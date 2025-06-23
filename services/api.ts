@@ -35,7 +35,7 @@ export interface BackendUser {
 
 class ForkFitAPI {
   // Updated with correct backend URL based on your project
-  private baseUrl = 'https://nutrisnapapp2025.replit.app/api';
+  private baseUrl = 'https://workspace--eduardocarval41.replit.app/api';
 
   async request<T>(endpoint: string, options: {
     method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
