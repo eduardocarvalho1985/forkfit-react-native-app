@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AddMealModal from '@/components/AddMealModal';
-import { APITest } from '../../components/APITest';
+import { APITest } from '@/components/APITest';
 
 export default function DashboardScreen() {
   const [showAddMealModal, setShowAddMealModal] = useState(false);
