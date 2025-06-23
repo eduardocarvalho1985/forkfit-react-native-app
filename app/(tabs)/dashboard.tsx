@@ -1,160 +1,135 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Modal,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import AddMealModal from '@/components/AddMealModal';
-import APITest from '../../components/APITest';
+import { useAuth } from '@/contexts/AuthContext';
+import APITest from '@/components/APITest';
 
 export default function DashboardScreen() {
   const [showAddMealModal, setShowAddMealModal] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState<'breakfast' | 'lunch' | 'dinner'>('breakfast');
+  const { user } = useAuth();
 
   const handleAddMeal = (mealType: 'breakfast' | 'lunch' | 'dinner') => {
     setSelectedMeal(mealType);
     setShowAddMealModal(true);
   };
 
+  const currentDate = new Date().toLocaleDateString('pt-BR', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.appName}>ForkFit</Text>
-          <TouchableOpacity>
-            <Ionicons name="notifications-outline" size={24} color="#FFF" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Date Navigation */}
-        <View style={styles.dateContainer}>
-          <TouchableOpacity>
-            <Ionicons name="chevron-back" size={24} color="#666" />
-          </TouchableOpacity>
-          <View style={styles.dateInfo}>
-            <Text style={styles.dateLabel}>Hoje</Text>
-            <Text style={styles.dateValue}>23 jun</Text>
+          <View>
+            <Text style={styles.greeting}>Olá, {user?.email?.split('@')[0] || 'Usuário'}!</Text>
+            <Text style={styles.date}>{currentDate}</Text>
           </View>
-          <TouchableOpacity>
-            <Ionicons name="chevron-forward" size={24} color="#666" />
+          <TouchableOpacity style={styles.notificationButton}>
+            <Ionicons name="notifications-outline" size={24} color="#333" />
           </TouchableOpacity>
         </View>
 
         {/* Daily Summary */}
-        <View style={styles.summaryContainer}>
-          <Text style={styles.summaryTitle}>Resumo Diário</Text>
-
-          <View style={styles.caloriesContainer}>
-            <View style={styles.caloriesCircle}>
-              <Ionicons name="flame" size={24} color="#FF6B6B" />
-              <Text style={styles.caloriesNumber}>0</Text>
+        <View style={styles.summaryCard}>
+          <Text style={styles.summaryTitle}>Resumo do Dia</Text>
+          <View style={styles.summaryStats}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>0</Text>
+              <Text style={styles.statLabel}>Calorias</Text>
             </View>
-            <Text style={styles.caloriesTotal}>/ 1673 kcal</Text>
-          </View>
-
-          <Text style={styles.remainingCalories}>Restante: 1673 kcal</Text>
-
-          {/* Macros */}
-          <View style={styles.macrosContainer}>
-            <View style={[styles.macroCard, { backgroundColor: '#E3F2FD' }]}>
-              <Ionicons name="water" size={20} color="#2196F3" />
-              <Text style={styles.macroLabel}>PROTEÍNA</Text>
-              <Text style={styles.macroValue}>0g</Text>
-              <Text style={styles.macroTarget}>de 142g</Text>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>0g</Text>
+              <Text style={styles.statLabel}>Proteína</Text>
             </View>
-
-            <View style={[styles.macroCard, { backgroundColor: '#FFF3E0' }]}>
-              <Ionicons name="nutrition" size={20} color="#FF9800" />
-              <Text style={styles.macroLabel}>CARBS</Text>
-              <Text style={styles.macroValue}>0g</Text>
-              <Text style={styles.macroTarget}>de 225g</Text>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>0g</Text>
+              <Text style={styles.statLabel}>Carboidratos</Text>
             </View>
-
-            <View style={[styles.macroCard, { backgroundColor: '#FCE4EC' }]}>
-              <Ionicons name="leaf" size={20} color="#E91E63" />
-              <Text style={styles.macroLabel}>GORDURA</Text>
-              <Text style={styles.macroValue}>0g</Text>
-              <Text style={styles.macroTarget}>de 48g</Text>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>0g</Text>
+              <Text style={styles.statLabel}>Gordura</Text>
             </View>
           </View>
         </View>
 
-        {/* Meals */}
-        <View style={styles.mealsContainer}>
-          <Text style={styles.mealsTitle}>Refeições de Hoje</Text>
+        {/* Meals Section */}
+        <View style={styles.mealsSection}>
+          <Text style={styles.sectionTitle}>Refeições</Text>
 
           {/* Breakfast */}
-          <View style={styles.mealCard}>
+          <TouchableOpacity 
+            style={styles.mealCard}
+            onPress={() => handleAddMeal('breakfast')}
+          >
             <View style={styles.mealHeader}>
-              <Text style={styles.mealName}>Café da Manhã</Text>
-              <Text style={styles.mealCalories}>0 kcal</Text>
+              <View style={styles.mealTitleContainer}>
+                <Ionicons name="sunny-outline" size={20} color="#FF9500" />
+                <Text style={styles.mealTitle}>Café da Manhã</Text>
+              </View>
+              <Ionicons name="add-circle-outline" size={24} color="#FF725E" />
             </View>
-            <Text style={styles.noMealText}>Nenhum alimento registrado</Text>
-            <TouchableOpacity
-              style={styles.addMealButton}
-              onPress={() => handleAddMeal('breakfast')}
-            >
-              <Ionicons name="add" size={16} color="#666" />
-              <Text style={styles.addMealText}>Adicionar alimento</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.aiAnalysisButton}>
-              <Ionicons name="sparkles" size={16} color="#FFF" />
-              <Text style={styles.aiAnalysisText}>Análise por IA</Text>
-            </TouchableOpacity>
-          </View>
+            <Text style={styles.mealSubtitle}>Adicionar alimentos</Text>
+          </TouchableOpacity>
 
           {/* Lunch */}
-          <View style={styles.mealCard}>
+          <TouchableOpacity 
+            style={styles.mealCard}
+            onPress={() => handleAddMeal('lunch')}
+          >
             <View style={styles.mealHeader}>
-              <Text style={styles.mealName}>Lanche da Manhã</Text>
-              <Text style={styles.mealCalories}>0 kcal</Text>
+              <View style={styles.mealTitleContainer}>
+                <Ionicons name="partly-sunny-outline" size={20} color="#34C759" />
+                <Text style={styles.mealTitle}>Almoço</Text>
+              </View>
+              <Ionicons name="add-circle-outline" size={24} color="#FF725E" />
             </View>
-            <Text style={styles.noMealText}>Nenhum alimento registrado</Text>
-            <TouchableOpacity
-              style={styles.addMealButton}
-              onPress={() => handleAddMeal('lunch')}
-            >
-              <Ionicons name="add" size={16} color="#666" />
-              <Text style={styles.addMealText}>Adicionar alimento</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.aiAnalysisButton}>
-              <Ionicons name="sparkles" size={16} color="#FFF" />
-              <Text style={styles.aiAnalysisText}>Análise por IA</Text>
-            </TouchableOpacity>
-          </View>
+            <Text style={styles.mealSubtitle}>Adicionar alimentos</Text>
+          </TouchableOpacity>
 
           {/* Dinner */}
-          <View style={styles.mealCard}>
+          <TouchableOpacity 
+            style={styles.mealCard}
+            onPress={() => handleAddMeal('dinner')}
+          >
             <View style={styles.mealHeader}>
-              <Text style={styles.mealName}>Almoço</Text>
-              <Text style={styles.mealCalories}>0 kcal</Text>
+              <View style={styles.mealTitleContainer}>
+                <Ionicons name="moon-outline" size={20} color="#5856D6" />
+                <Text style={styles.mealTitle}>Jantar</Text>
+              </View>
+              <Ionicons name="add-circle-outline" size={24} color="#FF725E" />
             </View>
-            <Text style={styles.noMealText}>Nenhum alimento registrado</Text>
-            <TouchableOpacity
-              style={styles.addMealButton}
-              onPress={() => handleAddMeal('dinner')}
-            >
-              <Ionicons name="add" size={16} color="#666" />
-              <Text style={styles.addMealText}>Adicionar alimento</Text>
+            <Text style={styles.mealSubtitle}>Adicionar alimentos</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Quick Actions */}
+        <View style={styles.quickActions}>
+          <Text style={styles.sectionTitle}>Ações Rápidas</Text>
+          <View style={styles.actionButtons}>
+            <TouchableOpacity style={styles.actionButton}>
+              <Ionicons name="camera-outline" size={24} color="#FF725E" />
+              <Text style={styles.actionText}>Escanear</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.aiAnalysisButton}>
-              <Ionicons name="sparkles" size={16} color="#FFF" />
-              <Text style={styles.aiAnalysisText}>Análise por IA</Text>
+            <TouchableOpacity style={styles.actionButton}>
+              <Ionicons name="search-outline" size={24} color="#FF725E" />
+              <Text style={styles.actionText}>Buscar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton}>
+              <Ionicons name="bookmark-outline" size={24} color="#FF725E" />
+              <Text style={styles.actionText}>Favoritos</Text>
             </TouchableOpacity>
           </View>
         </View>
-        <TouchableOpacity style={styles.addButton}>
-          <Text style={styles.addButtonText}>Adicionar alimento</Text>
-        </TouchableOpacity>
 
-        {/* Backend Connection Test */}
+        {/* API Test Section */}
         <View style={styles.testSection}>
+          <Text style={styles.sectionTitle}>Teste de Conexão</Text>
           <APITest />
         </View>
       </ScrollView>
@@ -169,171 +144,139 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+    paddingHorizontal: 16,
   },
   header: {
-    backgroundColor: '#FF6B6B',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingTop: 16,
+    paddingBottom: 24,
   },
-  appName: {
-    color: '#FFF',
-    fontSize: 20,
+  greeting: {
+    fontSize: 24,
     fontWeight: 'bold',
-  },
-  dateContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#FFF',
-  },
-  dateInfo: {
-    alignItems: 'center',
-  },
-  dateLabel: {
-    fontSize: 16,
-    fontWeight: '600',
     color: '#333',
+    marginBottom: 4,
   },
-  dateValue: {
-    fontSize: 14,
+  date: {
+    fontSize: 16,
     color: '#666',
   },
-  summaryContainer: {
+  notificationButton: {
+    padding: 8,
+  },
+  summaryCard: {
     backgroundColor: '#FFF',
-    margin: 16,
+    borderRadius: 16,
     padding: 20,
-    borderRadius: 12,
-    alignItems: 'center',
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   summaryTitle: {
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: 20,
     color: '#333',
+    marginBottom: 16,
   },
-  caloriesContainer: {
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  caloriesCircle: {
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  caloriesNumber: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  caloriesTotal: {
-    fontSize: 16,
-    color: '#666',
-  },
-  remainingCalories: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 20,
-  },
-  macrosContainer: {
+  summaryStats: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: '100%',
   },
-  macroCard: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 8,
+  statItem: {
     alignItems: 'center',
-    marginHorizontal: 4,
   },
-  macroLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    marginTop: 4,
-    marginBottom: 2,
-  },
-  macroValue: {
-    fontSize: 16,
+  statNumber: {
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#FF725E',
+    marginBottom: 4,
   },
-  macroTarget: {
-    fontSize: 10,
+  statLabel: {
+    fontSize: 12,
     color: '#666',
   },
-  mealsContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 20,
+  mealsSection: {
+    marginBottom: 24,
   },
-  mealsTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 16,
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
     color: '#333',
+    marginBottom: 16,
   },
   mealCard: {
     backgroundColor: '#FFF',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   mealHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 4,
   },
-  mealName: {
+  mealTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  mealTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
+    marginLeft: 8,
   },
-  mealCalories: {
+  mealSubtitle: {
     fontSize: 14,
     color: '#666',
   },
-  noMealText: {
-    fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
-    marginVertical: 12,
+  quickActions: {
+    marginBottom: 24,
   },
-  addMealButton: {
+  actionButtons: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  actionButton: {
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    padding: 16,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    marginBottom: 8,
+    flex: 1,
+    marginHorizontal: 4,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  addMealText: {
-    marginLeft: 4,
-    color: '#666',
-    fontSize: 14,
-  },
-  aiAnalysisButton: {
-    backgroundColor: '#FF6B6B',
-    borderRadius: 8,
-    paddingVertical: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  aiAnalysisText: {
-    color: '#FFF',
-    fontWeight: '600',
-    marginLeft: 4,
-  },
-  addButtonText: {
+  actionText: {
     color: '#FF725E',
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: '600',
+    marginTop: 8,
   },
   testSection: {
-    marginTop: 20,
+    marginBottom: 24,
     padding: 16,
     backgroundColor: '#F8F9FA',
     borderRadius: 12,
