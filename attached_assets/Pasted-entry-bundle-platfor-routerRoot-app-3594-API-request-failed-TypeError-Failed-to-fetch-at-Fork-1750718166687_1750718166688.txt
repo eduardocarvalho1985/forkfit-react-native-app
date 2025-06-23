@@ -1,0 +1,40 @@
+entry.bundle?platfor…routerRoot=app:3594 API request failed: TypeError: Failed to fetch
+    at ForkFitAPI.request (entry.bundle?platfor…rRoot=app:144112:32)
+    at ForkFitAPI.getOrCreateUser (entry.bundle?platfor…rRoot=app:144146:19)
+    at entry.bundle?platfor…rRoot=app:101352:48
+
+entry.bundle?platfor…routerRoot=app:3594 Failed to sync user with backend: Error: Failed to fetch
+    at ForkFitAPI.request (entry.bundle?platfor…rRoot=app:144135:15)
+    at async entry.bundle?platfor…rRoot=app:101352:33
+entry.bundle?platfor…uterRoot=app:101361 Continuing with Firebase-only authentication...
+dashboard:1 Access to fetch at 'https://nutrisnapapp2025.replit.app/' from origin 'https://026b19df-1bc8-41b3-9173-4fe0bc38edf2-00-amg1vxdmxojp.worf.replit.dev' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+entry.bundle?platfor…uterRoot=app:100914 
+ GET https://nutrisnapapp2025.replit.app/ net::ERR_FAILED 404 (Not Found)
+testAPI	@	entry.bundle?platfor…uterRoot=app:100914
+onClick	@	entry.bundle?platfor…outerRoot=app:31691
+processDispatchQueue	@	entry.bundle?platfor…outerRoot=app:14292
+(anonymous)	@	entry.bundle?platfor…outerRoot=app:14589
+batchedUpdates$1	@	entry.bundle?platfor…routerRoot=app:7960
+dispatchEventForPluginEventSystem	@	entry.bundle?platfor…outerRoot=app:14372
+dispatchEvent	@	entry.bundle?platfor…outerRoot=app:16454
+dispatchDiscreteEvent	@	entry.bundle?platfor…outerRoot=app:16436
+entry.bundle?platfor…routerRoot=app:3594 API test failed: TypeError: Failed to fetch
+    at testAPI (entry.bundle?platfor…rRoot=app:100914:30)
+    at onClick (entry.bundle?platfor…erRoot=app:31691:15)
+    at processDispatchQueue (entry.bundle?platfor…erRoot=app:14292:15)
+    at entry.bundle?platfor…terRoot=app:14589:9
+    at batchedUpdates$1 (entry.bundle?platfor…terRoot=app:7960:40)
+    at dispatchEventForPluginEventSystem (entry.bundle?platfor…terRoot=app:14372:7)
+    at dispatchEvent (entry.bundle?platfor…erRoot=app:16454:33)
+    at dispatchDiscreteEvent (entry.bundle?platfor…erRoot=app:16436:60)
+registerError	@	entry.bundle?platfor…routerRoot=app:3594
+console.error	@	entry.bundle?platfor…routerRoot=app:3532
+testAPI	@	entry.bundle?platfor…uterRoot=app:100948
+await in testAPI		
+onClick	@	entry.bundle?platfor…outerRoot=app:31691
+processDispatchQueue	@	entry.bundle?platfor…outerRoot=app:14292
+(anonymous)	@	entry.bundle?platfor…outerRoot=app:14589
+batchedUpdates$1	@	entry.bundle?platfor…routerRoot=app:7960
+dispatchEventForPluginEventSystem	@	entry.bundle?platfor…outerRoot=app:14372
+dispatchEvent	@	entry.bundle?platfor…outerRoot=app:16454
+dispatchDiscreteEvent	@	entry.bundle?platfor…outerRoot=app:16436
