@@ -16,19 +16,54 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
 
   const handleRegister = async () => {
+    console.log('Register button pressed');
+    
+    // Input validation
+    if (!email.trim()) {
+      Alert.alert('Erro', 'Por favor, insira um email válido');
+      return;
+    }
+    
+    if (!password.trim()) {
+      Alert.alert('Erro', 'Por favor, insira uma senha');
+      return;
+    }
+    
+    if (password.length < 6) {
+      Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+    
     if (password !== confirmPassword) {
       Alert.alert('Erro', 'As senhas não coincidem');
       return;
     }
 
+    setLoading(true);
     try {
-      await signUp(email, password);
+      console.log('Calling signUp function...');
+      await signUp(email.trim(), password);
+      console.log('Registration successful, navigating to dashboard');
       router.replace('/(tabs)/dashboard');
     } catch (error: any) {
-      Alert.alert('Erro', error.message);
+      console.error('Registration error:', error);
+      let errorMessage = 'Erro ao criar conta. Tente novamente.';
+      
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'Este email já está em uso. Tente fazer login.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Email inválido. Verifique o formato do email.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'Senha muito fraca. Use pelo menos 6 caracteres.';
+      }
+      
+      Alert.alert('Erro', errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -63,8 +98,14 @@ export default function RegisterScreen() {
           secureTextEntry
         />
 
-        <TouchableOpacity style={styles.button} onPress={handleRegister}>
-          <Text style={styles.buttonText}>Cadastrar</Text>
+        <TouchableOpacity 
+          style={[styles.button, loading && styles.buttonDisabled]} 
+          onPress={handleRegister}
+          disabled={loading}
+        >
+          <Text style={styles.buttonText}>
+            {loading ? 'Criando conta...' : 'Cadastrar'}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.back()}>
@@ -113,6 +154,9 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     marginTop: 16,
+  },
+  buttonDisabled: {
+    backgroundColor: '#FFB3B3',
   },
   buttonText: {
     color: '#FFF',

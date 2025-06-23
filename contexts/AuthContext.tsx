@@ -46,18 +46,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
+    try {
+      console.log('Attempting to sign in with email:', email);
+      await signInWithEmailAndPassword(auth, email, password);
+      console.log('Sign in successful');
+    } catch (error: any) {
+      console.error('Sign in error:', error);
+      throw error;
+    }
   };
 
   const signUp = async (email: string, password: string) => {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-    
-    // Create user document in Firestore
-    await setDoc(doc(db, 'users', user.uid), {
-      email: user.email,
-      createdAt: serverTimestamp(),
-    });
+    try {
+      console.log('Attempting to create user with email:', email);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      console.log('User created successfully:', user.uid);
+      
+      // Create user document in Firestore
+      console.log('Creating user document in Firestore...');
+      await setDoc(doc(db, 'users', user.uid), {
+        email: user.email,
+        createdAt: serverTimestamp(),
+      });
+      console.log('User document created successfully');
+    } catch (error: any) {
+      console.error('Sign up error:', error);
+      throw error;
+    }
   };
 
   const signOut = async () => {

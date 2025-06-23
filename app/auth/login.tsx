@@ -15,14 +15,34 @@ import { router } from 'expo-router';
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
 
   const handleLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      Alert.alert('Erro', 'Por favor, preencha todos os campos');
+      return;
+    }
+
+    setLoading(true);
     try {
-      await signIn(email, password);
+      await signIn(email.trim(), password);
       router.replace('/(tabs)/dashboard');
     } catch (error: any) {
-      Alert.alert('Erro', error.message);
+      console.error('Login error:', error);
+      let errorMessage = 'Erro ao fazer login. Verifique suas credenciais.';
+      
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'Usuário não encontrado. Verifique o email ou cadastre-se.';
+      } else if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Senha incorreta. Tente novamente.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Email inválido. Verifique o formato do email.';
+      }
+      
+      Alert.alert('Erro', errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -49,8 +69,14 @@ export default function LoginScreen() {
           secureTextEntry
         />
 
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Entrar</Text>
+        <TouchableOpacity 
+          style={[styles.button, loading && styles.buttonDisabled]} 
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          <Text style={styles.buttonText}>
+            {loading ? 'Entrando...' : 'Entrar'}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.push('/auth/register')}>
@@ -99,6 +125,9 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     marginTop: 16,
+  },
+  buttonDisabled: {
+    backgroundColor: '#FFB3B3',
   },
   buttonText: {
     color: '#FFF',

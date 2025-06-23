@@ -4,12 +4,12 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyC0qmlyXYjgWl4KHQyLFYPBi0x3umBqYAw",
+  apiKey: "AIzaSyAVmyIy6bq2Pp_XLP3nBQAqZt7an_UNZtk",
   authDomain: "forkfit-dev.firebaseapp.com",
   projectId: "forkfit-dev",
   storageBucket: "forkfit-dev.firebasestorage.app",
   messagingSenderId: "161660580984",
-  appId: "1:161660580984:ios:9cac482dad0fc17178a98d"
+  appId: "1:161660580984:android:5714ac6c68992b8178a98d"
 };
 
 // Initialize Firebase
