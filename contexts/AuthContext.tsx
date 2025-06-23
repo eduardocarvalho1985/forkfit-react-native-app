@@ -1,10 +1,9 @@
-
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import auth from '@react-native-firebase/auth';
-import { User } from '@react-native-firebase/auth';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 
 interface AuthContextType {
-  user: User | null;
+  user: FirebaseAuthTypes.User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
@@ -22,17 +21,17 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = auth().onAuthStateChanged((user) => {
+    const subscriber = auth().onAuthStateChanged((user: FirebaseAuthTypes.User | null) => {
       setUser(user);
-      setLoading(false);
+      if (initializing) setInitializing(false);
     });
-
-    return unsubscribe;
-  }, []);
+    return subscriber; // unsubscribe on unmount
+  }, [initializing]);
 
   const signIn = async (email: string, password: string) => {
     await auth().signInWithEmailAndPassword(email, password);
