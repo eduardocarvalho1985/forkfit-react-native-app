@@ -34,8 +34,8 @@ export interface BackendUser {
 }
 
 class ForkFitAPI {
-  // Replace with your actual repl URL
-  private baseUrl = 'https://nutrisnapapp2025.replit.app/api';
+  // Replace with your actual repl URL - Try multiple possible URLs
+  private baseUrl = 'https://nutri-snapp.replit.app/api';
 
   async request<T>(endpoint: string, options: {
     method?: 'GET' | 'POST' | 'PUT' | 'DELETE';

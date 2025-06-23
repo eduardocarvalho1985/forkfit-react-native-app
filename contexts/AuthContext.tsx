@@ -76,11 +76,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } catch (error) {
           console.error('Failed to sync user with backend:', error);
           // Still set Firebase user even if backend fails
-          const token = await firebaseUser.getIdToken().catch(() => undefined);
-          setUser({
-            ...firebaseUser,
-            token,
-          } as ExtendedUser);
+          try {
+            const token = await firebaseUser.getIdToken();
+            setUser({
+              ...firebaseUser,
+              token,
+            } as ExtendedUser);
+          } catch (tokenError) {
+            console.error('Failed to get Firebase token:', tokenError);
+            setUser(firebaseUser as ExtendedUser);
+          }
         }
       } else {
         console.log('User signed out');
@@ -166,6 +171,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.log('User synced with backend:', backendUser);
       } catch (backendError) {
         console.error('Failed to sync user with backend:', backendError);
+        console.log('Continuing without backend sync...');
         // Continue even if backend sync fails
       }
 

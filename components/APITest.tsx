@@ -1,80 +1,75 @@
-import React, { useState } from 'react';
+
+import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { api } from '../services/api';
 
-export const APITest: React.FC = () => {
-  const [isLoading, setIsLoading] = useState(false);
+export function APITest() {
+  const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<string>('');
 
   const testConnection = async () => {
-    setIsLoading(true);
-    setResult('');
-
+    setTesting(true);
+    setResult('Testing...');
+    
     try {
       console.log('Testing backend connection...');
-      const categories = await api.getFoodCategories();
-
-      const successMessage = `✅ Success! Found ${categories.length} food categories:\n${categories.slice(0, 3).join(', ')}...`;
-      setResult(successMessage);
-      console.log('API connected successfully:', categories);
-
-      Alert.alert('Connection Success!', successMessage);
-    } catch (error) {
-      const errorMessage = `❌ Failed: ${error}`;
-      setResult(errorMessage);
-      console.error('API connection failed:', error);
-
-      Alert.alert('Connection Failed', errorMessage);
+      const categories = await api.testConnection();
+      console.log('API Test Success:', categories);
+      setResult(`✅ Success! Found ${categories.length} food categories:\n${categories.slice(0, 5).join(', ')}...`);
+    } catch (error: any) {
+      console.error('API Test Failed:', error);
+      setResult(`❌ Failed: ${error.message}`);
     } finally {
-      setIsLoading(false);
+      setTesting(false);
     }
   };
 
   return (
     <View style={styles.container}>
       <TouchableOpacity 
-        style={[styles.button, isLoading && styles.buttonDisabled]} 
+        style={[styles.button, testing && styles.buttonDisabled]} 
         onPress={testConnection}
-        disabled={isLoading}
+        disabled={testing}
       >
         <Text style={styles.buttonText}>
-          {isLoading ? 'Testing...' : 'Test Backend Connection'}
+          {testing ? 'Testing...' : 'Test Backend Connection'}
         </Text>
       </TouchableOpacity>
-
+      
       {result ? (
-        <Text style={styles.result}>{result}</Text>
+        <View style={styles.resultContainer}>
+          <Text style={styles.resultText}>{result}</Text>
+        </View>
       ) : null}
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
-    alignItems: 'center',
+    padding: 10,
   },
   button: {
     backgroundColor: '#FF725E',
-    padding: 15,
+    padding: 12,
     borderRadius: 8,
-    minWidth: 200,
     alignItems: 'center',
   },
   buttonDisabled: {
     backgroundColor: '#ccc',
   },
   buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: '#fff',
+    fontWeight: '600',
   },
-  result: {
-    marginTop: 15,
+  resultContainer: {
+    marginTop: 10,
     padding: 10,
     backgroundColor: '#f5f5f5',
     borderRadius: 5,
+  },
+  resultText: {
     fontSize: 12,
-    textAlign: 'center',
+    color: '#333',
   },
 });
