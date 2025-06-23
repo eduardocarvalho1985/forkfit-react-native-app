@@ -1,8 +1,9 @@
+
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 
-interface AuthContextType {
+interface AuthContextData {
   user: FirebaseAuthTypes.User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
@@ -10,27 +11,31 @@ interface AuthContextType {
   signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+interface AuthProviderProps {
+  children: ReactNode;
+}
 
-export const useAuth = () => {
+const AuthContext = createContext<AuthContextData>({} as AuthContextData);
+
+export function useAuth(): AuthContextData {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
+}
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
-    const subscriber = auth().onAuthStateChanged((user: FirebaseAuthTypes.User | null) => {
+    const unsubscribe = auth().onAuthStateChanged((user: FirebaseAuthTypes.User | null) => {
       setUser(user);
       setLoading(false);
     });
-    return subscriber; // unsubscribe on unmount
+
+    return unsubscribe;
   }, []);
 
   const signIn = async (email: string, password: string) => {
@@ -38,7 +43,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (email: string, password: string) => {
-    await auth().createUserWithEmailAndPassword(email, password);
+    const { user } = await auth().createUserWithEmailAndPassword(email, password);
+    
+    // Create user document in Firestore
+    await firestore()
+      .collection('users')
+      .doc(user.uid)
+      .set({
+        email: user.email,
+        createdAt: firestore.FieldValue.serverTimestamp(),
+      });
   };
 
   const signOut = async () => {
@@ -53,5 +67,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
