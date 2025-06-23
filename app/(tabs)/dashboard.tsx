@@ -153,7 +153,7 @@ export default function DashboardScreen() {
           <Text style={styles.addButtonText}>Adicionar alimento</Text>
         </View>
 
-        {/* API Test Component */}
+        {/* API Test Section */}
         <View style={styles.testSection}>
           <Text style={styles.sectionTitle}>Backend Connection Test</Text>
           <APITest />
