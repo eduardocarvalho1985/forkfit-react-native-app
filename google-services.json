@@ -1,41 +1,41 @@
 
 {
   "project_info": {
-    "project_number": "161660580984",
-    "project_id": "forkfit-dev",
-    "storage_bucket": "forkfit-dev.firebasestorage.app"
+    "project_number": "740196834740",
+    "project_id": "nutrisnapapp2025",
+    "storage_bucket": "nutrisnapapp2025.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:161660580984:android:5714ac6c68992b8178a98d",
+        "mobilesdk_app_id": "1:740196834740:android:d4e1f19767ca7d1306a6e1",
         "android_client_info": {
-          "package_name": "forkfit.app.forkfit"
+          "package_name": "forkfit.app.forkfitprod"
         }
       },
       "oauth_client": [
         {
-          "client_id": "161660580984-mvq9di609u4tj8itiash89ho0ieimgu8.apps.googleusercontent.com",
+          "client_id": "740196834740-29etdgq3tcedr9drn10iaf3qb98pkogd.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyAVmyIy6bq2Pp_XLP3nBQAqZt7an_UNZtk"
+          "current_key": "AIzaSyBzrryqKfpqxkf5fzpj_NbdWD5QfM7Kj7g"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "161660580984-mvq9di609u4tj8itiash89ho0ieimgu8.apps.googleusercontent.com",
+              "client_id": "740196834740-29etdgq3tcedr9drn10iaf3qb98pkogd.apps.googleusercontent.com",
               "client_type": 3
             },
             {
-              "client_id": "161660580984-dcdb5n6j5gdq3grp4kl63hsce8sup5ar.apps.googleusercontent.com",
+              "client_id": "740196834740-vv70es2lcfgmdd3jn0inbosdgmvkkk2t.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "forkfit.app.forkfit"
+                "bundle_id": "forkfit.app.forkfitprod"
               }
             }
           ]

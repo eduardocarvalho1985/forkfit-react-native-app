@@ -4,12 +4,12 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAVmyIy6bq2Pp_XLP3nBQAqZt7an_UNZtk",
-  authDomain: "forkfit-dev.firebaseapp.com",
-  projectId: "forkfit-dev",
-  storageBucket: "forkfit-dev.firebasestorage.app",
-  messagingSenderId: "161660580984",
-  appId: "1:161660580984:android:5714ac6c68992b8178a98d"
+  apiKey: "AIzaSyBzrryqKfpqxkf5fzpj_NbdWD5QfM7Kj7g",
+  authDomain: "nutrisnapapp2025.firebaseapp.com",
+  projectId: "nutrisnapapp2025",
+  storageBucket: "nutrisnapapp2025.firebasestorage.app",
+  messagingSenderId: "740196834740",
+  appId: "1:740196834740:android:d4e1f19767ca7d1306a6e1"
 };
 
 // Initialize Firebase
