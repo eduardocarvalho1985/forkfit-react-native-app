@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   View,
@@ -11,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AddMealModal from '@/components/AddMealModal';
+import { APITest } from '../../components/APITest';
 
 export default function DashboardScreen() {
   const [showAddMealModal, setShowAddMealModal] = useState(false);
@@ -49,7 +49,7 @@ export default function DashboardScreen() {
         {/* Daily Summary */}
         <View style={styles.summaryContainer}>
           <Text style={styles.summaryTitle}>Resumo Diário</Text>
-          
+
           <View style={styles.caloriesContainer}>
             <View style={styles.caloriesCircle}>
               <Ionicons name="flame" size={24} color="#FF6B6B" />
@@ -149,13 +149,16 @@ export default function DashboardScreen() {
             </TouchableOpacity>
           </View>
         </View>
-      </ScrollView>
+        <View style={styles.addButton}>
+          <Text style={styles.addButtonText}>Adicionar alimento</Text>
+        </View>
 
-      <AddMealModal
-        visible={showAddMealModal}
-        onClose={() => setShowAddMealModal(false)}
-        mealType={selectedMeal}
-      />
+        {/* API Test Component */}
+        <View style={styles.testSection}>
+          <Text style={styles.sectionTitle}>Backend Connection Test</Text>
+          <APITest />
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -324,5 +327,18 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontWeight: '600',
     marginLeft: 4,
+  },
+  addButtonText: {
+    color: '#FF725E',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  testSection: {
+    marginTop: 30,
+    padding: 20,
+    backgroundColor: '#FFF8F6',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FFA28F',
   },
 });

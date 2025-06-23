@@ -9,9 +9,21 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
+import { api, BackendUser } from '../services/api';
+
+interface ExtendedUser extends User {
+  token?: string;
+  // Backend user data
+  id?: number;
+  onboardingCompleted?: boolean;
+  calories?: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+}
 
 interface AuthContextData {
-  user: User | null;
+  user: ExtendedUser | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
@@ -37,8 +49,44 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: User | null) => {
+      if (firebaseUser) {
+        try {
+          console.log('Firebase user signed in:', firebaseUser.uid);
+          
+          // Get Firebase ID token
+          const token = await firebaseUser.getIdToken();
+          console.log('Got Firebase token');
+          
+          // Sync with backend
+          const backendUser = await api.getOrCreateUser(
+            firebaseUser.uid,
+            firebaseUser.email || '',
+            token
+          );
+          
+          console.log('Backend user synced:', backendUser);
+          
+          // Combine Firebase and backend user data
+          setUser({
+            ...firebaseUser,
+            token, // Store token for API calls
+            ...backendUser, // Backend user data
+          } as ExtendedUser);
+          
+        } catch (error) {
+          console.error('Failed to sync user with backend:', error);
+          // Still set Firebase user even if backend fails
+          const token = await firebaseUser.getIdToken().catch(() => undefined);
+          setUser({
+            ...firebaseUser,
+            token,
+          } as ExtendedUser);
+        }
+      } else {
+        console.log('User signed out');
+        setUser(null);
+      }
       setLoading(false);
     });
 
