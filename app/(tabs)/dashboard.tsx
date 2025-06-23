@@ -5,17 +5,53 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function DashboardScreen() {
   const testAPI = async () => {
     try {
-      // Your web app URL (replace with actual repl name)
-      const API_URL = 'https://nutrisnapapp2025.replit.app/api';
-      const response = await fetch(`${API_URL}/food-database/categories`);
+      // Test different endpoints to find what's available
+      const BASE_URL = 'https://nutrisnapapp2025.replit.app';
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+      // First, test if the backend is responding at all
+      let response = await fetch(`${BASE_URL}/`);
+      console.log('Root endpoint status:', response.status);
+
+      if (response.ok) {
+        const rootData = await response.text();
+        console.log('Root response:', rootData.substring(0, 200));
       }
 
-      const categories = await response.json();
-      Alert.alert('Success!', `Connected! Found ${categories.length} Brazilian food categories`);
-      console.log('Categories:', categories);
+      // Test if /api exists
+      response = await fetch(`${BASE_URL}/api`);
+      console.log('API endpoint status:', response.status);
+
+      if (response.ok) {
+        const apiData = await response.text();
+        console.log('API response:', apiData.substring(0, 200));
+      }
+
+      // Try alternative endpoint paths
+      const testPaths = [
+        '/api/categories',
+        '/categories', 
+        '/food-categories',
+        '/api/food/categories',
+        '/api/foods/categories'
+      ];
+
+      for (const path of testPaths) {
+        try {
+          response = await fetch(`${BASE_URL}${path}`);
+          console.log(`Testing ${path}: ${response.status}`);
+
+          if (response.ok) {
+            const data = await response.json();
+            Alert.alert('Success!', `Found endpoint: ${path}\nResponse: ${JSON.stringify(data).substring(0, 100)}...`);
+            console.log(`Success at ${path}:`, data);
+            return;
+          }
+        } catch (err) {
+          console.log(`Error testing ${path}:`, err.message);
+        }
+      }
+
+      Alert.alert('Backend Found', 'Backend is running but food database endpoints not found. Check backend implementation.');
 
     } catch (error) {
       Alert.alert('Connection Failed', `Error: ${error.message}`);
