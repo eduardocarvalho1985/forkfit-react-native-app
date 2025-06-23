@@ -28,10 +28,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const subscriber = auth().onAuthStateChanged((user: FirebaseAuthTypes.User | null) => {
       setUser(user);
-      if (initializing) setInitializing(false);
+      setLoading(false);
     });
     return subscriber; // unsubscribe on unmount
-  }, [initializing]);
+  }, []);
 
   const signIn = async (email: string, password: string) => {
     await auth().signInWithEmailAndPassword(email, password);
