@@ -3,14 +3,14 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Modal,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AddMealModal from '@/components/AddMealModal';
-import { APITest } from '@/components/APITest';
+import APITest from '../../components/APITest';
 
 export default function DashboardScreen() {
   const [showAddMealModal, setShowAddMealModal] = useState(false);
@@ -149,13 +149,12 @@ export default function DashboardScreen() {
             </TouchableOpacity>
           </View>
         </View>
-        <View style={styles.addButton}>
+        <TouchableOpacity style={styles.addButton}>
           <Text style={styles.addButtonText}>Adicionar alimento</Text>
-        </View>
+        </TouchableOpacity>
 
-        {/* API Test Section */}
+        {/* Backend Connection Test */}
         <View style={styles.testSection}>
-          <Text style={styles.sectionTitle}>Backend Connection Test</Text>
           <APITest />
         </View>
       </ScrollView>
@@ -334,11 +333,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   testSection: {
-    marginTop: 30,
-    padding: 20,
-    backgroundColor: '#FFF8F6',
+    marginTop: 20,
+    padding: 16,
+    backgroundColor: '#F8F9FA',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#FFA28F',
+    borderColor: '#E0E0E0',
   },
 });

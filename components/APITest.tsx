@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { api } from '../services/api';
 
@@ -10,7 +9,7 @@ export function APITest() {
   const testConnection = async () => {
     setTesting(true);
     setResult('Testing...');
-    
+
     try {
       console.log('Testing backend connection...');
       const categories = await api.testConnection();
@@ -35,7 +34,7 @@ export function APITest() {
           {testing ? 'Testing...' : 'Test Backend Connection'}
         </Text>
       </TouchableOpacity>
-      
+
       {result ? (
         <View style={styles.resultContainer}>
           <Text style={styles.resultText}>{result}</Text>

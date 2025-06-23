@@ -34,8 +34,8 @@ export interface BackendUser {
 }
 
 class ForkFitAPI {
-  // Replace with your actual repl URL - Try multiple possible URLs
-  private baseUrl = 'https://nutri-snapp.replit.app/api';
+  // Updated with correct backend URL based on your project
+  private baseUrl = 'https://nutrisnapapp2025.replit.app/api';
 
   async request<T>(endpoint: string, options: {
     method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -50,24 +50,43 @@ class ForkFitAPI {
         'Content-Type': 'application/json',
         ...(token && { Authorization: `Bearer ${token}` }),
       },
+      // Add timeout and better error handling
+      signal: AbortSignal.timeout(10000), // 10 second timeout
     };
 
     if (body && method !== 'GET') {
       config.body = JSON.stringify(body);
     }
 
-    console.log(`API ${method} ${endpoint}`, body ? { body } : '');
+    const fullUrl = `${this.baseUrl}${endpoint}`;
+    console.log(`API ${method} ${fullUrl}`, body ? { body } : '');
     
-    const response = await fetch(`${this.baseUrl}${endpoint}`, config);
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP ${response.status}`);
-    }
+    try {
+      const response = await fetch(fullUrl, config);
+      
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText || `HTTP ${response.status}: ${response.statusText}` };
+        }
+        console.error(`API Error ${response.status}:`, errorData);
+        throw new Error(errorData.message || `Backend error: ${response.status}`);
+      }
 
-    const result = await response.json();
-    console.log(`API Response:`, result);
-    return result;
+      const result = await response.json();
+      console.log(`API Response:`, result);
+      return result;
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.error('API request timeout');
+        throw new Error('Request timeout - backend may be unavailable');
+      }
+      console.error('API request failed:', error);
+      throw new Error(error.message || 'Failed to connect to backend');
+    }
   }
 
   // Test connection

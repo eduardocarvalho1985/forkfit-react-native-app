@@ -75,16 +75,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         } catch (error) {
           console.error('Failed to sync user with backend:', error);
+          console.log('Continuing with Firebase-only authentication...');
           // Still set Firebase user even if backend fails
           try {
             const token = await firebaseUser.getIdToken();
             setUser({
               ...firebaseUser,
               token,
+              // Set default values when backend is unavailable
+              onboardingCompleted: false,
+              calories: 2000,
+              protein: 150,
+              carbs: 250,
+              fat: 65,
             } as ExtendedUser);
           } catch (tokenError) {
             console.error('Failed to get Firebase token:', tokenError);
-            setUser(firebaseUser as ExtendedUser);
+            setUser({
+              ...firebaseUser,
+              onboardingCompleted: false,
+            } as ExtendedUser);
           }
         }
       } else {
