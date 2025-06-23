@@ -5,57 +5,95 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function DashboardScreen() {
   const testAPI = async () => {
     try {
-      // Test different endpoints to find what's available
-      const BASE_URL = 'https://nutrisnapapp2025.replit.app';
-
-      // First, test if the backend is responding at all
-      let response = await fetch(`${BASE_URL}/`);
-      console.log('Root endpoint status:', response.status);
-
-      if (response.ok) {
-        const rootData = await response.text();
-        console.log('Root response:', rootData.substring(0, 200));
-      }
-
-      // Test if /api exists
-      response = await fetch(`${BASE_URL}/api`);
-      console.log('API endpoint status:', response.status);
-
-      if (response.ok) {
-        const apiData = await response.text();
-        console.log('API response:', apiData.substring(0, 200));
-      }
-
-      // Try alternative endpoint paths
-      const testPaths = [
-        '/api/categories',
-        '/categories', 
-        '/food-categories',
-        '/api/food/categories',
-        '/api/foods/categories'
+      Alert.alert('Testing...', 'Checking backend connection and CORS settings');
+      
+      // Test 1: Check if backend is running at all
+      console.log('🔍 Testing backend availability...');
+      
+      // Test different possible URLs and methods
+      const backendTests = [
+        {
+          name: 'Backend Root',
+          url: 'https://nutrisnapapp2025.replit.app/',
+          method: 'GET'
+        },
+        {
+          name: 'Backend API',
+          url: 'https://nutrisnapapp2025.replit.app/api',
+          method: 'GET'
+        },
+        {
+          name: 'Health Check',
+          url: 'https://nutrisnapapp2025.replit.app/health',
+          method: 'GET'
+        },
+        {
+          name: 'Status Check',
+          url: 'https://nutrisnapapp2025.replit.app/status',
+          method: 'GET'
+        }
       ];
 
-      for (const path of testPaths) {
-        try {
-          response = await fetch(`${BASE_URL}${path}`);
-          console.log(`Testing ${path}: ${response.status}`);
+      let anySuccess = false;
+      let results = [];
 
-          if (response.ok) {
-            const data = await response.json();
-            Alert.alert('Success!', `Found endpoint: ${path}\nResponse: ${JSON.stringify(data).substring(0, 100)}...`);
-            console.log(`Success at ${path}:`, data);
-            return;
+      for (const test of backendTests) {
+        try {
+          console.log(`Testing ${test.name}: ${test.url}`);
+          
+          const response = await fetch(test.url, {
+            method: test.method,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            // Add timeout
+            signal: AbortSignal.timeout(5000)
+          });
+          
+          const status = response.status;
+          console.log(`${test.name} status: ${status}`);
+          
+          if (status >= 200 && status < 300) {
+            anySuccess = true;
+            try {
+              const data = await response.text();
+              results.push(`✅ ${test.name}: ${status} - ${data.substring(0, 50)}...`);
+            } catch {
+              results.push(`✅ ${test.name}: ${status} - Response OK`);
+            }
+          } else if (status === 404) {
+            results.push(`⚠️ ${test.name}: 404 - Endpoint not found`);
+          } else {
+            results.push(`❌ ${test.name}: ${status} - Error`);
           }
-        } catch (err) {
-          console.log(`Error testing ${path}:`, err.message);
+          
+        } catch (error) {
+          const errorMsg = error.message || 'Unknown error';
+          console.log(`${test.name} failed:`, errorMsg);
+          
+          if (errorMsg.includes('CORS')) {
+            results.push(`🚫 ${test.name}: CORS blocked`);
+          } else if (errorMsg.includes('timeout')) {
+            results.push(`⏰ ${test.name}: Timeout`);
+          } else {
+            results.push(`❌ ${test.name}: ${errorMsg}`);
+          }
         }
       }
 
-      Alert.alert('Backend Found', 'Backend is running but food database endpoints not found. Check backend implementation.');
+      // Show results
+      const resultText = results.join('\n');
+      console.log('Test Results:', resultText);
+      
+      if (anySuccess) {
+        Alert.alert('Backend Status', `Some endpoints working:\n\n${resultText}`);
+      } else {
+        Alert.alert('Backend Issues', `Backend connection problems:\n\n${resultText}\n\nPossible solutions:\n- Check if backend is running\n- Verify CORS settings\n- Confirm URL is correct`);
+      }
 
     } catch (error) {
-      Alert.alert('Connection Failed', `Error: ${error.message}`);
-      console.error('API test failed:', error);
+      console.error('Test failed:', error);
+      Alert.alert('Test Failed', `Unexpected error: ${error.message}`);
     }
   };
 
