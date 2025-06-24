@@ -71,19 +71,30 @@ class ForkFitAPI {
     try {
       const response = await fetch(fullUrl, config);
       
+      console.log(`Response status: ${response.status}`);
+      console.log(`Response headers:`, Object.fromEntries(response.headers.entries()));
+      
       if (!response.ok) {
         const errorText = await response.text().catch(() => '');
+        console.error(`API Error ${response.status} - Raw response:`, errorText.substring(0, 200));
+        
         let errorData;
         try {
           errorData = JSON.parse(errorText);
         } catch {
-          errorData = { message: errorText || `HTTP ${response.status}: ${response.statusText}` };
+          errorData = { 
+            message: errorText.includes('<!DOCTYPE') 
+              ? `Endpoint returned HTML instead of JSON - check if ${endpoint} exists on backend`
+              : errorText || `HTTP ${response.status}: ${response.statusText}` 
+          };
         }
-        console.error(`API Error ${response.status}:`, errorData);
         throw new Error(errorData.message || `Backend error: ${response.status}`);
       }
 
-      const result = await response.json();
+      const responseText = await response.text();
+      console.log(`Raw response:`, responseText.substring(0, 200));
+      
+      const result = JSON.parse(responseText);
       console.log(`API Response:`, result);
       return result;
     } catch (error: any) {

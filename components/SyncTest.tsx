@@ -7,6 +7,18 @@ import { api } from '@/services/api';
 export function SyncTest() {
   const { user } = useAuth();
 
+  const testConnection = async () => {
+    try {
+      console.log('Testing backend connection...');
+      const categories = await api.getFoodCategories();
+      console.log('Connection successful! Categories:', categories);
+      Alert.alert('Success', `Backend connected!\nFound ${categories.length} food categories`);
+    } catch (error: any) {
+      console.error('Connection failed:', error);
+      Alert.alert('Connection Error', `Backend connection failed: ${error.message}`);
+    }
+  };
+
   const testSync = async () => {
     if (!user) {
       Alert.alert('Error', 'No user logged in');
@@ -37,7 +49,10 @@ export function SyncTest() {
       <Text style={styles.subtitle}>
         Current user: {user?.email || 'Not logged in'}
       </Text>
-      <TouchableOpacity style={styles.button} onPress={testSync}>
+      <TouchableOpacity style={styles.button} onPress={testConnection}>
+        <Text style={styles.buttonText}>Test Backend Connection</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={[styles.button, { marginTop: 10 }]} onPress={testSync}>
         <Text style={styles.buttonText}>Test User Sync</Text>
       </TouchableOpacity>
     </View>

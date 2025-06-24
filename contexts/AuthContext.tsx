@@ -58,6 +58,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           console.log('Got Firebase token');
 
           // Sync user with backend using the sync endpoint
+          console.log('Attempting to sync with backend...');
           const backendUser = await api.syncUser({
             uid: firebaseUser.uid,
             email: firebaseUser.email || '',
