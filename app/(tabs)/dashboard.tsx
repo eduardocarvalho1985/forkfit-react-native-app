@@ -1,59 +1,98 @@
+
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function DashboardScreen() {
-  const testAPI = async () => {
-    try {
-      const API_URL = 'https://forkfit.app/api';
-
-      console.log('Testing connection to:', API_URL);
-
-      const response = await fetch(`${API_URL}/food-database/categories`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const categories = await response.json();
-
-      Alert.alert(
-        'Success!', 
-        `Connected to ForkFit backend!\n\nFound ${categories.length} Brazilian food categories:\n\n${categories.slice(0, 3).join('\n')}`
-      );
-
-      console.log('All categories:', categories);
-
-    } catch (error) {
-      Alert.alert('Connection Failed', `Error: ${error.message}`);
-      console.error('API test failed:', error);
-    }
-  };
+  const { user } = useAuth();
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>ForkFit Mobile</Text>
-        <Text style={styles.subtitle}>Brazilian Nutrition Tracking</Text>
-
-        <TouchableOpacity style={styles.button} onPress={testAPI}>
-          <Text style={styles.buttonText}>Test Food Database API</Text>
-        </TouchableOpacity>
-
-        <View style={styles.info}>
-          <Text style={styles.infoText}>
-            Backend: forkfit.app
-          </Text>
-          <Text style={styles.infoText}>
-            Expected: 13 Brazilian food categories
-          </Text>
+      <ScrollView style={styles.scrollView}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.greeting}>Olá, {user?.displayName || 'Usuário'}!</Text>
+            <Text style={styles.subtitle}>Como estão seus objetivos hoje?</Text>
+          </View>
+          <TouchableOpacity style={styles.notificationButton}>
+            <Ionicons name="notifications-outline" size={24} color="#333" />
+          </TouchableOpacity>
         </View>
-      </View>
+
+        {/* Daily Summary Card */}
+        <View style={styles.summaryCard}>
+          <Text style={styles.cardTitle}>Resumo do Dia</Text>
+          <View style={styles.summaryRow}>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryValue}>1,847</Text>
+              <Text style={styles.summaryLabel}>Calorias</Text>
+            </View>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryValue}>89g</Text>
+              <Text style={styles.summaryLabel}>Proteína</Text>
+            </View>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryValue}>203g</Text>
+              <Text style={styles.summaryLabel}>Carboidratos</Text>
+            </View>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryValue}>67g</Text>
+              <Text style={styles.summaryLabel}>Gordura</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Quick Actions */}
+        <View style={styles.actionsContainer}>
+          <Text style={styles.sectionTitle}>Ações Rápidas</Text>
+          <View style={styles.actionsGrid}>
+            <TouchableOpacity style={styles.actionCard}>
+              <Ionicons name="camera-outline" size={32} color="#FF6B6B" />
+              <Text style={styles.actionText}>Escanear Alimento</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionCard}>
+              <Ionicons name="add-circle-outline" size={32} color="#4ECDC4" />
+              <Text style={styles.actionText}>Adicionar Refeição</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionCard}>
+              <Ionicons name="water-outline" size={32} color="#45B7D1" />
+              <Text style={styles.actionText}>Registrar Água</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionCard}>
+              <Ionicons name="fitness-outline" size={32} color="#96CEB4" />
+              <Text style={styles.actionText}>Log de Exercício</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Meals Today */}
+        <View style={styles.mealsContainer}>
+          <Text style={styles.sectionTitle}>Refeições de Hoje</Text>
+          <View style={styles.mealCard}>
+            <View style={styles.mealHeader}>
+              <Text style={styles.mealTime}>Café da Manhã</Text>
+              <Text style={styles.mealCalories}>420 cal</Text>
+            </View>
+            <Text style={styles.mealItems}>Aveia com banana, leite desnatado</Text>
+          </View>
+          
+          <View style={styles.mealCard}>
+            <View style={styles.mealHeader}>
+              <Text style={styles.mealTime}>Almoço</Text>
+              <Text style={styles.mealCalories}>650 cal</Text>
+            </View>
+            <Text style={styles.mealItems}>Arroz integral, feijão, frango grelhado, salada</Text>
+          </View>
+
+          <TouchableOpacity style={styles.addMealButton}>
+            <Ionicons name="add" size={20} color="#FF6B6B" />
+            <Text style={styles.addMealText}>Adicionar Refeição</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -61,50 +100,150 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f9fa',
   },
-  content: {
+  scrollView: {
     flex: 1,
-    justifyContent: 'center',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
+    backgroundColor: '#fff',
   },
-  title: {
-    fontSize: 28,
+  greeting: {
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
     color: '#666',
-    marginBottom: 40,
-    textAlign: 'center',
+    marginTop: 4,
   },
-  button: {
-    backgroundColor: '#4CAF50',
-    padding: 15,
-    borderRadius: 8,
-    minWidth: 200,
-    marginBottom: 15,
+  notificationButton: {
+    padding: 8,
   },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
+  summaryCard: {
+    backgroundColor: '#fff',
+    margin: 20,
+    marginTop: 10,
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  cardTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
-    textAlign: 'center',
+    color: '#333',
+    marginBottom: 16,
   },
-  info: {
-    backgroundColor: '#f8f9fa',
-    padding: 15,
-    borderRadius: 8,
-    maxWidth: 300,
-    marginTop: 20,
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
-  infoText: {
+  summaryItem: {
+    alignItems: 'center',
+  },
+  summaryValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FF6B6B',
+  },
+  summaryLabel: {
     fontSize: 12,
     color: '#666',
+    marginTop: 4,
+  },
+  actionsContainer: {
+    padding: 20,
+    paddingTop: 0,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
+  },
+  actionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  actionCard: {
+    backgroundColor: '#fff',
+    width: '48%',
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  actionText: {
+    fontSize: 14,
+    color: '#333',
+    marginTop: 8,
     textAlign: 'center',
-    marginBottom: 5,
+  },
+  mealsContainer: {
+    padding: 20,
+    paddingTop: 0,
+  },
+  mealCard: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  mealHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  mealTime: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  mealCalories: {
+    fontSize: 14,
+    color: '#FF6B6B',
+    fontWeight: '600',
+  },
+  mealItems: {
+    fontSize: 14,
+    color: '#666',
+  },
+  addMealButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#FF6B6B',
+    borderStyle: 'dashed',
+  },
+  addMealText: {
+    fontSize: 16,
+    color: '#FF6B6B',
+    fontWeight: '600',
+    marginLeft: 8,
   },
 });
