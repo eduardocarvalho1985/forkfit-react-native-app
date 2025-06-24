@@ -6,8 +6,7 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged
 } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from '../firebaseConfig';
+import { auth } from '../firebaseConfig';
 import { api, BackendUser } from '../services/api';
 
 interface ExtendedUser extends User {
@@ -205,17 +204,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.log('Continuing without backend sync...');
         // Continue even if backend sync fails
       }
-
-      // Create user document in Firestore (fallback) - non-blocking
-      setDoc(doc(db, 'users', user.uid), {
-        email: user.email,
-        createdAt: new Date().toISOString(),
-      }).then(() => {
-        console.log('Firestore document created successfully');
-      }).catch((firestoreError) => {
-        console.error('Firestore error (non-blocking):', firestoreError);
-        // This is a fallback, don't block registration
-      });
 
       console.log('User registration completed, proceeding to sign in');
       // Sign in after successful registration - don't wait for Firestore
