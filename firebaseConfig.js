@@ -17,21 +17,16 @@ const firebaseConfig = {
 // Prevent duplicate app initialization
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
-// Initialize Auth with platform-specific persistence
+// Initialize Auth with AsyncStorage persistence for React Native
 let auth;
 try {
-  if (Platform.OS === 'web') {
-    // For web, use the default auth
-    auth = getAuth(app);
-  } else {
-    // For native platforms, use AsyncStorage persistence
-    auth = initializeAuth(app, {
-      persistence: getReactNativePersistence(ReactNativeAsyncStorage)
-    });
-  }
+  // Always use AsyncStorage persistence for React Native
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+  });
 } catch (error) {
-  // Fallback to default auth if initialization fails
-  console.log('Using fallback auth initialization');
+  // If initializeAuth fails (e.g., already initialized), get existing auth
+  console.log('Auth already initialized, getting existing instance');
   auth = getAuth(app);
 }
 

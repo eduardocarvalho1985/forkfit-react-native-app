@@ -1,10 +1,9 @@
-
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { router } from 'expo-router';
 
-export default function IndexScreen() {
+export default function HomeScreen() {
   const { user, loading } = useAuth();
 
   useEffect(() => {

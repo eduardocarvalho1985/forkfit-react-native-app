@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   View,
@@ -31,7 +30,7 @@ export default function LoginScreen() {
     } catch (error: any) {
       console.error('Login error:', error);
       let errorMessage = 'Erro ao fazer login. Verifique suas credenciais.';
-      
+
       if (error.code === 'auth/user-not-found') {
         errorMessage = 'Usuário não encontrado. Verifique o email ou cadastre-se.';
       } else if (error.code === 'auth/wrong-password') {
@@ -39,7 +38,7 @@ export default function LoginScreen() {
       } else if (error.code === 'auth/invalid-email') {
         errorMessage = 'Email inválido. Verifique o formato do email.';
       }
-      
+
       Alert.alert('Erro', errorMessage);
     } finally {
       setLoading(false);

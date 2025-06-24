@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   View,
@@ -21,23 +20,23 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     console.log('Register button pressed');
-    
+
     // Input validation
     if (!email.trim()) {
       Alert.alert('Erro', 'Por favor, insira um email válido');
       return;
     }
-    
+
     if (!password.trim()) {
       Alert.alert('Erro', 'Por favor, insira uma senha');
       return;
     }
-    
+
     if (password.length < 6) {
       Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres');
       return;
     }
-    
+
     if (password !== confirmPassword) {
       Alert.alert('Erro', 'As senhas não coincidem');
       return;
@@ -52,7 +51,7 @@ export default function RegisterScreen() {
     } catch (error: any) {
       console.error('Registration error:', error);
       let errorMessage = 'Erro ao criar conta. Tente novamente.';
-      
+
       if (error.code === 'auth/email-already-in-use') {
         errorMessage = 'Este email já está em uso. Tente fazer login.';
       } else if (error.code === 'auth/invalid-email') {
@@ -60,7 +59,7 @@ export default function RegisterScreen() {
       } else if (error.code === 'auth/weak-password') {
         errorMessage = 'Senha muito fraca. Use pelo menos 6 caracteres.';
       }
-      
+
       Alert.alert('Erro', errorMessage);
     } finally {
       setLoading(false);
