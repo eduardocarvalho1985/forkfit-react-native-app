@@ -1,0 +1,136 @@
+# Mobile Authentication Sync Guide
+
+## Problem
+Firebase creates users in Firebase Console, but they don't appear in PostgreSQL database.
+
+## Solution
+Added `/api/users/sync` endpoint to sync Firebase users to PostgreSQL.
+
+## Mobile App Implementation
+
+### 1. Update Firebase Auth Handler
+```typescript
+// In your mobile app's auth context or login handler
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { ForkFitApiClient } from './shared-mobile/api-client';
+
+const apiClient = new ForkFitApiClient({
+  baseUrl: 'https://forkfit.app/api'
+});
+
+const handleAuthStateChange = async (firebaseUser: FirebaseUser | null) => {
+  if (firebaseUser) {
+    try {
+      // Sync user with PostgreSQL backend
+      const backendUser = await apiClient.syncUser({
+        uid: firebaseUser.uid,
+        email: firebaseUser.email!,
+        displayName: firebaseUser.displayName,
+        photoURL: firebaseUser.photoURL
+      });
+      
+      console.log('User synced with backend:', backendUser);
+      Alert.alert('Success', 'User synchronized with backend database');
+      
+    } catch (error) {
+      console.error('Failed to sync user with backend:', error);
+      Alert.alert('Sync Warning', 'User created in Firebase but not in backend database');
+    }
+  }
+};
+
+// Set up the listener
+onAuthStateChanged(auth, handleAuthStateChange);
+```
+
+### 2. Login Flow
+```typescript
+const handleLogin = async (email: string, password: string) => {
+  try {
+    // Firebase login
+    const credential = await signInWithEmailAndPassword(auth, email, password);
+    const firebaseUser = credential.user;
+    
+    // Sync with backend (this will happen automatically via auth state change)
+    // But you can also do it explicitly:
+    await apiClient.syncUser({
+      uid: firebaseUser.uid,
+      email: firebaseUser.email!,
+      displayName: firebaseUser.displayName,
+      photoURL: firebaseUser.photoURL
+    });
+    
+    console.log('User logged in and synced');
+  } catch (error) {
+    console.error('Login failed:', error);
+  }
+};
+```
+
+### 3. Registration Flow
+```typescript
+const handleRegister = async (email: string, password: string) => {
+  try {
+    // Firebase registration
+    const credential = await createUserWithEmailAndPassword(auth, email, password);
+    const firebaseUser = credential.user;
+    
+    // Sync with backend immediately
+    await apiClient.syncUser({
+      uid: firebaseUser.uid,
+      email: firebaseUser.email!,
+      displayName: firebaseUser.displayName,
+      photoURL: firebaseUser.photoURL
+    });
+    
+    console.log('User registered and synced');
+  } catch (error) {
+    console.error('Registration failed:', error);
+  }
+};
+```
+
+## Testing the Sync
+
+### 1. Test Sync Endpoint
+```bash
+curl -X POST "https://forkfit.app/api/users/sync" \
+  -H "Content-Type: application/json" \
+  -d '{"uid":"your-firebase-uid","email":"your@email.com","displayName":"Your Name"}'
+```
+
+### 2. Check PostgreSQL Database
+```sql
+SELECT uid, email, name, onboarding_completed, created_at FROM users ORDER BY created_at DESC LIMIT 5;
+```
+
+### 3. Test in Mobile App
+```typescript
+const testSync = async () => {
+  try {
+    const result = await apiClient.syncUser({
+      uid: 'test-firebase-uid',
+      email: 'test@example.com',
+      displayName: 'Test User'
+    });
+    console.log('Sync successful:', result);
+    Alert.alert('Success', 'User synchronized successfully');
+  } catch (error) {
+    console.error('Sync failed:', error);
+    Alert.alert('Error', 'Sync failed - check console for details');
+  }
+};
+```
+
+## Expected Behavior
+1. User logs in via Firebase → appears in Firebase Console
+2. App calls `/api/users/sync` → user appears in PostgreSQL
+3. Subsequent API calls work because user exists in both systems
+
+## API Endpoint Details
+- **POST** `/api/users/sync`
+- **Body**: `{ uid, email, displayName?, photoURL? }`
+- **Response**: User object from PostgreSQL
+- **Status**: 201 for new users, 200 for existing users
+
+This ensures both Firebase and PostgreSQL stay synchronized for mobile app functionality.
