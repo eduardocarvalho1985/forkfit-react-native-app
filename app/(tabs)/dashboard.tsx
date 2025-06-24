@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function DashboardScreen() {
   const testAPI = async () => {
     try {
-      const API_URL = 'https://workspace--eduardocarval41.replit.app/api';
+      const API_URL = 'https://forkfit.app/api';
 
       console.log('Testing connection to:', API_URL);
 
@@ -47,7 +47,7 @@ export default function DashboardScreen() {
 
         <View style={styles.info}>
           <Text style={styles.infoText}>
-            Backend: workspace--eduardocarval41.replit.app
+            Backend: forkfit.app
           </Text>
           <Text style={styles.infoText}>
             Expected: 13 Brazilian food categories
