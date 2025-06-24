@@ -96,10 +96,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
               fat: 65,
             } as ExtendedUser);
           } catch (tokenError) {
-            console.error('Failed to get Firebase token:', tokenError);
+            console.error('Failed to get Firebase token, but continuing with basic user:', tokenError);
+            // Even if token fails, set basic user data so registration completes
             setUser({
               ...firebaseUser,
               onboardingCompleted: false,
+              calories: 2000,
+              protein: 150,
+              carbs: 250,
+              fat: 65,
             } as ExtendedUser);
           }
         }
@@ -201,19 +206,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Continue even if backend sync fails
       }
 
-      // Create user document in Firestore (fallback)
-      try {
-        await setDoc(doc(db, 'users', user.uid), {
-          email: user.email,
-          createdAt: new Date().toISOString(),
-        });
+      // Create user document in Firestore (fallback) - non-blocking
+      setDoc(doc(db, 'users', user.uid), {
+        email: user.email,
+        createdAt: new Date().toISOString(),
+      }).then(() => {
         console.log('Firestore document created successfully');
-      } catch (firestoreError) {
+      }).catch((firestoreError) => {
         console.error('Firestore error (non-blocking):', firestoreError);
-        // Continue even if Firestore fails
-      }
+        // This is a fallback, don't block registration
+      });
 
-      // Sign in after successful registration
+      console.log('User registration completed, proceeding to sign in');
+      // Sign in after successful registration - don't wait for Firestore
       return await signIn(email, password);
     } catch (error: any) {
       console.error('Sign up error:', error);
