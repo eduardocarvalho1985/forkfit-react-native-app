@@ -33,6 +33,13 @@ export interface BackendUser {
   fat?: number;
 }
 
+export interface SyncUserRequest {
+  uid: string;
+  email: string;
+  displayName?: string | null;
+  photoURL?: string | null;
+}
+
 class ForkFitAPI {
   // Updated with working backend URL
   private baseUrl = 'https://forkfit.app/api';
@@ -100,6 +107,13 @@ class ForkFitAPI {
       method: 'POST',
       body: { uid, email },
       token 
+    });
+  }
+
+  async syncUser(userData: SyncUserRequest): Promise<BackendUser> {
+    return this.request('/users/sync', {
+      method: 'POST',
+      body: userData
     });
   }
 

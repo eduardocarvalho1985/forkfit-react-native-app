@@ -9,6 +9,7 @@ import {
   SafeAreaView 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SyncTest } from '@/components/SyncTest';
 
 export default function DashboardScreen() {
   const [currentDate] = useState(new Date());
@@ -134,6 +135,9 @@ export default function DashboardScreen() {
             />
           </View>
         </View>
+
+        {/* Sync Test Component (for development) */}
+        <SyncTest />
 
         {/* Meals */}
         <MealSection title="Café da Manhã" calories="0 kcal" />

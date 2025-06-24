@@ -57,12 +57,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
           const token = await firebaseUser.getIdToken();
           console.log('Got Firebase token');
 
-          // Sync with backend
-          const backendUser = await api.getOrCreateUser(
-            firebaseUser.uid,
-            firebaseUser.email || '',
-            token
-          );
+          // Sync user with backend using the sync endpoint
+          const backendUser = await api.syncUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email || '',
+            displayName: firebaseUser.displayName,
+            photoURL: firebaseUser.photoURL
+          });
 
           console.log('Backend user synced:', backendUser);
 
@@ -118,10 +119,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const token = await firebaseUser.getIdToken();
       console.log('Got Firebase token');
 
-      // Sync with backend
+      // Sync with backend using sync endpoint
       let backendData: BackendUser | undefined;
       try {
-        backendData = await api.getOrCreateUser(firebaseUser.uid, email, token);
+        backendData = await api.syncUser({
+          uid: firebaseUser.uid,
+          email: email,
+          displayName: firebaseUser.displayName,
+          photoURL: firebaseUser.photoURL
+        });
         console.log('User synced with backend:', backendData);
       } catch (backendError) {
         console.error('Failed to sync user with backend:', backendError);
@@ -175,9 +181,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       console.log('User created, now syncing with backend...');
 
-      // Create user in backend
+      // Sync user with backend using sync endpoint
       try {
-        const backendUser = await api.getOrCreateUser(user.uid, email, token);
+        const backendUser = await api.syncUser({
+          uid: user.uid,
+          email: email,
+          displayName: user.displayName,
+          photoURL: user.photoURL
+        });
         console.log('User synced with backend:', backendUser);
       } catch (backendError) {
         console.error('Failed to sync user with backend:', backendError);
