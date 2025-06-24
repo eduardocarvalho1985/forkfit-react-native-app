@@ -122,10 +122,33 @@ class ForkFitAPI {
   }
 
   async syncUser(userData: SyncUserRequest): Promise<BackendUser> {
-    return this.request('/users/sync', {
-      method: 'POST',
-      body: userData
-    });
+    try {
+      // Try the sync endpoint first
+      return await this.request('/users/sync', {
+        method: 'POST',
+        body: userData
+      });
+    } catch (error: any) {
+      // If sync endpoint doesn't exist, try the alternative endpoint
+      if (error.message.includes('HTML instead of JSON') || error.message.includes('<!DOCTYPE')) {
+        console.log('Sync endpoint not found, trying alternative user endpoint...');
+        return await this.request(`/users/${userData.uid}`, {
+          method: 'POST',
+          body: userData
+        });
+      }
+      throw error;
+    }
+  }
+
+  // Test if sync endpoint exists
+  async testSyncEndpoint(): Promise<boolean> {
+    try {
+      await this.request('/users/sync', { method: 'POST', body: { test: true } });
+      return true;
+    } catch (error: any) {
+      return !error.message.includes('HTML instead of JSON');
+    }
   }
 
   // Food database

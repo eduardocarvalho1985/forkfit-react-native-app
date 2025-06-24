@@ -12,7 +12,16 @@ export function SyncTest() {
       console.log('Testing backend connection...');
       const categories = await api.getFoodCategories();
       console.log('Connection successful! Categories:', categories);
-      Alert.alert('Success', `Backend connected!\nFound ${categories.length} food categories`);
+      
+      // Also test if sync endpoint exists
+      console.log('Testing sync endpoint...');
+      const syncExists = await api.testSyncEndpoint();
+      console.log('Sync endpoint exists:', syncExists);
+      
+      Alert.alert(
+        'Backend Status', 
+        `✅ Backend connected!\n📁 Found ${categories.length} food categories\n${syncExists ? '✅ Sync endpoint available' : '⚠️ Sync endpoint missing'}`
+      );
     } catch (error: any) {
       console.error('Connection failed:', error);
       Alert.alert('Connection Error', `Backend connection failed: ${error.message}`);

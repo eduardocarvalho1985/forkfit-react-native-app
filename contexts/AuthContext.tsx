@@ -75,8 +75,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
             ...backendUser, // Backend user data
           } as ExtendedUser);
 
-        } catch (error) {
-          console.error('Failed to sync user with backend:', error);
+        } catch (error: any) {
+          if (error.message.includes('HTML instead of JSON')) {
+            console.log('Sync endpoint not available on backend. Backend may not have user sync implemented yet.');
+          } else {
+            console.error('Failed to sync user with backend:', error);
+          }
           console.log('Continuing with Firebase-only authentication...');
           // Still set Firebase user even if backend fails
           try {
