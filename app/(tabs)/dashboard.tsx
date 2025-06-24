@@ -125,7 +125,7 @@ export default function DashboardScreen() {
               color="#FFF8E1"
             />
             <MacroCard
-              icon="droplet"
+              icon="water-outline"
               label="GORDURA"
               value="0g"
               unit="g"
