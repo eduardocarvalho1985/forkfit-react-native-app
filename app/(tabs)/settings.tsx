@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   View, 
@@ -15,7 +16,7 @@ import { router } from 'expo-router';
 export default function Settings() {
   const { user, signOut } = useAuth();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     Alert.alert(
       'Sair',
       'Tem certeza que deseja sair da sua conta?',
