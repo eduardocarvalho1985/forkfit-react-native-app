@@ -1,73 +1,61 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
-  TouchableOpacity, 
-  ScrollView,
-  SafeAreaView 
+  SafeAreaView, 
+  ScrollView, 
+  TouchableOpacity 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { SyncTest } from '@/components/SyncTest';
+import { useAuth } from '@/contexts/AuthContext';
 
-export default function DashboardScreen() {
-  const [currentDate] = useState(new Date());
-  
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('pt-BR', { 
-      day: '2-digit', 
-      month: 'short' 
+export default function Dashboard() {
+  const { user, backendUser } = useAuth();
+  const [currentDate, setCurrentDate] = useState('');
+
+  useEffect(() => {
+    const today = new Date();
+    const dateString = today.toLocaleDateString('pt-BR', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
-  };
+    setCurrentDate(dateString.charAt(0).toUpperCase() + dateString.slice(1));
+  }, []);
 
-  const MacroCard = ({ 
-    icon, 
-    label, 
-    value, 
-    unit, 
-    target, 
-    color 
-  }: {
+  const StatCard = ({ icon, title, value, unit, color }: {
     icon: string;
-    label: string;
-    value: string;
+    title: string;
+    value: string | number;
     unit: string;
-    target: string;
     color: string;
   }) => (
-    <View style={[styles.macroCard, { backgroundColor: color }]}>
-      <View style={styles.macroIcon}>
-        <Ionicons name={icon as any} size={16} color="#666" />
+    <View style={styles.statCard}>
+      <View style={[styles.statIcon, { backgroundColor: color }]}>
+        <Ionicons name={icon as any} size={20} color="#FFF" />
       </View>
-      <Text style={styles.macroLabel}>{label}</Text>
-      <Text style={styles.macroValue}>{value}</Text>
-      <Text style={styles.macroTarget}>de {target}</Text>
+      <Text style={styles.statTitle}>{title}</Text>
+      <Text style={styles.statValue}>
+        {value}
+        <Text style={styles.statUnit}> {unit}</Text>
+      </Text>
     </View>
   );
 
-  const MealSection = ({ 
-    title, 
-    calories 
-  }: { 
-    title: string; 
-    calories: string 
+  const QuickAction = ({ icon, title, onPress }: {
+    icon: string;
+    title: string;
+    onPress: () => void;
   }) => (
-    <View style={styles.mealSection}>
-      <View style={styles.mealHeader}>
-        <Text style={styles.mealTitle}>{title}</Text>
-        <Text style={styles.mealCalories}>{calories}</Text>
+    <TouchableOpacity style={styles.quickAction} onPress={onPress}>
+      <View style={styles.quickActionIcon}>
+        <Ionicons name={icon as any} size={24} color="#FF725E" />
       </View>
-      <Text style={styles.noFood}>Nenhum alimento registrado</Text>
-      <TouchableOpacity style={styles.addButton}>
-        <Ionicons name="add" size={16} color="#666" />
-        <Text style={styles.addButtonText}>Adicionar alimento</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.aiAnalysisButton}>
-        <Ionicons name="camera" size={16} color="#FFF8F6" />
-        <Text style={styles.aiAnalysisText}>Análise por IA</Text>
-      </TouchableOpacity>
-    </View>
+      <Text style={styles.quickActionTitle}>{title}</Text>
+    </TouchableOpacity>
   );
 
   return (
@@ -75,74 +63,101 @@ export default function DashboardScreen() {
       <ScrollView style={styles.scrollView}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.appTitle}>ForkFit</Text>
-          <TouchableOpacity>
-            <Ionicons name="notifications-outline" size={24} color="#FFF8F6" />
+          <View>
+            <Text style={styles.greeting}>Olá, {user?.displayName || 'Usuário'}!</Text>
+            <Text style={styles.date}>{currentDate}</Text>
+          </View>
+          <TouchableOpacity style={styles.profileButton}>
+            <Ionicons name="person-circle" size={32} color="#FFF" />
           </TouchableOpacity>
         </View>
 
-        {/* Date Navigation */}
-        <View style={styles.dateNavigation}>
-          <TouchableOpacity>
-            <Ionicons name="chevron-back" size={20} color="#666" />
-          </TouchableOpacity>
-          <View style={styles.dateContainer}>
-            <Text style={styles.dateLabel}>Hoje</Text>
-            <Text style={styles.dateValue}>{formatDate(currentDate)}</Text>
-          </View>
-          <TouchableOpacity>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Daily Summary */}
-        <View style={styles.summarySection}>
-          <Text style={styles.summaryTitle}>Resumo Diário</Text>
-          
-          <View style={styles.calorieCircle}>
-            <Ionicons name="flame-outline" size={24} color="#FF725E" />
-            <Text style={styles.calorieCount}>0</Text>
-            <Text style={styles.calorieTarget}>/ 1673 kcal</Text>
-          </View>
-          
-          <Text style={styles.remaining}>Restante: 1673 kcal</Text>
-
-          {/* Macro Cards */}
-          <View style={styles.macroContainer}>
-            <MacroCard
-              icon="water"
-              label="PROTEÍNA"
-              value="0g"
-              unit="g"
-              target="142g"
-              color="#E3F2FD"
+        {/* Today's Stats */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Resumo de Hoje</Text>
+          <View style={styles.statsGrid}>
+            <StatCard
+              icon="flame"
+              title="Calorias"
+              value={backendUser?.calories || 0}
+              unit="kcal"
+              color="#FF725E"
             />
-            <MacroCard
+            <StatCard
+              icon="fitness"
+              title="Proteína"
+              value={backendUser?.protein || 0}
+              unit="g"
+              color="#4CAF50"
+            />
+            <StatCard
               icon="nutrition"
-              label="CARBS"
-              value="0g"
+              title="Carboidratos"
+              value={backendUser?.carbs || 0}
               unit="g"
-              target="225g"
-              color="#FFF8E1"
+              color="#2196F3"
             />
-            <MacroCard
-              icon="water-outline"
-              label="GORDURA"
-              value="0g"
+            <StatCard
+              icon="water"
+              title="Gordura"
+              value={backendUser?.fat || 0}
               unit="g"
-              target="48g"
-              color="#FCE4EC"
+              color="#FF9800"
             />
           </View>
         </View>
 
-        {/* Sync Test Component (for development) */}
-        <SyncTest />
+        {/* Quick Actions */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Ações Rápidas</Text>
+          <View style={styles.quickActionsGrid}>
+            <QuickAction
+              icon="camera"
+              title="Fotografar Refeição"
+              onPress={() => {
+                // TODO: Implement meal photo capture
+              }}
+            />
+            <QuickAction
+              icon="add-circle"
+              title="Adicionar Alimento"
+              onPress={() => {
+                // TODO: Implement manual food entry
+              }}
+            />
+            <QuickAction
+              icon="barbell"
+              title="Registrar Treino"
+              onPress={() => {
+                // TODO: Implement workout logging
+              }}
+            />
+            <QuickAction
+              icon="analytics"
+              title="Ver Relatórios"
+              onPress={() => {
+                // TODO: Navigate to reports
+              }}
+            />
+          </View>
+        </View>
 
-        {/* Meals */}
-        <MealSection title="Café da Manhã" calories="0 kcal" />
-        <MealSection title="Lanche da Manhã" calories="0 kcal" />
-        <MealSection title="Almoço" calories="0 kcal" />
+        {/* Recent Meals */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Refeições Recentes</Text>
+            <TouchableOpacity>
+              <Text style={styles.seeAllText}>Ver todas</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.emptyState}>
+            <Ionicons name="restaurant" size={48} color="#CCC" />
+            <Text style={styles.emptyStateText}>Nenhuma refeição registrada hoje</Text>
+            <Text style={styles.emptyStateSubtext}>
+              Comece fotografando sua próxima refeição!
+            </Text>
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -157,161 +172,141 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     backgroundColor: '#FF725E',
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  appTitle: {
-    fontSize: 18,
+  greeting: {
+    fontSize: 20,
     fontWeight: '600',
     color: '#FFF8F6',
+    marginBottom: 4,
   },
-  dateNavigation: {
+  date: {
+    fontSize: 14,
+    color: '#FFF8F6',
+    opacity: 0.8,
+  },
+  profileButton: {
+    padding: 4,
+  },
+  section: {
+    margin: 20,
+  },
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#FFF8F6',
+    marginBottom: 16,
   },
-  dateContainer: {
-    alignItems: 'center',
-  },
-  dateLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 2,
-  },
-  dateValue: {
-    fontSize: 12,
-    color: '#666',
-  },
-  summarySection: {
-    backgroundColor: '#FFF8F6',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  summaryTitle: {
+  sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#1F2937',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  calorieCircle: {
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  calorieCount: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginVertical: 5,
-  },
-  calorieTarget: {
-    fontSize: 14,
-    color: '#666',
-  },
-  remaining: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  macroContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  macroCard: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  macroIcon: {
-    marginBottom: 8,
-  },
-  macroLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 4,
-  },
-  macroValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 2,
-  },
-  macroTarget: {
-    fontSize: 10,
-    color: '#666',
-  },
-  mealSection: {
-    backgroundColor: '#FFF',
-    marginHorizontal: 20,
     marginBottom: 16,
-    padding: 16,
+  },
+  seeAllText: {
+    color: '#FF725E',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  statCard: {
+    backgroundColor: '#FFF',
     borderRadius: 12,
+    padding: 16,
+    width: '48%',
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 2,
   },
-  mealHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  statIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
-  mealTitle: {
-    fontSize: 16,
+  statTitle: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+  },
+  statValue: {
+    fontSize: 18,
     fontWeight: '600',
     color: '#1F2937',
   },
-  mealCalories: {
-    fontSize: 14,
+  statUnit: {
+    fontSize: 12,
+    fontWeight: '400',
     color: '#666',
   },
-  noFood: {
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  quickAction: {
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    padding: 16,
+    width: '48%',
+    alignItems: 'center',
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  quickActionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FFF8F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  quickActionTitle: {
     fontSize: 12,
+    fontWeight: '500',
+    color: '#1F2937',
+    textAlign: 'center',
+  },
+  emptyState: {
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    padding: 32,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#666',
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
     color: '#999',
     textAlign: 'center',
-    marginBottom: 16,
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
-    borderRadius: 8,
-  },
-  addButtonText: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 6,
-  },
-  aiAnalysisButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FF725E',
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  aiAnalysisText: {
-    fontSize: 14,
-    color: '#FFF8F6',
-    fontWeight: '600',
-    marginLeft: 6,
   },
 });
