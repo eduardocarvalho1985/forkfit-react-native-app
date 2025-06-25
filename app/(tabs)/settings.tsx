@@ -41,141 +41,69 @@ export default function Settings() {
     );
   };
 
-  const SettingsItem = ({ 
-    icon, 
-    title, 
-    subtitle, 
-    onPress, 
-    showArrow = true,
-    destructive = false 
-  }: {
-    icon: string;
-    title: string;
-    subtitle?: string;
-    onPress: () => void;
-    showArrow?: boolean;
-    destructive?: boolean;
-  }) => (
-    <TouchableOpacity 
-      style={styles.settingsItem} 
-      onPress={onPress}
-    >
-      <View style={styles.settingsItemLeft}>
-        <View style={[styles.iconContainer, destructive && styles.iconContainerDestructive]}>
-          <Ionicons 
-            name={icon as any} 
-            size={20} 
-            color={destructive ? '#FF3B30' : '#666'} 
-          />
-        </View>
-        <View style={styles.textContainer}>
-          <Text style={[styles.settingsTitle, destructive && styles.destructiveText]}>
-            {title}
-          </Text>
-          {subtitle && (
-            <Text style={styles.settingsSubtitle}>{subtitle}</Text>
-          )}
-        </View>
-      </View>
-      {showArrow && (
-        <Ionicons 
-          name="chevron-forward" 
-          size={16} 
-          color="#999" 
-        />
-      )}
-    </TouchableOpacity>
-  );
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
-        {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Ajustes</Text>
+          <Text style={styles.title}>Ajustes</Text>
+          <Text style={styles.subtitle}>Configurações da conta</Text>
         </View>
 
-        {/* User Info */}
-        <View style={styles.section}>
-          <View style={styles.userInfo}>
-            <View style={styles.avatar}>
-              <Ionicons name="person" size={24} color="#666" />
-            </View>
-            <View style={styles.userDetails}>
-              <Text style={styles.userName}>
-                {user?.displayName || 'Usuário'}
-              </Text>
-              <Text style={styles.userEmail}>
-                {user?.email}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Account Settings */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Conta</Text>
-          <SettingsItem
-            icon="person-outline"
-            title="Perfil"
-            subtitle="Editar informações pessoais"
-            onPress={() => {
-              Alert.alert('Em breve', 'Funcionalidade em desenvolvimento');
-            }}
-          />
-          <SettingsItem
-            icon="lock-closed-outline"
-            title="Privacidade"
-            subtitle="Configurações de privacidade"
-            onPress={() => {
-              Alert.alert('Em breve', 'Funcionalidade em desenvolvimento');
-            }}
-          />
+
+          <View style={styles.userInfo}>
+            <Ionicons name="person-circle-outline" size={24} color="#666" />
+            <View style={styles.userDetails}>
+              <Text style={styles.userEmail}>{user?.email}</Text>
+              <Text style={styles.userStatus}>Conta ativa</Text>
+            </View>
+          </View>
+
+          <TouchableOpacity style={styles.menuItem}>
+            <Ionicons name="person-outline" size={20} color="#666" />
+            <Text style={styles.menuText}>Editar Perfil</Text>
+            <Ionicons name="chevron-forward" size={20} color="#666" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem}>
+            <Ionicons name="notifications-outline" size={20} color="#666" />
+            <Text style={styles.menuText}>Notificações</Text>
+            <Ionicons name="chevron-forward" size={20} color="#666" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem}>
+            <Ionicons name="lock-closed-outline" size={20} color="#666" />
+            <Text style={styles.menuText}>Privacidade</Text>
+            <Ionicons name="chevron-forward" size={20} color="#666" />
+          </TouchableOpacity>
         </View>
 
-        {/* App Settings */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Aplicativo</Text>
-          <SettingsItem
-            icon="notifications-outline"
-            title="Notificações"
-            subtitle="Gerenciar notificações"
-            onPress={() => {
-              Alert.alert('Em breve', 'Funcionalidade em desenvolvimento');
-            }}
-          />
-          <SettingsItem
-            icon="language-outline"
-            title="Idioma"
-            subtitle="Português (Brasil)"
-            onPress={() => {
-              Alert.alert('Em breve', 'Funcionalidade em desenvolvimento');
-            }}
-          />
-          <SettingsItem
-            icon="help-outline"
-            title="Ajuda e Suporte"
-            subtitle="Central de ajuda"
-            onPress={() => {
-              Alert.alert('Em breve', 'Funcionalidade em desenvolvimento');
-            }}
-          />
+          <Text style={styles.sectionTitle}>Suporte</Text>
+
+          <TouchableOpacity style={styles.menuItem}>
+            <Ionicons name="help-circle-outline" size={20} color="#666" />
+            <Text style={styles.menuText}>Central de Ajuda</Text>
+            <Ionicons name="chevron-forward" size={20} color="#666" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem}>
+            <Ionicons name="mail-outline" size={20} color="#666" />
+            <Text style={styles.menuText}>Fale Conosco</Text>
+            <Ionicons name="chevron-forward" size={20} color="#666" />
+          </TouchableOpacity>
         </View>
 
-        {/* Logout */}
         <View style={styles.section}>
-          <SettingsItem
-            icon="log-out-outline"
-            title="Sair"
-            onPress={handleLogout}
-            showArrow={false}
-            destructive={true}
-          />
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={20} color="#FF6B6B" />
+            <Text style={styles.logoutText}>Sair da Conta</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* App Version */}
-        <View style={styles.versionSection}>
-          <Text style={styles.versionText}>ForkFit v1.0.0</Text>
+        <View style={styles.footer}>
+          <Text style={styles.version}>ForkFit v1.0.0</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -185,115 +113,91 @@ export default function Settings() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF8F6',
+    backgroundColor: '#F8F9FA',
   },
   scrollView: {
     flex: 1,
   },
   header: {
-    backgroundColor: '#FF725E',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    padding: 20,
+    paddingTop: 10,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#FFF8F6',
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
   },
   section: {
-    marginTop: 20,
     backgroundColor: '#FFF',
-    marginHorizontal: 20,
+    marginHorizontal: 16,
+    marginBottom: 16,
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+    padding: 16,
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: '600',
-    color: '#666',
-    marginBottom: 8,
-    marginTop: 16,
-    marginHorizontal: 16,
+    color: '#1F2937',
+    marginBottom: 16,
   },
   userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-  },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#F0F0F0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  userDetails: {
-    flex: 1,
-  },
-  userName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 4,
-  },
-  userEmail: {
-    fontSize: 14,
-    color: '#666',
-  },
-  settingsItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
     paddingVertical: 12,
+    marginBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
-  settingsItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  userDetails: {
+    marginLeft: 12,
     flex: 1,
   },
-  iconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 6,
-    backgroundColor: '#F0F0F0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  iconContainerDestructive: {
-    backgroundColor: '#FFE5E5',
-  },
-  textContainer: {
-    flex: 1,
-  },
-  settingsTitle: {
+  userEmail: {
     fontSize: 16,
     fontWeight: '500',
     color: '#1F2937',
-    marginBottom: 2,
   },
-  destructiveText: {
-    color: '#FF3B30',
+  userStatus: {
+    fontSize: 14,
+    color: '#10B981',
+    marginTop: 2,
   },
-  settingsSubtitle: {
-    fontSize: 12,
-    color: '#666',
-  },
-  versionSection: {
-    padding: 20,
+  menuItem: {
+    flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
   },
-  versionText: {
-    fontSize: 12,
+  menuText: {
+    fontSize: 16,
+    color: '#1F2937',
+    marginLeft: 12,
+    flex: 1,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    justifyContent: 'center',
+  },
+  logoutText: {
+    fontSize: 16,
+    color: '#FF6B6B',
+    fontWeight: '500',
+    marginLeft: 8,
+  },
+  footer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  version: {
+    fontSize: 14,
     color: '#999',
   },
 });
