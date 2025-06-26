@@ -57,7 +57,7 @@ export default function Register() {
         <Text style={styles.buttonText}>Cadastrar</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push('/auth/login')}>
+      <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
         <Text style={styles.linkText}>Já tem conta? Entre aqui</Text>
       </TouchableOpacity>
     </View>
