@@ -24,7 +24,7 @@ try {
   auth = initializeAuth(app, {
     persistence: getReactNativePersistence(AsyncStorage),
   });
-} catch (err: any) {
+} catch (err) {
   // initializeAuth throws if it was already called (hot-reload) ► fall back gracefully
   auth = getAuth(app);
   console.log('Auth already initialized, using getAuth');
