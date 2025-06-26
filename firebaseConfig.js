@@ -1,4 +1,3 @@
-// firebaseConfig.js  (or .ts)
 
 import { initializeApp } from 'firebase/app';
 import {
@@ -7,15 +6,14 @@ import {
   getReactNativePersistence,
 } from 'firebase/auth';
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
-import Constants from 'expo-constants';
 
 const firebaseConfig = {
-  apiKey:           Constants.expoConfig?.extra?.firebaseApiKey,
-  authDomain:       `${Constants.expoConfig?.extra?.firebaseProjectId}.firebaseapp.com`,
-  projectId:        Constants.expoConfig?.extra?.firebaseProjectId,
-  storageBucket:    `${Constants.expoConfig?.extra?.firebaseProjectId}.appspot.com`,
-  messagingSenderId: Constants.expoConfig?.extra?.firebaseSenderId,
-  appId:            Constants.expoConfig?.extra?.firebaseAppId,
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: `${process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID}.firebaseapp.com`,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: `${process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID}.firebasestorage.app`,
+  messagingSenderId: "740196834740",
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);
