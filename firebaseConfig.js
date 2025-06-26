@@ -26,6 +26,7 @@ try {
   });
 } catch (e) {
   // if auth was already initialised (hot reload) fallback gracefully
+  console.log('Auth already initialized, using getAuth');
   auth = getAuth(app);
 }
 
