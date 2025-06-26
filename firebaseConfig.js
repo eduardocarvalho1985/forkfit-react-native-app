@@ -5,16 +5,21 @@ import {
   getAuth,
 } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Constants from 'expo-constants';
 
 const firebaseConfig = {
-  apiKey: Constants.expoConfig?.extra?.firebaseApiKey,
-  authDomain: `${Constants.expoConfig?.extra?.firebaseProjectId}.firebaseapp.com`,
-  projectId: Constants.expoConfig?.extra?.firebaseProjectId,
-  storageBucket: `${Constants.expoConfig?.extra?.firebaseProjectId}.appspot.com`,
-  messagingSenderId: Constants.expoConfig?.extra?.firebaseSenderId,
-  appId: Constants.expoConfig?.extra?.firebaseAppId,
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: `${process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID}.firebaseapp.com`,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: `${process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID}.firebasestorage.app`,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_SENDER_ID,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
+
+console.log('Firebase Config:', {
+  apiKey: firebaseConfig.apiKey ? 'Set' : 'Missing',
+  projectId: firebaseConfig.projectId,
+  appId: firebaseConfig.appId ? 'Set' : 'Missing'
+});
 
 const app = initializeApp(firebaseConfig);
 
