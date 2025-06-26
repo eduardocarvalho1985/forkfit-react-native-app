@@ -6,7 +6,7 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged
 } from 'firebase/auth';
-import { auth } from '../firebaseConfig';
+import { auth } from '@/firebaseConfig';
 import { api, BackendUser } from '../services/api';
 
 interface ExtendedUser extends User {
