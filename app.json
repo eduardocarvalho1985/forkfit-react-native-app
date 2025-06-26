@@ -15,7 +15,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "forkfit.app.forkfitprod"
+      "bundleIdentifier": "forkfit.app.forkfitprod",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -43,6 +46,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "285bdd1b-b93b-4d89-9344-3c4c58c790db"
+      }
     }
   }
 }
