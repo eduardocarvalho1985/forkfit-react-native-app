@@ -15,11 +15,14 @@ export default function Register() {
       return;
     }
 
+    console.log('Attempting to register with email:', email);
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      console.log('Registration successful:', userCredential.user.uid);
       router.replace('/(tabs)/dashboard');
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível criar a conta');
+      console.log('Registration error:', error);
+      Alert.alert('Erro', `Falha no registro: ${error.message}`);
     }
   };
 

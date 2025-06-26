@@ -26,13 +26,21 @@ const app = initializeApp(firebaseConfig);
 /* ---------- ALWAYS register auth before getAuth() ---------- */
 let auth;
 try {
+  // Try to initialize auth with AsyncStorage persistence
   auth = initializeAuth(app, {
     persistence: getReactNativePersistence(AsyncStorage),
   });
+  console.log('Firebase Auth initialized with AsyncStorage persistence');
 } catch (err) {
-  // initializeAuth throws if it was already called (hot-reload) ► fall back gracefully
-  auth = getAuth(app);
-  console.log('Auth already initialized, using getAuth');
+  // If initializeAuth fails (hot-reload), use getAuth
+  if (err.code === 'auth/already-initialized') {
+    auth = getAuth(app);
+    console.log('Auth already initialized, using getAuth');
+  } else {
+    // For other errors, fallback to getAuth without persistence
+    console.warn('Failed to initialize auth with AsyncStorage, falling back to getAuth:', err.message);
+    auth = getAuth(app);
+  }
 }
 
 export { app, auth };

@@ -9,11 +9,15 @@ export default function Login() {
   const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
+    console.log('Attempting to sign in with email:', email);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log('Sign in successful:', userCredential.user.uid);
       router.replace('/(tabs)/dashboard');
     } catch (error) {
-      Alert.alert('Erro', 'Email ou senha incorretos');
+      console.log('Sign in error:', error);
+      console.log('Login error:', error.message);
+      Alert.alert('Erro', `Falha no login: ${error.message}`);
     }
   };
 
