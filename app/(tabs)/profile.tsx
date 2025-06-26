@@ -1,3 +1,5 @@
+// app/auth/login.tsx   (repeat for register.tsx, index.tsx, _layout.tsx,
+// dashboard.tsx, settings.tsx, etc.)
 import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
 

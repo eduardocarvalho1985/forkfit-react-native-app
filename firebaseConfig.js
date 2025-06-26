@@ -1,33 +1,33 @@
-
 import { initializeApp } from 'firebase/app';
 import {
-  getAuth,
   initializeAuth,
   getReactNativePersistence,
+  getAuth,
 } from 'firebase/auth';
-import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
 const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-  authDomain: `${process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID}.firebaseapp.com`,
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: `${process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID}.firebasestorage.app`,
-  messagingSenderId: "740196834740",
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+  apiKey: Constants.expoConfig?.extra?.firebaseApiKey,
+  authDomain: `${Constants.expoConfig?.extra?.firebaseProjectId}.firebaseapp.com`,
+  projectId: Constants.expoConfig?.extra?.firebaseProjectId,
+  storageBucket: `${Constants.expoConfig?.extra?.firebaseProjectId}.appspot.com`,
+  messagingSenderId: Constants.expoConfig?.extra?.firebaseSenderId,
+  appId: Constants.expoConfig?.extra?.firebaseAppId,
 };
 
 const app = initializeApp(firebaseConfig);
 
-// --- 🔑 initialize auth for React-Native BEFORE getAuth() ---
+/* ---------- ALWAYS register auth before getAuth() ---------- */
 let auth;
 try {
   auth = initializeAuth(app, {
-    persistence: getReactNativePersistence(ReactNativeAsyncStorage),
+    persistence: getReactNativePersistence(AsyncStorage),
   });
-} catch (e) {
-  // if auth was already initialised (hot reload) fallback gracefully
-  console.log('Auth already initialized, using getAuth');
+} catch (err: any) {
+  // initializeAuth throws if it was already called (hot-reload) ► fall back gracefully
   auth = getAuth(app);
+  console.log('Auth already initialized, using getAuth');
 }
 
 export { app, auth };

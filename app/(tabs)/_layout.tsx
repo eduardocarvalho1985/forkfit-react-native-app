@@ -1,6 +1,11 @@
 
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useState } from 'react';
+import { View, Text } from 'react-native';  
+
+
+
 
 export default function TabsLayout() {
   return (
