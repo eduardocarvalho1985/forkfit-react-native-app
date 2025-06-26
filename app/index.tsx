@@ -1,27 +1,35 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { useAuth } from '@/contexts/AuthContext';
+
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../firebaseConfig';
 import { router } from 'expo-router';
 
-export default function HomeScreen() {
-  const { user, loading } = useAuth();
+export default function Index() {
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!loading) {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsLoading(false);
       if (user) {
         router.replace('/(tabs)/dashboard');
       } else {
         router.replace('/auth/login');
       }
-    }
-  }, [user, loading]);
+    });
 
-  return (
-    <View style={styles.container}>
-      <ActivityIndicator size="large" color="#FF725E" />
-      <Text style={styles.loadingText}>ForkFit</Text>
-    </View>
-  );
+    return unsubscribe;
+  }, []);
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.loading}>Carregando ForkFit...</Text>
+      </View>
+    );
+  }
+
+  return null;
 }
 
 const styles = StyleSheet.create({
@@ -29,12 +37,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFF8F6',
+    backgroundColor: '#fff',
   },
-  loadingText: {
-    marginTop: 16,
+  loading: {
     fontSize: 18,
-    fontWeight: '600',
     color: '#FF725E',
   },
 });
