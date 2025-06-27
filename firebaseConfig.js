@@ -1,6 +1,7 @@
+
 import { initializeApp } from 'firebase/app';
-import { initializeAuth, getAuth, getReactNativePersistence } from 'firebase/auth';
-import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+import { initializeAuth, getAuth } from 'firebase/auth';
+import { Platform } from 'react-native';
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -19,23 +20,34 @@ console.log('Firebase Config:', {
 
 const app = initializeApp(firebaseConfig);
 
-// Initialize Auth with AsyncStorage persistence
+// Initialize Auth based on platform
 let auth;
 try {
-  auth = initializeAuth(app, {
-    persistence: getReactNativePersistence(ReactNativeAsyncStorage)
-  });
-  console.log('Firebase Auth initialized with AsyncStorage persistence');
-} catch (err) {
-  // If initializeAuth fails (e.g., already initialized during development), use getAuth
-  if (err.code === 'auth/already-initialized') {
+  if (Platform.OS === 'web') {
+    // For web platform, use regular getAuth
     auth = getAuth(app);
-    console.log('Auth already initialized, using getAuth');
+    console.log('Firebase Auth initialized for web platform');
   } else {
-    console.error('Failed to initialize Firebase Auth:', err);
-    // Fallback to getAuth
-    auth = getAuth(app);
+    // For React Native platforms, try to use AsyncStorage if available
+    try {
+      const { getReactNativePersistence } = require('firebase/auth/react-native');
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      
+      auth = initializeAuth(app, {
+        persistence: getReactNativePersistence(AsyncStorage)
+      });
+      console.log('Firebase Auth initialized with AsyncStorage persistence');
+    } catch (error) {
+      // Fallback to regular getAuth if React Native persistence fails
+      auth = getAuth(app);
+      console.log('Firebase Auth initialized with fallback getAuth');
+    }
   }
+} catch (err) {
+  // Final fallback
+  console.error('Failed to initialize Firebase Auth:', err);
+  auth = getAuth(app);
+  console.log('Firebase Auth initialized with final fallback');
 }
 
 export { app, auth };
