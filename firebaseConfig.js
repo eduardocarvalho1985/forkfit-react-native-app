@@ -1,10 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import {
-  initializeAuth,
-  getAuth,
-  getReactNativePersistence,
-} from 'firebase/auth';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { initializeAuth, getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -23,24 +18,13 @@ console.log('Firebase Config:', {
 
 const app = initializeApp(firebaseConfig);
 
-/* ---------- ALWAYS register auth before getAuth() ---------- */
+// Initialize Auth without AsyncStorage for now to avoid React Native errors
 let auth;
 try {
-  // Try to initialize auth with AsyncStorage persistence
-  auth = initializeAuth(app, {
-    persistence: getReactNativePersistence(AsyncStorage),
-  });
-  console.log('Firebase Auth initialized with AsyncStorage persistence');
+  auth = getAuth(app);
+  console.log('Firebase Auth initialized with getAuth');
 } catch (err) {
-  // If initializeAuth fails (hot-reload), use getAuth
-  if (err.code === 'auth/already-initialized') {
-    auth = getAuth(app);
-    console.log('Auth already initialized, using getAuth');
-  } else {
-    // For other errors, fallback to getAuth without persistence
-    console.warn('Failed to initialize auth with AsyncStorage, falling back to getAuth:', err.message);
-    auth = getAuth(app);
-  }
+  console.error('Failed to initialize Firebase Auth:', err);
 }
 
 export { app, auth };
