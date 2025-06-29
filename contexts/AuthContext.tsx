@@ -1,15 +1,12 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { 
-  User,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut as firebaseSignOut,
-  onAuthStateChanged
-} from 'firebase/auth';
-import { auth } from '@/firebaseConfig';
 import { api, BackendUser } from '../services/api';
 
-interface ExtendedUser extends User {
+// Mock user interface (similar to Firebase User)
+interface MockUser {
+  uid: string;
+  email: string;
+  displayName?: string;
+  photoURL?: string;
   token?: string;
   // Backend user data
   id?: number;
@@ -21,7 +18,7 @@ interface ExtendedUser extends User {
 }
 
 interface AuthContextData {
-  user: ExtendedUser | null;
+  user: MockUser | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
@@ -34,215 +31,142 @@ interface AuthProviderProps {
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
+export function AuthProvider({ children }: AuthProviderProps) {
+  const [user, setUser] = useState<MockUser | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Check for existing user on app start
+  useEffect(() => {
+    const checkExistingUser = async () => {
+      try {
+        // Check if we have a stored user (you can implement this with AsyncStorage later)
+        const storedUser = null; // For now, always start with no user
+        
+        if (storedUser) {
+          setUser(storedUser);
+        }
+      } catch (error) {
+        console.error('Error checking existing user:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkExistingUser();
+  }, []);
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      console.log('Mock sign in with email:', email);
+      
+      // For demo purposes, accept any email/password combination
+      // In production, this would validate against Firebase
+      const mockUser: MockUser = {
+        uid: `mock_${Date.now()}`,
+        email: email,
+        displayName: email.split('@')[0],
+        token: 'mock_token',
+        onboardingCompleted: false,
+        calories: 2000,
+        protein: 150,
+        carbs: 250,
+        fat: 65,
+      };
+
+      // Try to sync with backend
+      try {
+        const backendUser = await api.syncUser({
+          uid: mockUser.uid,
+          email: email,
+          displayName: mockUser.displayName,
+          photoURL: mockUser.photoURL
+        });
+        console.log('User synced with backend:', backendUser);
+        
+        // Combine mock user with backend data
+        setUser({
+          ...mockUser,
+          ...backendUser,
+        });
+      } catch (backendError) {
+        console.error('Failed to sync with backend:', backendError);
+        // Still set the mock user even if backend fails
+        setUser(mockUser);
+      }
+
+      console.log('Mock sign in successful');
+    } catch (error: any) {
+      console.error('Mock sign in error:', error);
+      throw new Error('Failed to sign in');
+    }
+  };
+
+  const signUp = async (email: string, password: string) => {
+    try {
+      console.log('Mock sign up with email:', email);
+      
+      // For demo purposes, create a mock user
+      const mockUser: MockUser = {
+        uid: `mock_${Date.now()}`,
+        email: email,
+        displayName: email.split('@')[0],
+        token: 'mock_token',
+        onboardingCompleted: false,
+        calories: 2000,
+        protein: 150,
+        carbs: 250,
+        fat: 65,
+      };
+
+      // Try to sync with backend
+      try {
+        const backendUser = await api.syncUser({
+          uid: mockUser.uid,
+          email: email,
+          displayName: mockUser.displayName,
+          photoURL: mockUser.photoURL
+        });
+        console.log('User synced with backend:', backendUser);
+        
+        // Combine mock user with backend data
+        setUser({
+          ...mockUser,
+          ...backendUser,
+        });
+      } catch (backendError) {
+        console.error('Failed to sync with backend:', backendError);
+        // Still set the mock user even if backend fails
+        setUser(mockUser);
+      }
+
+      console.log('Mock sign up successful');
+    } catch (error: any) {
+      console.error('Mock sign up error:', error);
+      throw new Error('Failed to create account');
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      setUser(null);
+      console.log('Mock sign out successful');
+    } catch (error) {
+      console.error('Mock sign out error:', error);
+      throw new Error('Failed to sign out');
+    }
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
 export function useAuth(): AuthContextData {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}
-
-export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: User | null) => {
-      if (firebaseUser) {
-        try {
-          console.log('Firebase user signed in:', firebaseUser.uid);
-
-          // Get Firebase ID token
-          const token = await firebaseUser.getIdToken();
-          console.log('Got Firebase token');
-
-          // Sync user with backend using the sync endpoint
-          console.log('Attempting to sync with backend...');
-          const backendUser = await api.syncUser({
-            uid: firebaseUser.uid,
-            email: firebaseUser.email || '',
-            displayName: firebaseUser.displayName,
-            photoURL: firebaseUser.photoURL
-          });
-
-          console.log('Backend user synced:', backendUser);
-
-          // Combine Firebase and backend user data
-          setUser({
-            ...firebaseUser,
-            token, // Store token for API calls
-            ...backendUser, // Backend user data
-          } as ExtendedUser);
-
-        } catch (error: any) {
-          if (error.message.includes('HTML instead of JSON')) {
-            console.log('Sync endpoint not available on backend. Backend may not have user sync implemented yet.');
-          } else {
-            console.error('Failed to sync user with backend:', error);
-          }
-          console.log('Continuing with Firebase-only authentication...');
-          // Still set Firebase user even if backend fails
-          try {
-            const token = await firebaseUser.getIdToken();
-            setUser({
-              ...firebaseUser,
-              token,
-              // Set default values when backend is unavailable
-              onboardingCompleted: false,
-              calories: 2000,
-              protein: 150,
-              carbs: 250,
-              fat: 65,
-            } as ExtendedUser);
-          } catch (tokenError) {
-            console.error('Failed to get Firebase token, but continuing with basic user:', tokenError);
-            // Even if token fails, set basic user data so registration completes
-            setUser({
-              ...firebaseUser,
-              onboardingCompleted: false,
-              calories: 2000,
-              protein: 150,
-              carbs: 250,
-              fat: 65,
-            } as ExtendedUser);
-          }
-        }
-      } else {
-        console.log('User signed out');
-        setUser(null);
-      }
-      setLoading(false);
-    });
-
-    return unsubscribe;
-  }, []);
-
-  const signIn = async (email: string, password: string) => {
-    try {
-      console.log('Attempting to sign in with email:', email);
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const firebaseUser = userCredential.user;
-
-      console.log('Firebase user signed in:', firebaseUser.uid);
-
-      const token = await firebaseUser.getIdToken();
-      console.log('Got Firebase token');
-
-      // Sync with backend using sync endpoint
-      let backendData: BackendUser | undefined;
-      try {
-        backendData = await api.syncUser({
-          uid: firebaseUser.uid,
-          email: email,
-          displayName: firebaseUser.displayName,
-          photoURL: firebaseUser.photoURL
-        });
-        console.log('User synced with backend:', backendData);
-      } catch (backendError) {
-        console.error('Failed to sync user with backend:', backendError);
-      }
-
-      const userData: User = {
-        uid: firebaseUser.uid,
-        email: firebaseUser.email || '',
-        displayName: firebaseUser.displayName || undefined,
-        photoURL: firebaseUser.photoURL || undefined,
-        token,
-        backendData,
-      };
-
-      setUser(userData);
-      console.log('Sign in successful');
-      return userData;
-    } catch (error: any) {
-      console.error('Sign in error:', error);
-      let message = 'Failed to sign in';
-
-      switch (error.code) {
-        case 'auth/user-not-found':
-          message = 'No account found with this email';
-          break;
-        case 'auth/wrong-password':
-          message = 'Incorrect password';
-          break;
-        case 'auth/invalid-email':
-          message = 'Please enter a valid email address';
-          break;
-        case 'auth/too-many-requests':
-          message = 'Too many failed attempts. Please try again later';
-          break;
-      }
-
-      throw new Error(message);
-    }
-  };
-
-  const signUp = async (email: string, password: string) => {
-    try {
-      console.log('Calling signUp function...');
-      console.log('Attempting to create user with email:', email);
-
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // Get Firebase token for backend API
-      const token = await user.getIdToken();
-
-      console.log('User created, now syncing with backend...');
-
-      // Sync user with backend using sync endpoint
-      try {
-        const backendUser = await api.syncUser({
-          uid: user.uid,
-          email: email,
-          displayName: user.displayName,
-          photoURL: user.photoURL
-        });
-        console.log('User synced with backend:', backendUser);
-      } catch (backendError) {
-        console.error('Failed to sync user with backend:', backendError);
-        console.log('Continuing without backend sync...');
-        // Continue even if backend sync fails
-      }
-
-      console.log('User registration completed, proceeding to sign in');
-      // Sign in after successful registration - don't wait for Firestore
-      return await signIn(email, password);
-    } catch (error: any) {
-      console.error('Sign up error:', error);
-      let message = 'Failed to create account';
-
-      switch (error.code) {
-        case 'auth/email-already-in-use':
-          message = 'An account with this email already exists';
-          break;
-        case 'auth/weak-password':
-          message = 'Password should be at least 6 characters';
-          break;
-        case 'auth/invalid-email':
-          message = 'Please enter a valid email address';
-          break;
-      }
-
-      throw new Error(message);
-    }
-  };
-
-  const signOut = async () => {
-    await firebaseSignOut(auth);
-  };
-
-  const value = {
-    user,
-    loading,
-    signIn,
-    signUp,
-    signOut,
-  };
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
 }

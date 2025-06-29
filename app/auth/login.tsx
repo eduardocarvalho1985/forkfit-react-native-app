@@ -1,23 +1,24 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../firebaseConfig';
 import { router } from 'expo-router';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const { signIn } = useAuth();
 
   const handleLogin = async () => {
-    console.log('Attempting to sign in with email:', email);
+    if (!email || !password) {
+      Alert.alert('Erro', 'Por favor, preencha todos os campos');
+      return;
+    }
+
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log('Sign in successful:', userCredential.user.uid);
-      router.replace('/(tabs)/dashboard');
-    } catch (error) {
-      console.log('Sign in error:', error);
-      console.log('Login error:', error.message);
-      Alert.alert('Erro', `Falha no login: ${error.message}`);
+      await signIn(email, password);
+      // Navigation will be handled by the root layout
+    } catch (error: any) {
+      Alert.alert('Erro', error.message);
     }
   };
 

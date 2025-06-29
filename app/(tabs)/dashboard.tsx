@@ -1,73 +1,438 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+} from 'react-native';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import Icon from 'react-native-vector-icons/Ionicons';
 
-export default function Dashboard() {
+const MEAL_TYPES = [
+  'Café da Manhã',
+  'Lanche da Manhã',
+  'Almoço',
+  'Lanche da Tarde',
+  'Lanche',
+  'Jantar',
+  'Ceia',
+];
+
+// Mock user and food logs for now
+const mockUser = {
+  calories: 1673,
+  protein: 142,
+  carbs: 225,
+  fat: 48,
+};
+const mockFoodLogs: any[] = [];
+
+function MacroProgress({ label, current, target, color }: { label: string; current: number; target: number; color: string }) {
+  const percentage = Math.min((current / target) * 100, 100);
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.macroItem}>
+      <Text style={styles.macroLabel}>{label}</Text>
+      <View style={styles.macroProgressContainer}>
+        <View style={styles.macroBar}>
+          <View style={[styles.macroFill, { width: `${percentage}%`, backgroundColor: color }]} />
+        </View>
+      </View>
+      <Text style={styles.macroNumbers}>
+        {current}g / {target}g
+      </Text>
+    </View>
+  );
+}
+
+function MealSection({ title, calories, foods, onAddFood }: { title: string; calories: number; foods: any[]; onAddFood: () => void }) {
+  return (
+    <View style={styles.mealSection}>
+      <View style={styles.mealHeader}>
+        <Text style={styles.mealTitle}>{title}</Text>
+        <Text style={styles.mealCalories}>{calories} kcal</Text>
+      </View>
+      {foods.length === 0 && (
+        <Text style={styles.noFoodText}>Nenhum alimento registrado</Text>
+      )}
+      <TouchableOpacity style={styles.addFoodButton} onPress={onAddFood}>
+        <Icon name="add" size={16} color="#64748b" />
+        <Text style={styles.addFoodText}>Adicionar alimento</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.aiButton}>
+        <Text style={styles.aiButtonText}>🤖 Análise por IA</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+export default function DashboardScreen() {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  // For now, use mock data
+  const user = mockUser;
+  const foodLogs = mockFoodLogs;
+
+  const formattedDate = format(currentDate, 'dd MMM', { locale: ptBR });
+  const isToday = format(currentDate, 'yyyy-MM-dd', { locale: ptBR }) === format(new Date(), 'yyyy-MM-dd', { locale: ptBR });
+
+  // Calculate totals (mock)
+  const totals = {
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+  };
+  const targets = {
+    calories: user.calories,
+    protein: user.protein,
+    carbs: user.carbs,
+    fat: user.fat,
+  };
+  const remainingCalories = targets.calories - totals.calories;
+
+  const handlePreviousDay = () => {
+    const newDate = new Date(currentDate);
+    newDate.setDate(currentDate.getDate() - 1);
+    setCurrentDate(newDate);
+  };
+  const handleNextDay = () => {
+    if (!isToday) {
+      const newDate = new Date(currentDate);
+      newDate.setDate(currentDate.getDate() + 1);
+      setCurrentDate(newDate);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>ForkFit Dashboard</Text>
-        <Text style={styles.subtitle}>Acompanhe sua nutrição</Text>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Progresso Diário</Text>
-        <View style={styles.progressContainer}>
-          <Text>Calorias: 0 / 2000</Text>
-          <Text>Proteína: 0g / 150g</Text>
-          <Text>Carboidratos: 0g / 250g</Text>
-          <Text>Gordura: 0g / 65g</Text>
+        <View style={styles.headerContent}>
+          <View style={styles.titleSection}>
+            <Text style={styles.appTitle}>ForkFit</Text>
+            <Icon name="restaurant" size={20} color="#fff" style={styles.titleIcon} />
+          </View>
+          <TouchableOpacity style={styles.notificationButton}>
+            <Icon name="notifications-outline" size={24} color="#fff" />
+          </TouchableOpacity>
         </View>
       </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Refeições de Hoje</Text>
-        <View style={styles.mealContainer}>
-          <Text>Café da Manhã</Text>
-          <Text>Almoço</Text>
-          <Text>Lanche</Text>
-          <Text>Jantar</Text>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Date Selector */}
+        <View style={styles.dateCard}>
+          <TouchableOpacity onPress={handlePreviousDay} style={styles.dateButton}>
+            <Icon name="chevron-back" size={20} color="#FF725E" />
+          </TouchableOpacity>
+          <View style={styles.dateInfo}>
+            <Text style={styles.dayText}>{isToday ? 'Hoje' : format(currentDate, 'EEEE', { locale: ptBR })}</Text>
+            <Text style={styles.dateText}>{formattedDate}</Text>
+          </View>
+          <TouchableOpacity onPress={handleNextDay} style={[styles.dateButton, isToday && styles.disabledButton]} disabled={isToday}>
+            <Icon name="chevron-forward" size={20} color={isToday ? '#ccc' : '#FF725E'} />
+          </TouchableOpacity>
         </View>
-      </View>
-    </ScrollView>
+        {/* Progress Summary */}
+        <View style={styles.progressCard}>
+          <Text style={styles.cardTitle}>Resumo Diário</Text>
+          <View style={styles.caloriesSection}>
+            <View style={styles.progressRing}>
+              <View style={styles.caloriesCenter}>
+                <View style={styles.caloriesRow}>
+                  <Icon name="flame" size={28} color="#f97316" />
+                  <Text style={styles.caloriesNumber}>{totals.calories}</Text>
+                </View>
+                <Text style={styles.caloriesTarget}>/ {targets.calories} kcal</Text>
+              </View>
+            </View>
+            <View style={styles.remainingCalories}>
+              <Text style={styles.remainingText}>
+                Restante: <Text style={styles.remainingNumber}>{remainingCalories} kcal</Text>
+              </Text>
+            </View>
+          </View>
+          <View style={styles.macrosGrid}>
+            <MacroProgress label="Proteína" current={totals.protein} target={targets.protein} color="#3b82f6" />
+            <MacroProgress label="Carbs" current={totals.carbs} target={targets.carbs} color="#f97316" />
+            <MacroProgress label="Gordura" current={totals.fat} target={targets.fat} color="#ef4444" />
+          </View>
+        </View>
+        {/* Meals Section */}
+        <View style={styles.mealsContainer}>
+          <Text style={styles.mealsTitle}>Refeições de {isToday ? 'Hoje' : format(currentDate, "dd 'de' MMMM", { locale: ptBR })}</Text>
+          {MEAL_TYPES.map((mealType) => (
+            <MealSection
+              key={mealType}
+              title={mealType}
+              calories={0}
+              foods={[]}
+              onAddFood={() => {}}
+            />
+          ))}
+        </View>
+      </ScrollView>
+      {/* Floating Add Button */}
+      <TouchableOpacity style={styles.fab} onPress={() => {}}>
+        <Icon name="add" size={24} color="#fff" />
+      </TouchableOpacity>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    padding: 16,
+    backgroundColor: '#FFF8F6',
   },
   header: {
-    marginBottom: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 24,
+    backgroundColor: '#FF725E',
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
-  title: {
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  titleSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  appTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
+    marginRight: 8,
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 4,
+  titleIcon: {
+    marginLeft: 4,
   },
-  section: {
+  notificationButton: {
+    padding: 8,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 20,
+  },
+  dateCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  dateButton: {
+    padding: 8,
+    borderRadius: 20,
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
+  dateInfo: {
+    alignItems: 'center',
+  },
+  dayText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1e293b',
+  },
+  dateText: {
+    fontSize: 14,
+    color: '#64748b',
+  },
+  progressCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 24,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  cardTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#1e293b',
+  },
+  caloriesSection: {
+    alignItems: 'center',
     marginBottom: 24,
   },
-  sectionTitle: {
+  progressRing: {
+    width: 170,
+    height: 170,
+    borderRadius: 85,
+    borderWidth: 10,
+    borderColor: '#f1f5f9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  caloriesCenter: {
+    alignItems: 'center',
+  },
+  caloriesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  caloriesNumber: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginLeft: 8,
+  },
+  caloriesTarget: {
+    fontSize: 16,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  remainingCalories: {
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  remainingText: {
+    fontSize: 16,
+    color: '#475569',
+  },
+  remainingNumber: {
+    fontWeight: 'bold',
+    fontSize: 18,
+    color: '#1e293b',
+  },
+  macrosGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  macroItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  macroLabel: {
+    fontSize: 12,
+    color: '#64748b',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  macroProgressContainer: {
+    width: 60,
+    marginBottom: 8,
+  },
+  macroBar: {
+    height: 8,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  macroFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  macroNumbers: {
+    fontSize: 11,
+    color: '#475569',
+    textAlign: 'center',
+  },
+  mealsContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 100,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  mealsTitle: {
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 12,
-    color: '#333',
+    color: '#1e293b',
   },
-  progressContainer: {
-    backgroundColor: '#f5f5f5',
-    padding: 16,
-    borderRadius: 8,
+  mealSection: {
+    marginBottom: 20,
   },
-  mealContainer: {
-    backgroundColor: '#f5f5f5',
-    padding: 16,
+  mealHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  mealTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1e293b',
+  },
+  mealCalories: {
+    fontSize: 14,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  noFoodText: {
+    fontSize: 13,
+    color: '#64748b',
+    marginBottom: 8,
+  },
+  addFoodButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    backgroundColor: '#f8fafc',
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    marginBottom: 8,
+  },
+  addFoodText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  aiButton: {
+    paddingVertical: 12,
+    backgroundColor: '#FF725E',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  aiButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 80,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FF725E',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });

@@ -1,28 +1,30 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../firebaseConfig';
 import { router } from 'expo-router';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const { signUp } = useAuth();
 
   const handleRegister = async () => {
+    if (!email || !password || !confirmPassword) {
+      Alert.alert('Erro', 'Por favor, preencha todos os campos');
+      return;
+    }
+
     if (password !== confirmPassword) {
       Alert.alert('Erro', 'As senhas não coincidem');
       return;
     }
 
-    console.log('Attempting to register with email:', email);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      console.log('Registration successful:', userCredential.user.uid);
-      router.replace('/(tabs)/dashboard');
-    } catch (error) {
-      console.log('Registration error:', error);
-      Alert.alert('Erro', `Falha no registro: ${error.message}`);
+      await signUp(email, password);
+      // Navigation will be handled by the root layout
+    } catch (error: any) {
+      Alert.alert('Erro', error.message);
     }
   };
 
