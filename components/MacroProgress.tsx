@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import FAIcon from 'react-native-vector-icons/FontAwesome5';
+import { FontAwesome6 } from '@expo/vector-icons';
 
 interface MacroProgressProps {
   label: string;
@@ -9,13 +9,8 @@ interface MacroProgressProps {
   target: number;
   unit: string;
   color: string;
+  iconName: string;
 }
-
-const ICONS: Record<string, string> = {
-  'proteína': 'utensils', // protein
-  'carbs': 'bread-slice', // carbs
-  'gordura': 'tint',      // fat
-};
 
 const COLOR_MAP: Record<string, { ring: string; text: string; bg: string }> = {
   'proteína': { ring: '#3b82f6', text: '#2563eb', bg: '#e0e7ff' },
@@ -23,9 +18,8 @@ const COLOR_MAP: Record<string, { ring: string; text: string; bg: string }> = {
   'gordura':  { ring: '#ef4444', text: '#b91c1c', bg: '#fee2e2' },
 };
 
-export const MacroProgress = ({ label, current, target, unit, color }: MacroProgressProps) => {
+export const MacroProgress = ({ label, current, target, unit, color, iconName }: MacroProgressProps) => {
   const lowerLabel = label.toLowerCase();
-  const iconName = ICONS[lowerLabel] || 'circle';
   const colorSet = COLOR_MAP[lowerLabel] || { ring: color, text: color, bg: '#f1f5f9' };
 
   const roundedCurrent = Math.round(current * 10) / 10;
@@ -65,7 +59,7 @@ export const MacroProgress = ({ label, current, target, unit, color }: MacroProg
         </Svg>
         {/* Icon in center */}
         <View style={styles.iconCenter}>
-          <FAIcon name={iconName} size={18} color={colorSet.text} solid />
+          <FontAwesome6 name={iconName} size={18} color={colorSet.text} solid />
         </View>
       </View>
       {/* Label and Values */}
