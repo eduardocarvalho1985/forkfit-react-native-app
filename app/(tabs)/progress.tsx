@@ -218,11 +218,11 @@ export default function ProgressScreen() {
 
 const styles = StyleSheet.create({
   title: {
-    fontSize: 22,
+    fontSize: 28,
     fontWeight: 'bold',
     color: TEXT,
-    marginTop: 24,
-    marginBottom: 8,
+    marginTop: 72,
+    marginBottom: 12,
     marginLeft: 18,
   },
   tabsRow: {
