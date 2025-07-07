@@ -1,9 +1,10 @@
 // app/auth/login.tsx   (repeat for register.tsx, index.tsx, _layout.tsx,
 // dashboard.tsx, settings.tsx, etc.)
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { FontAwesome6 } from '@expo/vector-icons';
+import { useAuth } from '../../contexts/AuthContext';
 
 const CORAL = '#FF725E';
 const OFF_WHITE = '#FFF8F6';
@@ -29,9 +30,11 @@ const ACTIVITY_OPTIONS = [
 ];
 
 export default function ProfileScreen() {
+  const { signOut, user } = useAuth();
+
   // Profile fields
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [name, setName] = useState(user?.displayName || '');
+  const [email, setEmail] = useState(user?.email || '');
   const [age, setAge] = useState('');
   const [gender, setGender] = useState(null);
   const [openGender, setOpenGender] = useState(false);
@@ -46,15 +49,44 @@ export default function ProfileScreen() {
   const [activity, setActivity] = useState(null);
   const [openActivity, setOpenActivity] = useState(false);
   // Nutrition
-  const [calories, setCalories] = useState('');
-  const [protein, setProtein] = useState('');
-  const [carbs, setCarbs] = useState('');
-  const [fat, setFat] = useState('');
+  const [calories, setCalories] = useState(user?.calories?.toString() || '');
+  const [protein, setProtein] = useState(user?.protein?.toString() || '');
+  const [carbs, setCarbs] = useState(user?.carbs?.toString() || '');
+  const [fat, setFat] = useState(user?.fat?.toString() || '');
+
+  const handleLogout = async () => {
+    Alert.alert(
+      'Sair da conta',
+      'Tem certeza que deseja sair da sua conta?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Sair',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await signOut();
+            } catch (error: any) {
+              Alert.alert('Erro', 'Não foi possível sair da conta. Tente novamente.');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: OFF_WHITE, paddingTop: 36 }} contentContainerStyle={{ paddingBottom: 32 }}>
-      {/* Big Title */}
-      <Text style={styles.title}>Perfil</Text>
+      {/* Header with Title and Logout */}
+      <View style={styles.header}>
+        <Text style={styles.title}>Perfil</Text>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <FontAwesome6 name="arrow-right-from-bracket" size={20} color={CORAL} />
+        </TouchableOpacity>
+      </View>
       {/* Profile Card */}
       <View style={styles.profileCard}>
         <View style={{ alignItems: 'center', marginBottom: 8 }}>
@@ -73,7 +105,7 @@ export default function ProfileScreen() {
           items={GOAL_OPTIONS}
           setOpen={setOpenGoal}
           setValue={setGoal}
-          setItems={() => {}}
+          setItems={() => { }}
           placeholder="Meta: Perder Peso"
           style={styles.dropdown}
           dropDownContainerStyle={styles.dropdownContainer}
@@ -104,7 +136,7 @@ export default function ProfileScreen() {
               items={GENDER_OPTIONS}
               setOpen={setOpenGender}
               setValue={setGender}
-              setItems={() => {}}
+              setItems={() => { }}
               placeholder="Selecione"
               style={styles.dropdown}
               dropDownContainerStyle={styles.dropdownContainer}
@@ -139,7 +171,7 @@ export default function ProfileScreen() {
           items={GOAL_OPTIONS}
           setOpen={setOpenGoal}
           setValue={setGoal}
-          setItems={() => {}}
+          setItems={() => { }}
           placeholder="Selecione seu objetivo"
           style={styles.dropdown}
           dropDownContainerStyle={styles.dropdownContainer}
@@ -166,7 +198,7 @@ export default function ProfileScreen() {
           items={ACTIVITY_OPTIONS}
           setOpen={setOpenActivity}
           setValue={setActivity}
-          setItems={() => {}}
+          setItems={() => { }}
           placeholder="Selecione seu nível de atividade"
           style={styles.dropdown}
           dropDownContainerStyle={styles.dropdownContainer}
@@ -205,13 +237,30 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginHorizontal: 18,
+    marginTop: 72,
+    marginBottom: 12,
+  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: TEXT,
-    marginTop: 72,
-    marginBottom: 12,
-    marginLeft: 18,
+    marginTop: 0,
+    marginBottom: 0,
+    marginLeft: 0,
+  },
+  logoutButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: BORDER,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   profileCard: {
     backgroundColor: '#fff',
