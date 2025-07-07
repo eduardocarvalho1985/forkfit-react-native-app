@@ -19,7 +19,8 @@
       "bundleIdentifier": "forkfit.app.forkfitprod",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "googleServicesFile": "./google-services.json",
