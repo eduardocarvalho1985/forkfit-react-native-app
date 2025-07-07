@@ -1,4 +1,3 @@
-
 export interface FoodItem {
   id: number;
   name: string;
@@ -42,99 +41,124 @@ export interface SyncUserRequest {
 
 class ForkFitAPI {
   // Updated with working backend URL
-  private baseUrl = 'https://forkfit.app/api';
+  private baseUrl = "https://forkfit.app/api";
 
-  async request<T>(endpoint: string, options: {
-    method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
-    body?: any;
-    token?: string;
-  } = {}): Promise<T> {
-    const { method = 'GET', body, token } = options;
-    
+  async request<T>(
+    endpoint: string,
+    options: {
+      method?: "GET" | "POST" | "PUT" | "DELETE";
+      body?: any;
+      token?: string;
+    } = {}
+  ): Promise<T> {
+    const { method = "GET", body, token } = options;
+
+    // Create AbortController for timeout (React Native compatible)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
     const config: RequestInit = {
       method,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
       },
-      // Add timeout and better error handling
-      signal: AbortSignal.timeout(10000), // 10 second timeout
+      signal: controller.signal,
     };
 
-    if (body && method !== 'GET') {
+    if (body && method !== "GET") {
       config.body = JSON.stringify(body);
     }
 
     const fullUrl = `${this.baseUrl}${endpoint}`;
-    console.log(`API ${method} ${fullUrl}`, body ? { body } : '');
-    
+    console.log(`API ${method} ${fullUrl}`, body ? { body } : "");
+
     try {
       const response = await fetch(fullUrl, config);
-      
+      clearTimeout(timeoutId); // Clear timeout on successful response
+
       console.log(`Response status: ${response.status}`);
-      console.log(`Response headers:`, Object.fromEntries(response.headers.entries()));
-      
+      console.log(
+        `Response headers:`,
+        Object.fromEntries(response.headers.entries())
+      );
+
       if (!response.ok) {
-        const errorText = await response.text().catch(() => '');
-        console.error(`API Error ${response.status} - Raw response:`, errorText.substring(0, 200));
-        
+        const errorText = await response.text().catch(() => "");
+        console.error(
+          `API Error ${response.status} - Raw response:`,
+          errorText.substring(0, 200)
+        );
+
         let errorData;
         try {
           errorData = JSON.parse(errorText);
         } catch {
-          errorData = { 
-            message: errorText.includes('<!DOCTYPE') 
+          errorData = {
+            message: errorText.includes("<!DOCTYPE")
               ? `Endpoint returned HTML instead of JSON - check if ${endpoint} exists on backend`
-              : errorText || `HTTP ${response.status}: ${response.statusText}` 
+              : errorText || `HTTP ${response.status}: ${response.statusText}`,
           };
         }
-        throw new Error(errorData.message || `Backend error: ${response.status}`);
+        throw new Error(
+          errorData.message || `Backend error: ${response.status}`
+        );
       }
 
       const responseText = await response.text();
       console.log(`Raw response:`, responseText.substring(0, 200));
-      
+
       const result = JSON.parse(responseText);
       console.log(`API Response:`, result);
       return result;
     } catch (error: any) {
-      if (error.name === 'AbortError') {
-        console.error('API request timeout');
-        throw new Error('Request timeout - backend may be unavailable');
+      clearTimeout(timeoutId); // Clear timeout on error
+      if (error.name === "AbortError") {
+        console.error("API request timeout");
+        throw new Error("Request timeout - backend may be unavailable");
       }
-      console.error('API request failed:', error);
-      throw new Error(error.message || 'Failed to connect to backend');
+      console.error("API request failed:", error);
+      throw new Error(error.message || "Failed to connect to backend");
     }
   }
 
   // Test connection
   async testConnection(): Promise<string[]> {
-    return this.request('/food-database/categories');
+    return this.request("/food-database/categories");
   }
 
   // User management
-  async getOrCreateUser(uid: string, email: string, token: string): Promise<BackendUser> {
-    return this.request(`/users/${uid}`, { 
-      method: 'POST',
+  async getOrCreateUser(
+    uid: string,
+    email: string,
+    token: string
+  ): Promise<BackendUser> {
+    return this.request(`/users/${uid}`, {
+      method: "POST",
       body: { uid, email },
-      token 
+      token,
     });
   }
 
   async syncUser(userData: SyncUserRequest): Promise<BackendUser> {
     try {
       // Try the sync endpoint first
-      return await this.request('/users/sync', {
-        method: 'POST',
-        body: userData
+      return await this.request("/users/sync", {
+        method: "POST",
+        body: userData,
       });
     } catch (error: any) {
       // If sync endpoint doesn't exist, try the alternative endpoint
-      if (error.message.includes('HTML instead of JSON') || error.message.includes('<!DOCTYPE')) {
-        console.log('Sync endpoint not found, trying alternative user endpoint...');
+      if (
+        error.message.includes("HTML instead of JSON") ||
+        error.message.includes("<!DOCTYPE")
+      ) {
+        console.log(
+          "Sync endpoint not found, trying alternative user endpoint..."
+        );
         return await this.request(`/users/${userData.uid}`, {
-          method: 'POST',
-          body: userData
+          method: "POST",
+          body: userData,
         });
       }
       throw error;
@@ -144,10 +168,13 @@ class ForkFitAPI {
   // Test if sync endpoint exists
   async testSyncEndpoint(): Promise<boolean> {
     try {
-      await this.request('/users/sync', { method: 'POST', body: { test: true } });
+      await this.request("/users/sync", {
+        method: "POST",
+        body: { test: true },
+      });
       return true;
     } catch (error: any) {
-      return !error.message.includes('HTML instead of JSON');
+      return !error.message.includes("HTML instead of JSON");
     }
   }
 
@@ -157,17 +184,25 @@ class ForkFitAPI {
   }
 
   async getFoodCategories(): Promise<string[]> {
-    return this.request('/food-database/categories');
+    return this.request("/food-database/categories");
   }
 
   // Food logging
-  async getFoodLogs(uid: string, date: string, token: string): Promise<FoodLog[]> {
+  async getFoodLogs(
+    uid: string,
+    date: string,
+    token: string
+  ): Promise<FoodLog[]> {
     return this.request(`/users/${uid}/food-logs/${date}`, { token });
   }
 
-  async createFoodLog(uid: string, foodLog: FoodLog, token: string): Promise<FoodLog> {
+  async createFoodLog(
+    uid: string,
+    foodLog: FoodLog,
+    token: string
+  ): Promise<FoodLog> {
     return this.request(`/users/${uid}/food-logs`, {
-      method: 'POST',
+      method: "POST",
       body: foodLog,
       token,
     });
