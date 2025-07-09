@@ -31,7 +31,10 @@
       },
       "edgeToEdgeEnabled": true
     },
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "web": {
       "bundler": "metro",
       "output": "static",
@@ -66,8 +69,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "285bdd1b-b93b-4d89-9344-3c4c58c790db"
+        "projectId": "977feabd-cc00-4955-8212-fcfcccc7ce37"
       }
-    }
+    },
+    "owner": "jabbarahmad810"
   }
 }
