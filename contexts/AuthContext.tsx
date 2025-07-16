@@ -53,11 +53,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Firebase auth state listener
+  // Initialize Firebase first
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(
-      getAuth(),
-      async (firebaseUser) => {
+    try {
+      // This ensures Firebase is initialized
+      const firebaseAuth = getAuth();
+      console.log('Firebase Auth initialized successfully');
+      
+      const unsubscribe = onAuthStateChanged(
+        firebaseAuth,
+        async (firebaseUser) => {
         if (firebaseUser) {
           try {
             // Refresh the user's token to check if they are still valid
@@ -80,6 +85,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     );
 
     return unsubscribe;
+    } catch (error) {
+      console.error('Firebase initialization error:', error);
+      setLoading(false);
+    }
   }, [loading]);
 
   const syncUserWithBackend = async (firebaseUser: FirebaseAuthTypes.User) => {
