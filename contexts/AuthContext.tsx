@@ -41,6 +41,7 @@ interface AuthContextData {
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
+  syncUser: () => Promise<void>;
 }
 
 interface AuthProviderProps {
@@ -55,35 +56,41 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Firebase auth state listener
   useEffect(() => {
+    console.log('AuthContext: Setting up auth state listener');
     const unsubscribe = onAuthStateChanged(
       getAuth(),
       async (firebaseUser) => {
+        console.log('AuthContext: Auth state changed, firebaseUser:', firebaseUser ? firebaseUser.uid : 'null');
         if (firebaseUser) {
           try {
+            console.log('AuthContext: Refreshing token...');
             // Refresh the user's token to check if they are still valid
             await firebaseUser.getIdToken(true);
+            console.log('AuthContext: Token refreshed successfully');
 
             // Sync with backend and combine data
             await syncUserWithBackend(firebaseUser);
           } catch (error) {
-            console.error('Error refreshing token or syncing user:', error);
+            console.error('AuthContext: Error refreshing token or syncing user:', error);
             // If there's an error getting the token, the user is likely disabled/deleted
-            console.log('User is disabled or deleted, signing out...');
+            console.log('AuthContext: User is disabled or deleted, signing out...');
             await firebaseSignOut(getAuth());
             setUser(null);
           }
         } else {
+          console.log('AuthContext: No firebase user, setting user to null');
           setUser(null);
         }
-        if (loading) setLoading(false);
+        setLoading(false);
       }
     );
 
     return unsubscribe;
-  }, [loading]);
+  }, []); // Remove loading dependency to prevent listener recreation
 
   const syncUserWithBackend = async (firebaseUser: FirebaseAuthTypes.User) => {
     try {
+      console.log('Syncing user with backend:', firebaseUser.uid);
       const backendUser = await api.syncUser({
         uid: firebaseUser.uid,
         email: firebaseUser.email || '',
@@ -101,6 +108,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         photoURL: firebaseUser.photoURL,
       };
 
+      console.log('Combined user data:', combinedUser);
       setUser(combinedUser);
     } catch (backendError) {
       console.error('Failed to sync with backend:', backendError);
@@ -116,6 +124,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         carbs: 250,
         fat: 65,
       };
+      console.log('Using basic user data:', basicUser);
       setUser(basicUser);
     }
   };
@@ -231,6 +240,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  const syncUser = async () => {
+    const firebaseUser = getAuth().currentUser;
+    if (firebaseUser) {
+      console.log('AuthContext: Manual sync triggered for user:', firebaseUser.uid);
+      await syncUserWithBackend(firebaseUser);
+    } else {
+      console.log('AuthContext: Manual sync failed - no Firebase user');
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -239,7 +258,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       signUp,
       signOut,
       signInWithGoogle,
-      signInWithApple
+      signInWithApple,
+      syncUser
     }}>
       {children}
     </AuthContext.Provider>

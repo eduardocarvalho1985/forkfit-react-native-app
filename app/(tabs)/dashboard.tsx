@@ -18,7 +18,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MacroProgress } from '../../components/MacroProgress';
 import { SafeAreaView as SafeAreaViewContext } from 'react-native-safe-area-context';
 import { FoodEditModal } from '../../components/FoodEditModal';
+import { APITest } from '../../components/APITest';
 import Svg, { Circle } from 'react-native-svg';
+import { useAuth } from '../../contexts/AuthContext';
+import { api, FoodItem, FoodLog } from '../../services/api';
+import { getAuth } from '@react-native-firebase/auth';
 
 const MEAL_TYPES = [
   'Café da Manhã',
@@ -32,50 +36,7 @@ const MEAL_TYPES = [
 
 const MEAL_OPTIONS = MEAL_TYPES.map(m => ({ value: m, label: m }));
 
-// Mock food database
-const MOCK_FOOD_DATABASE = [
-  { id: 1, name: 'Arroz Branco', calories: 130, protein: 2.7, carbs: 28, fat: 0.3, category: 'Grãos' },
-  { id: 2, name: 'Frango Grelhado', calories: 165, protein: 31, carbs: 0, fat: 3.6, category: 'Proteínas' },
-  { id: 3, name: 'Brócolis', calories: 34, protein: 2.8, carbs: 7, fat: 0.4, category: 'Vegetais' },
-  { id: 4, name: 'Ovo Cozido', calories: 155, protein: 13, carbs: 1.1, fat: 11, category: 'Proteínas' },
-  { id: 5, name: 'Aveia', calories: 389, protein: 17, carbs: 66, fat: 7, category: 'Grãos' },
-  { id: 6, name: 'Banana', calories: 89, protein: 1.1, carbs: 23, fat: 0.3, category: 'Frutas' },
-  { id: 7, name: 'Leite Desnatado', calories: 42, protein: 3.4, carbs: 5, fat: 0.1, category: 'Laticínios' },
-  { id: 8, name: 'Pão Integral', calories: 247, protein: 13, carbs: 41, fat: 4.2, category: 'Grãos' },
-  { id: 9, name: 'Salmão', calories: 208, protein: 25, carbs: 0, fat: 12, category: 'Proteínas' },
-  { id: 10, name: 'Batata Doce', calories: 86, protein: 1.6, carbs: 20, fat: 0.1, category: 'Vegetais' },
-];
-
-// Mock user data
-const mockUser = {
-  calories: 2000,
-  protein: 150,
-  carbs: 250,
-  fat: 65,
-};
-
-interface FoodLog {
-  id: string;
-  name: string;
-  quantity: number;
-  unit: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  mealType: string;
-  date: string;
-}
-
-interface FoodItem {
-  id: number;
-  name: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  category: string;
-}
+// Using FoodLog and FoodItem from services/api.ts
 
 function MealSection({ 
   title, 
@@ -97,7 +58,7 @@ function MealSection({
         <Text style={styles.mealCalories}>{calories} kcal</Text>
       </View>
       
-      {foods.length === 0 ? (
+      {!foods || foods.length === 0 ? (
         <Text style={styles.noFoodText}>Nenhum alimento registrado</Text>
       ) : (
         <View style={styles.foodList}>
@@ -147,45 +108,8 @@ function MealSection({
 export default function DashboardScreen() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [addFoodVisible, setAddFoodVisible] = useState(false);
-  const [foodLogs, setFoodLogs] = useState<FoodLog[]>([
-    // Sample data for testing
-    {
-      id: '1',
-      name: 'Aveia',
-      quantity: 50,
-      unit: 'g',
-      calories: 195,
-      protein: 8.5,
-      carbs: 33,
-      fat: 3.5,
-      mealType: 'Café da Manhã',
-      date: format(new Date(), 'yyyy-MM-dd'),
-    },
-    {
-      id: '2',
-      name: 'Banana',
-      quantity: 100,
-      unit: 'g',
-      calories: 89,
-      protein: 1.1,
-      carbs: 23,
-      fat: 0.3,
-      mealType: 'Café da Manhã',
-      date: format(new Date(), 'yyyy-MM-dd'),
-    },
-    {
-      id: '3',
-      name: 'Frango Grelhado',
-      quantity: 150,
-      unit: 'g',
-      calories: 248,
-      protein: 46.5,
-      carbs: 0,
-      fat: 5.4,
-      mealType: 'Almoço',
-      date: format(new Date(), 'yyyy-MM-dd'),
-    },
-  ]);
+  const [foodLogs, setFoodLogs] = useState<FoodLog[]>([]);
+  const [loadingLogs, setLoadingLogs] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState<string>('');
   const [searchModalVisible, setSearchModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -197,35 +121,150 @@ export default function DashboardScreen() {
   const [foodEditModalVisible, setFoodEditModalVisible] = useState(false);
   const [foodEditInitialData, setFoodEditInitialData] = useState<any>(null);
 
+  // Real food database from backend
+  const [foodDatabase, setFoodDatabase] = useState<FoodItem[]>([]);
+  const [loadingFoods, setLoadingFoods] = useState(false);
+
+  // Real user data from backend
+  const authContext = useAuth();
+  const [localUser, setLocalUser] = useState(authContext.user);
+  
+  // Debug: Log AuthContext properties
+  useEffect(() => {
+    console.log('Dashboard: AuthContext properties:', {
+      hasUser: !!authContext.user,
+      hasSyncUser: typeof authContext.syncUser === 'function',
+      syncUserType: typeof authContext.syncUser,
+      availableMethods: Object.keys(authContext)
+    });
+  }, [authContext]);
+  
+  // Update local user when auth context changes
+  useEffect(() => {
+    console.log('Dashboard: AuthContext user changed:', authContext.user);
+    setLocalUser(authContext.user);
+  }, [authContext.user]);
+  
+  const user = localUser || authContext.user;
+  
+  // Debug: Log the entire auth context
+  useEffect(() => {
+    console.log('Dashboard: AuthContext state:', {
+      user: authContext.user,
+      loading: authContext.loading,
+      hasUser: !!authContext.user,
+      userUid: authContext.user?.uid,
+      userCalories: authContext.user?.calories
+    });
+  }, [authContext.user, authContext.loading]);
+  
+  // Debug: Log user data changes
+  useEffect(() => {
+    console.log('Dashboard: User data changed:', {
+      uid: user?.uid,
+      email: user?.email,
+      calories: user?.calories,
+      protein: user?.protein,
+      carbs: user?.carbs,
+      fat: user?.fat
+    });
+  }, [user]);
+
+  // Force user sync when dashboard loads
+  useEffect(() => {
+    const forceUserSync = async () => {
+      console.log('Dashboard: Force user sync on load');
+      const firebaseUser = getAuth().currentUser;
+      if (firebaseUser && !user?.calories) {
+        console.log('Dashboard: User has no calories, forcing sync');
+        try {
+          const backendUser = await api.syncUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email || '',
+            displayName: firebaseUser.displayName,
+            photoURL: firebaseUser.photoURL
+          });
+          console.log('Dashboard: Force sync result:', backendUser);
+          
+          // Manually update local user state
+          const combinedUser = {
+            ...backendUser,
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            photoURL: firebaseUser.photoURL,
+          };
+          setLocalUser(combinedUser);
+        } catch (error) {
+          console.error('Dashboard: Force sync failed:', error);
+        }
+      }
+    };
+    
+    forceUserSync();
+  }, [user?.calories]);
+
   // Format date for display
   const formattedDate = format(currentDate, 'dd MMM');
   const isToday = format(currentDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
   const dateKey = format(currentDate, 'yyyy-MM-dd');
 
+  // Load food logs from backend when date changes or user changes
+  useEffect(() => {
+    if (user?.uid) {
+      loadFoodLogs();
+    }
+  }, [currentDate, user?.uid]);
+
+  const loadFoodLogs = async () => {
+    console.log('loadFoodLogs called for date:', dateKey);
+    if (!user?.uid) {
+      console.log('No user.uid available');
+      return;
+    }
+    
+    try {
+      setLoadingLogs(true);
+      const firebaseUser = getAuth().currentUser;
+      const token = firebaseUser ? await firebaseUser.getIdToken() : '';
+      console.log('Loading food logs with token:', token ? 'present' : 'missing');
+      
+      const logs = await api.getFoodLogs(user.uid, dateKey, token);
+      console.log('Loaded food logs:', logs);
+      setFoodLogs(logs);
+    } catch (error) {
+      console.error('Failed to load food logs:', error);
+      // Keep existing logs if loading fails
+    } finally {
+      setLoadingLogs(false);
+    }
+  };
+
   // Calculate totals for current date
-  const totals = foodLogs.reduce((acc, food) => ({
-    calories: acc.calories + food.calories,
-    protein: acc.protein + food.protein,
-    carbs: acc.carbs + food.carbs,
-    fat: acc.fat + food.fat,
+  const totals = (foodLogs || []).reduce((acc, food) => ({
+    calories: acc.calories + (food.calories || 0),
+    protein: acc.protein + (food.protein || 0),
+    carbs: acc.carbs + (food.carbs || 0),
+    fat: acc.fat + (food.fat || 0),
   }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
 
   const targets = {
-    calories: mockUser.calories,
-    protein: mockUser.protein,
-    carbs: mockUser.carbs,
-    fat: mockUser.fat,
+    calories: user?.calories || 2000,
+    protein: user?.protein || 150,
+    carbs: user?.carbs || 250,
+    fat: user?.fat || 65,
   };
   
   const remainingCalories = targets.calories - totals.calories;
 
   // Get foods for each meal type
   const getFoodsForMeal = (mealType: string) => {
-    return foodLogs.filter(food => food.mealType === mealType);
+    return foodLogs?.filter(food => food.mealType === mealType) || [];
   };
 
   const getCaloriesForMeal = (mealType: string) => {
-    return getFoodsForMeal(mealType).reduce((sum, food) => sum + food.calories, 0);
+    const foods = getFoodsForMeal(mealType);
+    return foods.reduce((sum, food) => sum + (food.calories || 0), 0);
   };
 
   // Navigation handlers
@@ -245,6 +284,7 @@ export default function DashboardScreen() {
 
   // Food management handlers
   const handleOption = (option: string) => {
+    console.log('handleOption called with:', option);
     setAddFoodVisible(false);
     
     switch (option) {
@@ -258,6 +298,7 @@ export default function DashboardScreen() {
         Alert.alert('Alimentos Salvos', 'Funcionalidade em desenvolvimento');
         break;
       case 'banco':
+        console.log('Opening search modal...');
         setSearchModalVisible(true);
         break;
       case 'ai':
@@ -271,13 +312,21 @@ export default function DashboardScreen() {
     setAddFoodVisible(true);
   };
 
-  const handleSearchFood = (query: string) => {
+  const handleSearchFood = async (query: string) => {
+    console.log('Searching for:', query);
     setSearchQuery(query);
     if (query.trim()) {
-      const filtered = MOCK_FOOD_DATABASE.filter(food =>
-        food.name.toLowerCase().includes(query.toLowerCase())
-      );
-      setFilteredFoods(filtered);
+      try {
+        setLoadingFoods(true);
+        const foods = await api.searchFoods(query);
+        console.log('Search results:', foods);
+        setFilteredFoods(foods);
+      } catch (error) {
+        console.error('Failed to search foods:', error);
+        Alert.alert('Erro', 'Falha ao buscar alimentos');
+      } finally {
+        setLoadingFoods(false);
+      }
     } else {
       setFilteredFoods([]);
     }
@@ -289,8 +338,12 @@ export default function DashboardScreen() {
     setQuantityModalVisible(true);
   };
 
-  const handleConfirmQuantity = () => {
-    if (!selectedFood || !selectedMealType) return;
+  const handleConfirmQuantity = async () => {
+    console.log('handleConfirmQuantity called');
+    if (!selectedFood || !selectedMealType) {
+      console.log('Missing selectedFood or selectedMealType');
+      return;
+    }
 
     const quantity = parseFloat(foodQuantity);
     const unit = foodUnit;
@@ -299,7 +352,7 @@ export default function DashboardScreen() {
     const multiplier = quantity / 100;
     
     const newFoodLog: FoodLog = {
-      id: Date.now().toString(),
+      id: Date.now(),
       name: selectedFood.name,
       quantity: quantity,
       unit: unit,
@@ -311,13 +364,34 @@ export default function DashboardScreen() {
       date: dateKey,
     };
 
-    setFoodLogs(prev => [...prev, newFoodLog]);
-    setQuantityModalVisible(false);
-    setSelectedFood(null);
-    setFoodQuantity('100');
-    setFoodUnit('g');
-    
-    Alert.alert('Sucesso!', `${selectedFood.name} adicionado ao ${selectedMealType}`);
+    console.log('New food log:', newFoodLog);
+
+    try {
+      // Save to backend
+      const firebaseUser = getAuth().currentUser;
+      const token = firebaseUser ? await firebaseUser.getIdToken() : '';
+      console.log('Firebase user:', firebaseUser?.uid, 'Token:', token ? 'present' : 'missing');
+      
+      if (user?.uid && token) {
+        console.log('Saving food log to backend...');
+        await api.createFoodLog(user.uid, newFoodLog, token);
+        console.log('Food log saved to backend successfully');
+      } else {
+        console.log('Cannot save to backend - missing user.uid or token');
+      }
+      
+      // Update local state
+      setFoodLogs(prev => [...prev, newFoodLog]);
+      setQuantityModalVisible(false);
+      setSelectedFood(null);
+      setFoodQuantity('100');
+      setFoodUnit('g');
+      
+      Alert.alert('Sucesso!', `${selectedFood.name} adicionado ao ${selectedMealType}`);
+    } catch (error) {
+      console.error('Failed to save food log:', error);
+      Alert.alert('Erro', 'Falha ao salvar alimento. Tente novamente.');
+    }
   };
 
   const handleEditFood = (food: FoodLog) => {
@@ -426,6 +500,133 @@ export default function DashboardScreen() {
           </View>
           <TouchableOpacity onPress={handleNextDay} style={[styles.dateButton, isToday && styles.disabledButton]} disabled={isToday}>
             <Icon name="chevron-forward" size={22} color={isToday ? '#ccc' : '#FF725E'} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Backend Connection Test */}
+        <APITest />
+        
+        {/* Debug User Data */}
+        <View style={styles.debugCard}>
+          <Text style={styles.debugTitle}>Debug: User Data</Text>
+          <Text style={styles.debugText}>UID: {user?.uid || 'Not loaded'}</Text>
+          <Text style={styles.debugText}>Email: {user?.email || 'Not loaded'}</Text>
+          <Text style={styles.debugText}>Calories: {user?.calories || 'Not loaded'}</Text>
+          <Text style={styles.debugText}>Protein: {user?.protein || 'Not loaded'}</Text>
+          <Text style={styles.debugText}>Carbs: {user?.carbs || 'Not loaded'}</Text>
+          <Text style={styles.debugText}>Fat: {user?.fat || 'Not loaded'}</Text>
+          <Text style={styles.debugText}>User Object: {JSON.stringify(user, null, 2)}</Text>
+          
+          <TouchableOpacity 
+            style={styles.debugButton} 
+            onPress={async () => {
+              console.log('Manual user sync triggered');
+              const firebaseUser = getAuth().currentUser;
+              if (firebaseUser) {
+                console.log('Current Firebase user:', firebaseUser.uid);
+                try {
+                  const backendUser = await api.syncUser({
+                    uid: firebaseUser.uid,
+                    email: firebaseUser.email || '',
+                    displayName: firebaseUser.displayName,
+                    photoURL: firebaseUser.photoURL
+                  });
+                  console.log('Manual sync result:', backendUser);
+                  
+                  // Manually update local user state
+                  const combinedUser = {
+                    ...backendUser,
+                    uid: firebaseUser.uid,
+                    email: firebaseUser.email,
+                    displayName: firebaseUser.displayName,
+                    photoURL: firebaseUser.photoURL,
+                  };
+                  setLocalUser(combinedUser);
+                  
+                  Alert.alert('Sync Result', `User synced: ${backendUser.id}`);
+                } catch (error: any) {
+                  console.error('Manual sync failed:', error);
+                  Alert.alert('Sync Failed', error.message || 'Unknown error');
+                }
+              } else {
+                Alert.alert('No Firebase User', 'No authenticated user found');
+              }
+            }}
+          >
+            <Text style={styles.debugButtonText}>Manual User Sync</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.debugButton, { backgroundColor: '#3b82f6', marginTop: 8 }]} 
+            onPress={() => {
+              console.log('Force refresh triggered');
+              // Force re-render by updating a state
+              setCurrentDate(new Date());
+            }}
+          >
+            <Text style={styles.debugButtonText}>Force Refresh UI</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.debugButton, { backgroundColor: '#10b981', marginTop: 8 }]} 
+            onPress={() => {
+              console.log('Current user from useAuth:', user);
+              console.log('Current user from Firebase:', getAuth().currentUser);
+              Alert.alert('Debug Info', `User from useAuth: ${user ? 'Present' : 'Null'}\nFirebase User: ${getAuth().currentUser ? 'Present' : 'Null'}`);
+            }}
+          >
+            <Text style={styles.debugButtonText}>Check Auth State</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.debugButton, { backgroundColor: '#f59e0b', marginTop: 8 }]} 
+            onPress={async () => {
+              console.log('Force AuthContext sync triggered');
+              const firebaseUser = getAuth().currentUser;
+              if (firebaseUser) {
+                try {
+                  const backendUser = await api.syncUser({
+                    uid: firebaseUser.uid,
+                    email: firebaseUser.email || '',
+                    displayName: firebaseUser.displayName,
+                    photoURL: firebaseUser.photoURL
+                  });
+                  console.log('AuthContext sync result:', backendUser);
+                  
+                  // Manually update local user state
+                  const combinedUser = {
+                    ...backendUser,
+                    uid: firebaseUser.uid,
+                    email: firebaseUser.email,
+                    displayName: firebaseUser.displayName,
+                    photoURL: firebaseUser.photoURL,
+                  };
+                  setLocalUser(combinedUser);
+                  
+                  // Force a re-render by updating the date
+                  setCurrentDate(new Date());
+                  Alert.alert('Sync Complete', `User data: ${backendUser.calories} calories`);
+                } catch (error: any) {
+                  console.error('AuthContext sync failed:', error);
+                  Alert.alert('Sync Failed', error.message || 'Unknown error');
+                }
+              }
+            }}
+          >
+            <Text style={styles.debugButtonText}>Force AuthContext Sync</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.debugButton, { backgroundColor: '#8b5cf6', marginTop: 8 }]} 
+            onPress={() => {
+              console.log('Manual local user update triggered');
+              console.log('AuthContext user:', authContext.user);
+              console.log('Local user:', localUser);
+              setLocalUser(authContext.user);
+              Alert.alert('Local User Updated', `AuthContext user: ${authContext.user ? 'Present' : 'Null'}\nLocal user: ${localUser ? 'Present' : 'Null'}`);
+            }}
+          >
+            <Text style={styles.debugButtonText}>Update Local User</Text>
           </TouchableOpacity>
         </View>
 
@@ -582,7 +783,7 @@ export default function DashboardScreen() {
           </View>
 
           <ScrollView style={styles.searchResults}>
-            {filteredFoods.map((food) => (
+            {(filteredFoods || []).map((food) => (
               <TouchableOpacity
                 key={food.id}
                 style={styles.searchResultItem}
@@ -1143,5 +1344,37 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 24,
     marginHorizontal: 20,
+  },
+  debugCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    marginHorizontal: 18,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  debugTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: 8,
+  },
+  debugText: {
+    fontSize: 14,
+    color: '#64748b',
+    marginBottom: 4,
+  },
+  debugButton: {
+    backgroundColor: '#FF725E',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 12,
+    alignItems: 'center',
+  },
+  debugButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

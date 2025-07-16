@@ -9,13 +9,24 @@ function RootLayoutContent() {
   const { user, loading } = useAuth();
 
   React.useEffect(() => {
-    if (loading) return;
+    console.log('RootLayout: useEffect triggered, loading:', loading, 'user:', user ? user.uid : 'null');
+    if (loading) {
+      console.log('RootLayout: Still loading, waiting...');
+      return;
+    }
 
     if (!user) {
-      console.log('No user found, redirecting to login.');
+      console.log('RootLayout: No user found, redirecting to login.');
       router.replace('/auth/login');
     } else {
-      console.log('User found, redirecting to dashboard.');
+      console.log('RootLayout: User found, redirecting to dashboard. User data:', {
+        uid: user.uid,
+        email: user.email,
+        calories: user.calories,
+        protein: user.protein,
+        carbs: user.carbs,
+        fat: user.fat
+      });
       router.replace('/(tabs)/dashboard');
     }
   }, [user, loading]);
