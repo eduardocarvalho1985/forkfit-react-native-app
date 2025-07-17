@@ -207,6 +207,29 @@ class ForkFitAPI {
       token,
     });
   }
+
+  async updateFoodLog(
+    uid: string,
+    foodLog: FoodLog,
+    token: string
+  ): Promise<FoodLog> {
+    return this.request(`/users/${uid}/food-logs/${foodLog.id}`, {
+      method: "PUT",
+      body: foodLog,
+      token,
+    });
+  }
+
+  async deleteFoodLog(
+    uid: string,
+    foodLogId: number,
+    token: string
+  ): Promise<void> {
+    return this.request(`/users/${uid}/food-logs/${foodLogId}`, {
+      method: "DELETE",
+      token,
+    });
+  }
 }
 
 export const api = new ForkFitAPI();

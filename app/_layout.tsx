@@ -3,6 +3,7 @@
 import React from 'react';
 import { Stack, router } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 
 function RootLayoutContent() {
@@ -50,8 +51,10 @@ function RootLayoutContent() {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <RootLayoutContent />
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+        <RootLayoutContent />
+      </AuthProvider>
+    </GestureHandlerRootView>
   );
 }

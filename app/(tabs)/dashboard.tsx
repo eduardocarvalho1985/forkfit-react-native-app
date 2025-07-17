@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -15,10 +15,11 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { FontAwesome6 } from '@expo/vector-icons';
 import Modal from 'react-native-modal';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { MacroProgress } from '../../components/MacroProgress';
 import { SafeAreaView as SafeAreaViewContext } from 'react-native-safe-area-context';
-import { FoodEditModal } from '../../components/FoodEditModal';
-import { APITest } from '../../components/APITest';
+import { FoodBottomSheet } from '../../components/FoodBottomSheet';
+
 import Svg, { Circle } from 'react-native-svg';
 import { useAuth } from '../../contexts/AuthContext';
 import { api, FoodItem, FoodLog } from '../../services/api';
@@ -106,6 +107,9 @@ function MealSection({
 }
 
 export default function DashboardScreen() {
+  // Create a ref to control the bottom sheet
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+  
   const [currentDate, setCurrentDate] = useState(new Date());
   const [addFoodVisible, setAddFoodVisible] = useState(false);
   const [foodLogs, setFoodLogs] = useState<FoodLog[]>([]);
@@ -118,91 +122,13 @@ export default function DashboardScreen() {
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
   const [foodQuantity, setFoodQuantity] = useState('100');
   const [foodUnit, setFoodUnit] = useState('g');
-  const [foodEditModalVisible, setFoodEditModalVisible] = useState(false);
   const [foodEditInitialData, setFoodEditInitialData] = useState<any>(null);
 
-  // Real food database from backend
-  const [foodDatabase, setFoodDatabase] = useState<FoodItem[]>([]);
+  // Food database loading state
   const [loadingFoods, setLoadingFoods] = useState(false);
 
-  // Real user data from backend
-  const authContext = useAuth();
-  const [localUser, setLocalUser] = useState(authContext.user);
-  
-  // Debug: Log AuthContext properties
-  useEffect(() => {
-    console.log('Dashboard: AuthContext properties:', {
-      hasUser: !!authContext.user,
-      hasSyncUser: typeof authContext.syncUser === 'function',
-      syncUserType: typeof authContext.syncUser,
-      availableMethods: Object.keys(authContext)
-    });
-  }, [authContext]);
-  
-  // Update local user when auth context changes
-  useEffect(() => {
-    console.log('Dashboard: AuthContext user changed:', authContext.user);
-    setLocalUser(authContext.user);
-  }, [authContext.user]);
-  
-  const user = localUser || authContext.user;
-  
-  // Debug: Log the entire auth context
-  useEffect(() => {
-    console.log('Dashboard: AuthContext state:', {
-      user: authContext.user,
-      loading: authContext.loading,
-      hasUser: !!authContext.user,
-      userUid: authContext.user?.uid,
-      userCalories: authContext.user?.calories
-    });
-  }, [authContext.user, authContext.loading]);
-  
-  // Debug: Log user data changes
-  useEffect(() => {
-    console.log('Dashboard: User data changed:', {
-      uid: user?.uid,
-      email: user?.email,
-      calories: user?.calories,
-      protein: user?.protein,
-      carbs: user?.carbs,
-      fat: user?.fat
-    });
-  }, [user]);
-
-  // Force user sync when dashboard loads
-  useEffect(() => {
-    const forceUserSync = async () => {
-      console.log('Dashboard: Force user sync on load');
-      const firebaseUser = getAuth().currentUser;
-      if (firebaseUser && !user?.calories) {
-        console.log('Dashboard: User has no calories, forcing sync');
-        try {
-          const backendUser = await api.syncUser({
-            uid: firebaseUser.uid,
-            email: firebaseUser.email || '',
-            displayName: firebaseUser.displayName,
-            photoURL: firebaseUser.photoURL
-          });
-          console.log('Dashboard: Force sync result:', backendUser);
-          
-          // Manually update local user state
-          const combinedUser = {
-            ...backendUser,
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            displayName: firebaseUser.displayName,
-            photoURL: firebaseUser.photoURL,
-          };
-          setLocalUser(combinedUser);
-        } catch (error) {
-          console.error('Dashboard: Force sync failed:', error);
-        }
-      }
-    };
-    
-    forceUserSync();
-  }, [user?.calories]);
+  // User data from auth context
+  const { user } = useAuth();
 
   // Format date for display
   const formattedDate = format(currentDate, 'dd MMM');
@@ -212,29 +138,66 @@ export default function DashboardScreen() {
   // Load food logs from backend when date changes or user changes
   useEffect(() => {
     if (user?.uid) {
-      loadFoodLogs();
+      // Add a small delay to ensure Firebase auth is fully initialized
+      const timer = setTimeout(() => {
+        loadFoodLogs();
+      }, 500);
+      
+      return () => clearTimeout(timer);
     }
   }, [currentDate, user?.uid]);
 
   const loadFoodLogs = async () => {
-    console.log('loadFoodLogs called for date:', dateKey);
     if (!user?.uid) {
-      console.log('No user.uid available');
+      console.log('No user.uid available for loading food logs');
       return;
     }
     
     try {
       setLoadingLogs(true);
       const firebaseUser = getAuth().currentUser;
-      const token = firebaseUser ? await firebaseUser.getIdToken() : '';
-      console.log('Loading food logs with token:', token ? 'present' : 'missing');
+      
+      if (!firebaseUser) {
+        console.log('No Firebase user found, skipping food logs load');
+        setFoodLogs([]);
+        return;
+      }
+      
+      const token = await firebaseUser.getIdToken();
+      
+      if (!token) {
+        console.log('No Firebase token available, skipping food logs load');
+        setFoodLogs([]);
+        return;
+      }
+      
+      console.log('Loading food logs with:', {
+        uid: user.uid,
+        date: dateKey,
+        hasToken: !!token,
+        tokenLength: token?.length
+      });
       
       const logs = await api.getFoodLogs(user.uid, dateKey, token);
-      console.log('Loaded food logs:', logs);
-      setFoodLogs(logs);
-    } catch (error) {
+      console.log('Successfully loaded food logs:', logs?.length || 0, 'items');
+      setFoodLogs(logs || []);
+    } catch (error: any) {
       console.error('Failed to load food logs:', error);
-      // Keep existing logs if loading fails
+      
+      // If it's a 500 error, it might be a temporary server issue
+      if (error.message?.includes('500') || error.message?.includes('Internal Server Error')) {
+        console.log('Server error detected, will retry in 3 seconds...');
+        setTimeout(() => {
+          if (user?.uid) {
+            loadFoodLogs();
+          }
+        }, 3000);
+      }
+      
+      // Keep existing logs if loading fails, but set to empty array if this is the first load
+      if (foodLogs.length === 0) {
+        setFoodLogs([]);
+      }
     } finally {
       setLoadingLogs(false);
     }
@@ -284,14 +247,12 @@ export default function DashboardScreen() {
 
   // Food management handlers
   const handleOption = (option: string) => {
-    console.log('handleOption called with:', option);
     setAddFoodVisible(false);
     
     switch (option) {
       case 'manual':
-        console.log('Opening manual food entry modal...');
         setFoodEditInitialData({ mealType: selectedMealType || 'Almoço' });
-        setFoodEditModalVisible(true);
+        bottomSheetRef.current?.present();
         break;
       case 'recentes':
         Alert.alert('Refeições Recentes', 'Funcionalidade em desenvolvimento');
@@ -300,7 +261,6 @@ export default function DashboardScreen() {
         Alert.alert('Alimentos Salvos', 'Funcionalidade em desenvolvimento');
         break;
       case 'banco':
-        console.log('Opening search modal...');
         setSearchModalVisible(true);
         break;
       case 'ai':
@@ -315,16 +275,13 @@ export default function DashboardScreen() {
   };
 
   const handleSearchFood = async (query: string) => {
-    console.log('Searching for:', query);
     setSearchQuery(query);
     
     // Only search if query has at least 2 characters
     if (query.trim().length >= 2) {
       try {
         setLoadingFoods(true);
-        console.log('Making API call to search foods...');
         const foods = await api.searchFoods(query);
-        console.log('Search results:', foods);
         // Ensure foods is an array and has valid data
         if (Array.isArray(foods)) {
           setFilteredFoods(foods);
@@ -335,7 +292,6 @@ export default function DashboardScreen() {
       } catch (error) {
         console.error('Failed to search foods:', error);
         setFilteredFoods([]);
-        // Don't show alert for now to avoid modal issues
       } finally {
         setLoadingFoods(false);
       }
@@ -351,9 +307,7 @@ export default function DashboardScreen() {
   };
 
   const handleConfirmQuantity = async () => {
-    console.log('handleConfirmQuantity called');
     if (!selectedFood || !selectedMealType) {
-      console.log('Missing selectedFood or selectedMealType');
       return;
     }
 
@@ -364,7 +318,7 @@ export default function DashboardScreen() {
     const multiplier = quantity / 100;
     
     const newFoodLog: FoodLog = {
-      id: Date.now(),
+      id: Math.floor(Math.random() * 1000000) + 1, // Smaller ID range
       name: selectedFood.name,
       quantity: quantity,
       unit: unit,
@@ -376,20 +330,13 @@ export default function DashboardScreen() {
       date: dateKey,
     };
 
-    console.log('New food log:', newFoodLog);
-
     try {
       // Save to backend
       const firebaseUser = getAuth().currentUser;
       const token = firebaseUser ? await firebaseUser.getIdToken() : '';
-      console.log('Firebase user:', firebaseUser?.uid, 'Token:', token ? 'present' : 'missing');
       
       if (user?.uid && token) {
-        console.log('Saving food log to backend...');
         await api.createFoodLog(user.uid, newFoodLog, token);
-        console.log('Food log saved to backend successfully');
-      } else {
-        console.log('Cannot save to backend - missing user.uid or token');
       }
       
       // Update local state
@@ -407,74 +354,104 @@ export default function DashboardScreen() {
   };
 
   const handleEditFood = (food: FoodLog) => {
-    Alert.alert(
-      'Editar Alimento',
-      `Deseja editar ou remover "${food.name}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Remover', 
-          style: 'destructive',
-          onPress: () => {
-            setFoodLogs(prev => prev.filter(f => f.id !== food.id));
-            Alert.alert('Removido', 'Alimento removido com sucesso');
-          }
-        },
-        { 
-          text: 'Editar', 
-          onPress: () => {
-            // For now, just show current values
-            Alert.alert(
-              'Editar Alimento',
-              `Nome: ${food.name}\nQuantidade: ${food.quantity} ${food.unit}\nCalorias: ${food.calories} kcal\nProteína: ${food.protein}g\nCarboidratos: ${food.carbs}g\nGordura: ${food.fat}g`
-            );
-          }
-        }
-      ]
-    );
+    setFoodEditInitialData(food);
+    bottomSheetRef.current?.present();
   };
 
-  // Open modal for add
+  // Open bottom sheet for add
   const openAddFoodModal = (mealType?: string) => {
     setFoodEditInitialData(mealType ? { mealType } : null);
-    setFoodEditModalVisible(true);
+    bottomSheetRef.current?.present();
   };
 
-  // Open modal for edit
+  // Open bottom sheet for edit
   const openEditFoodModal = (food: any) => {
     setFoodEditInitialData(food);
-    setFoodEditModalVisible(true);
+    bottomSheetRef.current?.present();
   };
 
   // Handle save (add or edit)
-  const handleSaveFood = (food: any) => {
-    if (foodEditInitialData && foodEditInitialData.id) {
-      // Edit mode
-      setFoodLogs((prev: any[]) => prev.map(f => f.id === foodEditInitialData.id ? { ...f, ...food } : f));
-    } else {
-      // Add mode
-      setFoodLogs((prev: any[]) => [
-        ...prev,
-        { ...food, id: Date.now().toString(), date: dateKey },
-      ]);
+  const handleSaveFood = async (food: any) => {
+    try {
+      const firebaseUser = getAuth().currentUser;
+      const token = firebaseUser ? await firebaseUser.getIdToken() : '';
+      
+      if (foodEditInitialData && foodEditInitialData.id) {
+        // Edit mode - preserve the original ID from backend
+        const updatedFoodLog = { 
+          ...foodEditInitialData, 
+          ...food,
+          id: foodEditInitialData.id // Keep the original backend ID
+        };
+        
+        if (user?.uid && token) {
+          await api.updateFoodLog(user.uid, updatedFoodLog, token);
+        }
+        
+        // Update local state
+        setFoodLogs((prev: any[]) => prev.map(f => f.id === foodEditInitialData.id ? updatedFoodLog : f));
+        Alert.alert('Sucesso!', `${food.name} atualizado com sucesso`);
+      } else {
+        // Add mode
+        const newFoodLog: FoodLog = {
+          id: Math.floor(Math.random() * 1000000) + 1, // Smaller ID range
+          name: food.name,
+          quantity: food.quantity,
+          unit: food.unit,
+          calories: food.calories,
+          protein: food.protein,
+          carbs: food.carbs,
+          fat: food.fat,
+          mealType: food.mealType,
+          date: dateKey,
+        };
+        
+        if (user?.uid && token) {
+          await api.createFoodLog(user.uid, newFoodLog, token);
+        }
+        
+        // Update local state
+        setFoodLogs((prev: any[]) => [...prev, newFoodLog]);
+        Alert.alert('Sucesso!', `${food.name} adicionado ao ${food.mealType}`);
+      }
+      
+      bottomSheetRef.current?.dismiss();
+      setFoodEditInitialData(null);
+    } catch (error) {
+      console.error('Failed to save food log:', error);
+      Alert.alert('Erro', 'Falha ao salvar alimento. Tente novamente.');
     }
-    setFoodEditModalVisible(false);
-    setFoodEditInitialData(null);
   };
 
   // Handle delete
-  const handleDeleteFood = () => {
-    if (foodEditInitialData && foodEditInitialData.id) {
-      setFoodLogs((prev: any[]) => prev.filter(f => f.id !== foodEditInitialData.id));
+  const handleDeleteFood = async () => {
+    try {
+      if (foodEditInitialData && foodEditInitialData.id) {
+        const firebaseUser = getAuth().currentUser;
+        const token = firebaseUser ? await firebaseUser.getIdToken() : '';
+        
+        if (user?.uid && token) {
+          await api.deleteFoodLog(user.uid, foodEditInitialData.id, token);
+        }
+        
+        // Update local state
+        setFoodLogs((prev: any[]) => prev.filter(f => f.id !== foodEditInitialData.id));
+        Alert.alert('Sucesso!', `${foodEditInitialData.name} removido com sucesso`);
+      }
+      
+      bottomSheetRef.current?.dismiss();
+      setFoodEditInitialData(null);
+    } catch (error) {
+      console.error('Failed to delete food log:', error);
+      Alert.alert('Erro', 'Falha ao remover alimento. Tente novamente.');
     }
-    setFoodEditModalVisible(false);
-    setFoodEditInitialData(null);
   };
 
 
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFF8F6' }}>
+    <BottomSheetModalProvider>
+      <View style={{ flex: 1, backgroundColor: '#FFF8F6' }}>
       {/* Header with gradient */}
       <LinearGradient
         colors={["#FF725E", "#FF8A50"]}
@@ -517,132 +494,7 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Backend Connection Test */}
-        <APITest />
-        
-        {/* Debug User Data */}
-        <View style={styles.debugCard}>
-          <Text style={styles.debugTitle}>Debug: User Data</Text>
-          <Text style={styles.debugText}>UID: {user?.uid || 'Not loaded'}</Text>
-          <Text style={styles.debugText}>Email: {user?.email || 'Not loaded'}</Text>
-          <Text style={styles.debugText}>Calories: {user?.calories || 'Not loaded'}</Text>
-          <Text style={styles.debugText}>Protein: {user?.protein || 'Not loaded'}</Text>
-          <Text style={styles.debugText}>Carbs: {user?.carbs || 'Not loaded'}</Text>
-          <Text style={styles.debugText}>Fat: {user?.fat || 'Not loaded'}</Text>
-          <Text style={styles.debugText}>User Object: {JSON.stringify(user, null, 2)}</Text>
-          
-          <TouchableOpacity 
-            style={styles.debugButton} 
-            onPress={async () => {
-              console.log('Manual user sync triggered');
-              const firebaseUser = getAuth().currentUser;
-              if (firebaseUser) {
-                console.log('Current Firebase user:', firebaseUser.uid);
-                try {
-                  const backendUser = await api.syncUser({
-                    uid: firebaseUser.uid,
-                    email: firebaseUser.email || '',
-                    displayName: firebaseUser.displayName,
-                    photoURL: firebaseUser.photoURL
-                  });
-                  console.log('Manual sync result:', backendUser);
-                  
-                  // Manually update local user state
-                  const combinedUser = {
-                    ...backendUser,
-                    uid: firebaseUser.uid,
-                    email: firebaseUser.email,
-                    displayName: firebaseUser.displayName,
-                    photoURL: firebaseUser.photoURL,
-                  };
-                  setLocalUser(combinedUser);
-                  
-                  Alert.alert('Sync Result', `User synced: ${backendUser.id}`);
-                } catch (error: any) {
-                  console.error('Manual sync failed:', error);
-                  Alert.alert('Sync Failed', error.message || 'Unknown error');
-                }
-              } else {
-                Alert.alert('No Firebase User', 'No authenticated user found');
-              }
-            }}
-          >
-            <Text style={styles.debugButtonText}>Manual User Sync</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[styles.debugButton, { backgroundColor: '#3b82f6', marginTop: 8 }]} 
-            onPress={() => {
-              console.log('Force refresh triggered');
-              // Force re-render by updating a state
-              setCurrentDate(new Date());
-            }}
-          >
-            <Text style={styles.debugButtonText}>Force Refresh UI</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[styles.debugButton, { backgroundColor: '#10b981', marginTop: 8 }]} 
-            onPress={() => {
-              console.log('Current user from useAuth:', user);
-              console.log('Current user from Firebase:', getAuth().currentUser);
-              Alert.alert('Debug Info', `User from useAuth: ${user ? 'Present' : 'Null'}\nFirebase User: ${getAuth().currentUser ? 'Present' : 'Null'}`);
-            }}
-          >
-            <Text style={styles.debugButtonText}>Check Auth State</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[styles.debugButton, { backgroundColor: '#f59e0b', marginTop: 8 }]} 
-            onPress={async () => {
-              console.log('Force AuthContext sync triggered');
-              const firebaseUser = getAuth().currentUser;
-              if (firebaseUser) {
-                try {
-                  const backendUser = await api.syncUser({
-                    uid: firebaseUser.uid,
-                    email: firebaseUser.email || '',
-                    displayName: firebaseUser.displayName,
-                    photoURL: firebaseUser.photoURL
-                  });
-                  console.log('AuthContext sync result:', backendUser);
-                  
-                  // Manually update local user state
-                  const combinedUser = {
-                    ...backendUser,
-                    uid: firebaseUser.uid,
-                    email: firebaseUser.email,
-                    displayName: firebaseUser.displayName,
-                    photoURL: firebaseUser.photoURL,
-                  };
-                  setLocalUser(combinedUser);
-                  
-                  // Force a re-render by updating the date
-                  setCurrentDate(new Date());
-                  Alert.alert('Sync Complete', `User data: ${backendUser.calories} calories`);
-                } catch (error: any) {
-                  console.error('AuthContext sync failed:', error);
-                  Alert.alert('Sync Failed', error.message || 'Unknown error');
-                }
-              }
-            }}
-          >
-            <Text style={styles.debugButtonText}>Force AuthContext Sync</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[styles.debugButton, { backgroundColor: '#8b5cf6', marginTop: 8 }]} 
-            onPress={() => {
-              console.log('Manual local user update triggered');
-              console.log('AuthContext user:', authContext.user);
-              console.log('Local user:', localUser);
-              setLocalUser(authContext.user);
-              Alert.alert('Local User Updated', `AuthContext user: ${authContext.user ? 'Present' : 'Null'}\nLocal user: ${localUser ? 'Present' : 'Null'}`);
-            }}
-          >
-            <Text style={styles.debugButtonText}>Update Local User</Text>
-          </TouchableOpacity>
-        </View>
+
 
         {/* Progress Summary */}
         <View style={styles.progressCard}>
@@ -871,16 +723,16 @@ export default function DashboardScreen() {
         </View>
       </Modal>
 
-      {/* Simplified FoodEditModal */}
-      <FoodEditModal
-        visible={foodEditModalVisible}
-        onClose={() => { setFoodEditModalVisible(false); setFoodEditInitialData(null); }}
-        onSave={handleSaveFood}
-        onDelete={foodEditInitialData && foodEditInitialData.id ? handleDeleteFood : undefined}
+      {/* FoodBottomSheet */}
+      <FoodBottomSheet
+        ref={bottomSheetRef}
         initialData={foodEditInitialData}
         mealOptions={MEAL_OPTIONS}
+        onSave={handleSaveFood}
+        onDelete={foodEditInitialData && foodEditInitialData.id ? handleDeleteFood : undefined}
       />
-    </View>
+      </View>
+    </BottomSheetModalProvider>
   );
 }
 
@@ -1354,37 +1206,5 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 24,
     marginHorizontal: 20,
-  },
-  debugCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    marginHorizontal: 18,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  debugTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1e293b',
-    marginBottom: 8,
-  },
-  debugText: {
-    fontSize: 14,
-    color: '#64748b',
-    marginBottom: 4,
-  },
-  debugButton: {
-    backgroundColor: '#FF725E',
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 12,
-    alignItems: 'center',
-  },
-  debugButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
   },
 });
