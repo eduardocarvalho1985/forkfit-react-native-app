@@ -289,7 +289,9 @@ export default function DashboardScreen() {
     
     switch (option) {
       case 'manual':
-        Alert.alert('Entrada Manual', 'Funcionalidade em desenvolvimento');
+        console.log('Opening manual food entry modal...');
+        setFoodEditInitialData({ mealType: selectedMealType || 'Almoço' });
+        setFoodEditModalVisible(true);
         break;
       case 'recentes':
         Alert.alert('Refeições Recentes', 'Funcionalidade em desenvolvimento');
@@ -315,15 +317,25 @@ export default function DashboardScreen() {
   const handleSearchFood = async (query: string) => {
     console.log('Searching for:', query);
     setSearchQuery(query);
-    if (query.trim()) {
+    
+    // Only search if query has at least 2 characters
+    if (query.trim().length >= 2) {
       try {
         setLoadingFoods(true);
+        console.log('Making API call to search foods...');
         const foods = await api.searchFoods(query);
         console.log('Search results:', foods);
-        setFilteredFoods(foods);
+        // Ensure foods is an array and has valid data
+        if (Array.isArray(foods)) {
+          setFilteredFoods(foods);
+        } else {
+          console.error('Search returned non-array result:', foods);
+          setFilteredFoods([]);
+        }
       } catch (error) {
         console.error('Failed to search foods:', error);
-        Alert.alert('Erro', 'Falha ao buscar alimentos');
+        setFilteredFoods([]);
+        // Don't show alert for now to avoid modal issues
       } finally {
         setLoadingFoods(false);
       }
@@ -458,6 +470,8 @@ export default function DashboardScreen() {
     setFoodEditModalVisible(false);
     setFoodEditInitialData(null);
   };
+
+
 
   return (
     <View style={{ flex: 1, backgroundColor: '#FFF8F6' }}>
@@ -733,7 +747,7 @@ export default function DashboardScreen() {
             </TouchableOpacity>
           </View>
           <View style={styles.sheetOptionsGrid}>
-            <TouchableOpacity style={styles.sheetOption} onPress={() => openAddFoodModal()}>
+            <TouchableOpacity style={styles.sheetOption} onPress={() => handleOption('manual')}>
               <Icon name="create-outline" size={32} color="#FF725E" />
               <Text style={styles.sheetOptionText}>Entrada manual</Text>
             </TouchableOpacity>
@@ -778,32 +792,28 @@ export default function DashboardScreen() {
               placeholder="Digite o nome do alimento..."
               value={searchQuery}
               onChangeText={handleSearchFood}
-              autoFocus
             />
           </View>
 
-          <ScrollView style={styles.searchResults}>
-            {(filteredFoods || []).map((food) => (
-              <TouchableOpacity
-                key={food.id}
-                style={styles.searchResultItem}
-                onPress={() => handleSelectFood(food)}
-              >
-                <View style={styles.searchResultInfo}>
-                  <Text style={styles.searchResultName}>{food.name}</Text>
-                  <Text style={styles.searchResultCategory}>{food.category}</Text>
-                </View>
-                <View style={styles.searchResultMacros}>
-                  <Text style={styles.searchResultCalories}>{food.calories} kcal</Text>
-                  <Text style={styles.searchResultMacroDetails}>
-                    P: {food.protein}g | C: {food.carbs}g | G: {food.fat}g
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          <View style={styles.searchResults}>
+            <Text>Search modal loaded successfully!</Text>
+            <Text>Query: {searchQuery}</Text>
+            <Text>Loading: {loadingFoods ? 'Yes' : 'No'}</Text>
+            <Text>Results: {(filteredFoods || []).length}</Text>
+            <TouchableOpacity 
+              style={{ backgroundColor: '#FF725E', padding: 10, margin: 10, borderRadius: 8 }}
+              onPress={() => {
+                console.log('Test button pressed');
+                Alert.alert('Test', 'Modal is working!');
+              }}
+            >
+              <Text style={{ color: 'white', textAlign: 'center' }}>Test Button</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
+
+
 
       {/* Quantity Modal */}
       <Modal
@@ -861,7 +871,7 @@ export default function DashboardScreen() {
         </View>
       </Modal>
 
-      {/* Food Edit Modal */}
+      {/* Simplified FoodEditModal */}
       <FoodEditModal
         visible={foodEditModalVisible}
         onClose={() => { setFoodEditModalVisible(false); setFoodEditInitialData(null); }}
