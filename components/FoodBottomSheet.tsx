@@ -42,6 +42,7 @@ export const FoodBottomSheet = forwardRef<BottomSheetModal, FoodBottomSheetProps
     const [protein, setProtein] = useState('');
     const [carbs, setCarbs] = useState('');
     const [fat, setFat] = useState('');
+    const [saveFood, setSaveFood] = useState(false);
 
     // State for validation and auto-recalculation
     const [originalMacros, setOriginalMacros] = useState({
@@ -142,6 +143,7 @@ export const FoodBottomSheet = forwardRef<BottomSheetModal, FoodBottomSheetProps
             setProtein(initialProtein.toString());
             setCarbs(initialCarbs.toString());
             setFat(initialFat.toString());
+            setSaveFood(false); // Reset save food option for edit mode
             
             // Store original macros for auto-recalculation
             setOriginalMacros({
@@ -160,6 +162,7 @@ export const FoodBottomSheet = forwardRef<BottomSheetModal, FoodBottomSheetProps
             setProtein('');
             setCarbs('');
             setFat('');
+            setSaveFood(false);
             
             // Reset original macros
             setOriginalMacros({
@@ -201,6 +204,7 @@ export const FoodBottomSheet = forwardRef<BottomSheetModal, FoodBottomSheetProps
             protein: parseFloat(protein),
             carbs: parseFloat(carbs),
             fat: parseFloat(fat),
+            saveFood, // Include the save food preference
         });
     }
 
@@ -375,6 +379,32 @@ export const FoodBottomSheet = forwardRef<BottomSheetModal, FoodBottomSheetProps
             </View>
           </View>
 
+          {/* Save Food Checkbox */}
+          {!isEdit && (
+            <TouchableOpacity 
+              style={styles.saveFoodRow} 
+              onPress={() => setSaveFood(!saveFood)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.checkboxContainer}>
+                <View style={[
+                  styles.checkbox,
+                  saveFood && styles.checkboxChecked
+                ]}>
+                  {saveFood && (
+                    <FontAwesome6 name="check" size={12} color="#fff" />
+                  )}
+                </View>
+                <Text style={styles.saveFoodText}>
+                  Salvar alimento para uso futuro
+                </Text>
+              </View>
+              <Text style={styles.saveFoodInfo}>
+                Este alimento aparecerá em "Alimentos Salvos" para adição rápida
+              </Text>
+            </TouchableOpacity>
+          )}
+
           {/* Action Buttons */}
           <View style={styles.buttonRow}>
             {isEdit && onDelete && (
@@ -459,6 +489,41 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: BORDER,
     paddingHorizontal: 12,
+  },
+  saveFoodRow: {
+    marginTop: 20,
+    paddingVertical: 12,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: CORAL,
+    backgroundColor: '#fff',
+    marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: CORAL,
+  },
+  saveFoodText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: TEXT,
+    flex: 1,
+  },
+  saveFoodInfo: {
+    fontSize: 12,
+    color: '#64748b',
+    marginLeft: 32,
+    fontStyle: 'italic',
   },
   buttonRow: {
     flexDirection: 'row',

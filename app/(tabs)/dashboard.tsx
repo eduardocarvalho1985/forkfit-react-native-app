@@ -19,10 +19,12 @@ import { BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet
 import { MacroProgress } from '../../components/MacroProgress';
 import { SafeAreaView as SafeAreaViewContext } from 'react-native-safe-area-context';
 import { FoodBottomSheet } from '../../components/FoodBottomSheet';
+import { SavedFoodsBottomSheet } from '../../components/SavedFoodsBottomSheet';
+import { AIFoodAnalysisBottomSheet, AIAnalysisResult } from '../../components/AIFoodAnalysisBottomSheet';
 
 import Svg, { Circle } from 'react-native-svg';
 import { useAuth } from '../../contexts/AuthContext';
-import { api, FoodItem, FoodLog } from '../../services/api';
+import { api, FoodItem, FoodLog, SavedFood } from '../../services/api';
 import { getAuth } from '@react-native-firebase/auth';
 
 const MEAL_TYPES = [
@@ -107,8 +109,10 @@ function MealSection({
 }
 
 export default function DashboardScreen() {
-  // Create a ref to control the bottom sheet
+  // Create refs to control the bottom sheets
   const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const savedFoodsBottomSheetRef = useRef<BottomSheetModal>(null);
+  const aiFoodAnalysisBottomSheetRef = useRef<BottomSheetModal>(null);
   
   const [currentDate, setCurrentDate] = useState(new Date());
   const [addFoodVisible, setAddFoodVisible] = useState(false);
@@ -258,13 +262,13 @@ export default function DashboardScreen() {
         Alert.alert('Refeições Recentes', 'Funcionalidade em desenvolvimento');
         break;
       case 'salvos':
-        Alert.alert('Alimentos Salvos', 'Funcionalidade em desenvolvimento');
+        savedFoodsBottomSheetRef.current?.present();
         break;
       case 'banco':
         setSearchModalVisible(true);
         break;
       case 'ai':
-        Alert.alert('Análise por IA', 'Funcionalidade em desenvolvimento');
+        aiFoodAnalysisBottomSheetRef.current?.present();
         break;
     }
   };
@@ -376,7 +380,25 @@ export default function DashboardScreen() {
       const firebaseUser = getAuth().currentUser;
       const token = firebaseUser ? await firebaseUser.getIdToken() : '';
       
-      if (foodEditInitialData && foodEditInitialData.id) {
+      // Check if this is a saved food being edited
+      if (foodEditInitialData && foodEditInitialData.isSavedFood) {
+        // Update saved food
+        const updatedSavedFood = {
+          name: food.name,
+          quantity: food.quantity,
+          unit: food.unit,
+          calories: food.calories,
+          protein: food.protein,
+          carbs: food.carbs,
+          fat: food.fat,
+        };
+        
+        if (user?.uid && token) {
+          await api.updateSavedFood(user.uid, foodEditInitialData.id, updatedSavedFood, token);
+        }
+        
+        Alert.alert('Sucesso!', `${food.name} atualizado nos alimentos salvos`);
+      } else if (foodEditInitialData && foodEditInitialData.id) {
         // Edit mode - preserve the original ID from backend
         const updatedFoodLog = { 
           ...foodEditInitialData, 
@@ -408,11 +430,38 @@ export default function DashboardScreen() {
         
         if (user?.uid && token) {
           await api.createFoodLog(user.uid, newFoodLog, token);
+          
+          // If user wants to save this food for future use
+          if (food.saveFood) {
+            try {
+              const savedFoodData = {
+                name: food.name,
+                quantity: food.quantity,
+                unit: food.unit,
+                calories: food.calories,
+                protein: food.protein,
+                carbs: food.carbs,
+                fat: food.fat,
+              };
+              
+              await api.saveFood(user.uid, savedFoodData, token);
+              console.log('Food saved for future use:', food.name);
+            } catch (saveError) {
+              console.error('Failed to save food for future use:', saveError);
+              // Don't show error to user as the main food log was saved successfully
+            }
+          }
         }
         
         // Update local state
         setFoodLogs((prev: any[]) => [...prev, newFoodLog]);
-        Alert.alert('Sucesso!', `${food.name} adicionado ao ${food.mealType}`);
+        
+        // Show success message
+        if (food.saveFood) {
+          Alert.alert('Sucesso!', `${food.name} adicionado com sucesso e salvo para uso futuro!`);
+        } else {
+          Alert.alert('Sucesso!', `${food.name} adicionado com sucesso.`);
+        }
       }
       
       bottomSheetRef.current?.dismiss();
@@ -444,6 +493,98 @@ export default function DashboardScreen() {
     } catch (error) {
       console.error('Failed to delete food log:', error);
       Alert.alert('Erro', 'Falha ao remover alimento. Tente novamente.');
+    }
+  };
+
+  // Saved Foods handlers
+  const handleSelectSavedFood = (savedFood: SavedFood) => {
+    // Convert saved food to food log format and add to current meal
+    const newFoodLog: FoodLog = {
+      id: Math.floor(Math.random() * 1000000) + 1,
+      name: savedFood.name,
+      quantity: savedFood.quantity,
+      unit: savedFood.unit,
+      calories: savedFood.calories,
+      protein: savedFood.protein,
+      carbs: savedFood.carbs,
+      fat: savedFood.fat,
+      mealType: selectedMealType || 'Almoço',
+      date: dateKey,
+    };
+
+    // Add to food logs
+    setFoodLogs((prev: any[]) => [...prev, newFoodLog]);
+    
+    // Save to backend
+    const saveToBackend = async () => {
+      try {
+        const firebaseUser = getAuth().currentUser;
+        const token = firebaseUser ? await firebaseUser.getIdToken() : '';
+        
+        if (user?.uid && token) {
+          await api.createFoodLog(user.uid, newFoodLog, token);
+        }
+      } catch (error) {
+        console.error('Failed to save food log from saved food:', error);
+        Alert.alert('Erro', 'Falha ao adicionar alimento. Tente novamente.');
+      }
+    };
+    
+    saveToBackend();
+    Alert.alert('Sucesso!', `${savedFood.name} adicionado com sucesso.`);
+  };
+
+  const handleEditSavedFood = (savedFood: SavedFood) => {
+    // Open the food bottom sheet in edit mode with saved food data
+    setFoodEditInitialData({
+      ...savedFood,
+      mealType: selectedMealType || 'Almoço',
+      isSavedFood: true, // Flag to indicate this is a saved food being edited
+    });
+    savedFoodsBottomSheetRef.current?.dismiss();
+    bottomSheetRef.current?.present();
+  };
+
+  const handleDeleteSavedFood = (foodId: number) => {
+    // This will be handled by the SavedFoodsBottomSheet component
+    console.log('Saved food deleted:', foodId);
+  };
+
+  // AI Food Analysis handler
+  const handleFoodAnalyzed = async (aiResult: AIAnalysisResult) => {
+    try {
+      const firebaseUser = getAuth().currentUser;
+      const token = firebaseUser ? await firebaseUser.getIdToken() : '';
+      
+      if (!user?.uid || !token) {
+        Alert.alert('Erro', 'Token de autenticação não disponível');
+        return;
+      }
+
+      // Convert AI result to food log format
+      const newFoodLog: FoodLog = {
+        id: Math.floor(Math.random() * 1000000) + 1,
+        name: aiResult.food,
+        quantity: aiResult.quantity,
+        unit: aiResult.unit,
+        calories: aiResult.calories,
+        protein: aiResult.protein,
+        carbs: aiResult.carbs,
+        fat: aiResult.fat,
+        mealType: aiResult.mealType,
+        date: aiResult.date,
+      };
+
+      // Save to backend
+      await api.createFoodLog(user.uid, newFoodLog, token);
+      
+      // Update local state
+      setFoodLogs((prev: any[]) => [...prev, newFoodLog]);
+      
+      Alert.alert('Sucesso!', `${aiResult.food} adicionado com sucesso.`);
+    } catch (error: any) {
+      console.error('Failed to save AI analyzed food:', error);
+      Alert.alert('Erro', 'Falha ao adicionar alimento analisado. Tente novamente.');
     }
   };
 
@@ -730,6 +871,22 @@ export default function DashboardScreen() {
         mealOptions={MEAL_OPTIONS}
         onSave={handleSaveFood}
         onDelete={foodEditInitialData && foodEditInitialData.id ? handleDeleteFood : undefined}
+      />
+
+      {/* SavedFoodsBottomSheet */}
+      <SavedFoodsBottomSheet
+        ref={savedFoodsBottomSheetRef}
+        onSelectFood={handleSelectSavedFood}
+        onEditFood={handleEditSavedFood}
+        onDeleteFood={handleDeleteSavedFood}
+      />
+
+      {/* AIFoodAnalysisBottomSheet */}
+      <AIFoodAnalysisBottomSheet
+        ref={aiFoodAnalysisBottomSheetRef}
+        onFoodAnalyzed={handleFoodAnalyzed}
+        selectedMealType={selectedMealType || 'Almoço'}
+        date={dateKey}
       />
       </View>
     </BottomSheetModalProvider>

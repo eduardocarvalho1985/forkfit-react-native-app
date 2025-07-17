@@ -21,6 +21,18 @@ export interface FoodLog {
   fat: number;
 }
 
+export interface SavedFood {
+  id?: number;
+  uid: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
 export interface BackendUser {
   id?: number;
   uid: string;
@@ -227,6 +239,63 @@ class ForkFitAPI {
   ): Promise<void> {
     return this.request(`/users/${uid}/food-logs/${foodLogId}`, {
       method: "DELETE",
+      token,
+    });
+  }
+
+  // Saved foods
+  async getSavedFoods(uid: string, token: string): Promise<SavedFood[]> {
+    return this.request(`/users/${uid}/saved-foods`, { token });
+  }
+
+  async saveFood(uid: string, savedFood: Omit<SavedFood, 'uid'>, token: string): Promise<SavedFood> {
+    return this.request(`/users/${uid}/saved-foods`, {
+      method: "POST",
+      body: savedFood,
+      token,
+    });
+  }
+
+  async updateSavedFood(uid: string, savedFoodId: number, savedFood: Partial<SavedFood>, token: string): Promise<SavedFood> {
+    return this.request(`/users/${uid}/saved-foods/${savedFoodId}`, {
+      method: "PUT",
+      body: savedFood,
+      token,
+    });
+  }
+
+  async deleteSavedFood(uid: string, savedFoodId: number, token: string): Promise<void> {
+    return this.request(`/users/${uid}/saved-foods/${savedFoodId}`, {
+      method: "DELETE",
+      token,
+    });
+  }
+
+  // AI Food Analysis
+  async analyzeFoodImage(
+    uid: string, 
+    imageData: string, 
+    mealType: string, 
+    date: string, 
+    token: string
+  ): Promise<{
+    food: string;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    quantity: number;
+    unit: string;
+    mealType: string;
+    date: string;
+  }> {
+    return this.request(`/users/${uid}/food-image`, {
+      method: "POST",
+      body: {
+        image: imageData,
+        mealType,
+        date,
+      },
       token,
     });
   }
