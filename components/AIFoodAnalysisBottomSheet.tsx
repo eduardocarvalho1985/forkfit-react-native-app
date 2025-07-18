@@ -4,8 +4,9 @@ import React, { forwardRef, useMemo, useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Image, ActivityIndicator, Dimensions } from 'react-native';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { FontAwesome6 } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import * as ImageManipulator from 'expo-image-manipulator';
+// Temporarily disabled due to native module issues
+// import * as ImagePicker from 'expo-image-picker';
+// import * as ImageManipulator from 'expo-image-manipulator';
 import { api } from '../services/api';
 import { getAuth } from '@react-native-firebase/auth';
 import { useAuth } from '../contexts/AuthContext';
@@ -44,37 +45,14 @@ export const AIFoodAnalysisBottomSheet = forwardRef<BottomSheetModal, AIFoodAnal
     const [currentStep, setCurrentStep] = useState<'initial' | 'preview'>('initial');
     const { user } = useAuth();
 
-    const compressImage = async (uri: string): Promise<string> => {
-      try {
-        const manipulatedImage = await ImageManipulator.manipulateAsync(
-          uri,
-          [{ resize: { width: 800 } }],
-          { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true }
-        );
-        return `data:image/jpeg;base64,${manipulatedImage.base64}`;
-      } catch (error) {
-        console.error('Error compressing image:', error);
-        throw error;
-      }
-    };
-
     const pickImage = async () => {
-      try {
-        const result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: true,
-          aspect: [4, 3],
-          quality: 0.7,
-        });
-
-        if (!result.canceled && result.assets[0]) {
-          const compressedImage = await compressImage(result.assets[0].uri);
-          setSelectedImage(compressedImage);
-          setCurrentStep('preview');
-        }
-      } catch (error) {
-        Alert.alert('Erro', 'Não foi possível selecionar a imagem');
-      }
+      Alert.alert(
+        'Funcionalidade Temporariamente Indisponível',
+        'A análise por IA requer uma nova versão do app. Por favor, use a entrada manual por enquanto.',
+        [
+          { text: 'OK', onPress: handleClose }
+        ]
+      );
     };
 
     const analyzeImage = async () => {
@@ -185,16 +163,23 @@ export const AIFoodAnalysisBottomSheet = forwardRef<BottomSheetModal, AIFoodAnal
 
           {currentStep === 'initial' && (
             <View style={styles.initialContainer}>
+              <FontAwesome6 name="robot" size={48} color="#A0AEC0" />
+              <Text style={styles.initialTitle}>
+                Análise por IA
+              </Text>
               <Text style={styles.initialSubtitle}>
-                Selecione uma imagem do seu alimento para análise
+                Funcionalidade em desenvolvimento
+              </Text>
+              <Text style={styles.initialDescription}>
+                A análise por IA de alimentos requer uma nova versão do app com suporte a câmera e galeria. Por favor, use a entrada manual por enquanto.
               </Text>
               
               <TouchableOpacity
                 style={styles.galleryButton}
                 onPress={pickImage}
               >
-                <FontAwesome6 name="image" size={32} color={CORAL} />
-                <Text style={styles.galleryButtonText}>Selecionar da Galeria</Text>
+                <FontAwesome6 name="info-circle" size={24} color={CORAL} />
+                <Text style={styles.galleryButtonText}>Mais Informações</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -226,12 +211,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  initialTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: TEXT,
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 8,
+  },
   initialSubtitle: {
     fontSize: 16,
     color: '#64748b',
     textAlign: 'center',
+    marginBottom: 8,
+    paddingHorizontal: 20,
+  },
+  initialDescription: {
+    fontSize: 14,
+    color: '#94a3b8',
+    textAlign: 'center',
     marginBottom: 40,
     paddingHorizontal: 20,
+    lineHeight: 20,
   },
   optionsGrid: {
     flexDirection: 'row',
