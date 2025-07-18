@@ -27,10 +27,18 @@ interface AppUser {
   // Backend user data
   id?: number;
   onboardingCompleted?: boolean;
+  age?: number;
+  gender?: 'male' | 'female' | 'other';
+  height?: number;
+  weight?: number;
+  targetWeight?: number;
+  activityLevel?: string;
+  goal?: string;
   calories?: number;
   protein?: number;
   carbs?: number;
   fat?: number;
+  createdAt?: Date;
 }
 
 interface AuthContextData {

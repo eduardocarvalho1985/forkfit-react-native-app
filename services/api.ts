@@ -38,10 +38,18 @@ export interface BackendUser {
   uid: string;
   email: string;
   onboardingCompleted?: boolean;
+  age?: number;
+  gender?: 'male' | 'female' | 'other';
+  height?: number;
+  weight?: number;
+  targetWeight?: number;
+  activityLevel?: string;
+  goal?: string;
   calories?: number;
   protein?: number;
   carbs?: number;
   fat?: number;
+  createdAt?: Date;
 }
 
 export interface SyncUserRequest {
@@ -148,6 +156,18 @@ class ForkFitAPI {
     return this.request(`/users/${uid}`, {
       method: "POST",
       body: { uid, email },
+      token,
+    });
+  }
+
+  async getUserProfile(uid: string, token: string): Promise<BackendUser> {
+    return this.request(`/users/${uid}`, { token });
+  }
+
+  async updateUserProfile(uid: string, userData: Partial<BackendUser>, token: string): Promise<BackendUser> {
+    return this.request(`/users/${uid}`, {
+      method: "PUT",
+      body: userData,
       token,
     });
   }

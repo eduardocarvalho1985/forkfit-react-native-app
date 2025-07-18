@@ -340,11 +340,13 @@ export default function DashboardScreen() {
       const token = firebaseUser ? await firebaseUser.getIdToken() : '';
       
       if (user?.uid && token) {
-        await api.createFoodLog(user.uid, newFoodLog, token);
+        const createdFoodLog = await api.createFoodLog(user.uid, newFoodLog, token);
+        // Update local state with the backend response (which has the correct ID)
+        setFoodLogs(prev => [...prev, createdFoodLog]);
+      } else {
+        // Fallback to local state if no backend
+        setFoodLogs(prev => [...prev, newFoodLog]);
       }
-      
-      // Update local state
-      setFoodLogs(prev => [...prev, newFoodLog]);
       setQuantityModalVisible(false);
       setSelectedFood(null);
       setFoodQuantity('100');
@@ -512,17 +514,19 @@ export default function DashboardScreen() {
       date: dateKey,
     };
 
-    // Add to food logs
-    setFoodLogs((prev: any[]) => [...prev, newFoodLog]);
-    
-    // Save to backend
+    // Save to backend first, then update local state
     const saveToBackend = async () => {
       try {
         const firebaseUser = getAuth().currentUser;
         const token = firebaseUser ? await firebaseUser.getIdToken() : '';
         
         if (user?.uid && token) {
-          await api.createFoodLog(user.uid, newFoodLog, token);
+          const createdFoodLog = await api.createFoodLog(user.uid, newFoodLog, token);
+          // Update local state with the backend response (which has the correct ID)
+          setFoodLogs((prev: any[]) => [...prev, createdFoodLog]);
+        } else {
+          // Fallback to local state if no backend
+          setFoodLogs((prev: any[]) => [...prev, newFoodLog]);
         }
       } catch (error) {
         console.error('Failed to save food log from saved food:', error);
@@ -576,10 +580,10 @@ export default function DashboardScreen() {
       };
 
       // Save to backend
-      await api.createFoodLog(user.uid, newFoodLog, token);
+      const createdFoodLog = await api.createFoodLog(user.uid, newFoodLog, token);
       
-      // Update local state
-      setFoodLogs((prev: any[]) => [...prev, newFoodLog]);
+      // Update local state with the backend response (which has the correct ID)
+      setFoodLogs((prev: any[]) => [...prev, createdFoodLog]);
       
       Alert.alert('Sucesso!', `${aiResult.food} adicionado com sucesso.`);
     } catch (error: any) {

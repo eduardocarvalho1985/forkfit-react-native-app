@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "ForkFit",
-    "slug": "forkfit",
+    "slug": "forkfitauthfixed",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -29,7 +29,11 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "platforms": [
       "ios",
@@ -44,6 +48,8 @@
       "expo-router",
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
+      "expo-camera",
+      "expo-image-picker",
       [
         "expo-splash-screen",
         {
@@ -69,9 +75,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "977feabd-cc00-4955-8212-fcfcccc7ce37"
+        "projectId": "52b9dc85-b309-42c5-b465-37d2f968ef10"
       }
     },
-    "owner": "jabbarahmad810"
+    "owner": "duvoice"
   }
 }

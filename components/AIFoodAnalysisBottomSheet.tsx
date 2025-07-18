@@ -4,9 +4,7 @@ import React, { forwardRef, useMemo, useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Image, ActivityIndicator, Dimensions } from 'react-native';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { FontAwesome6 } from '@expo/vector-icons';
-// Temporarily disabled due to native module issues
-// import * as ImagePicker from 'expo-image-picker';
-// import * as ImageManipulator from 'expo-image-manipulator';
+import * as ImagePicker from 'expo-image-picker';
 import { api } from '../services/api';
 import { getAuth } from '@react-native-firebase/auth';
 import { useAuth } from '../contexts/AuthContext';
@@ -45,14 +43,46 @@ export const AIFoodAnalysisBottomSheet = forwardRef<BottomSheetModal, AIFoodAnal
     const [currentStep, setCurrentStep] = useState<'initial' | 'preview'>('initial');
     const { user } = useAuth();
 
+    const convertImageToBase64 = async (uri: string): Promise<string> => {
+      try {
+        // Convert image URI to base64
+        const response = await fetch(uri);
+        const blob = await response.blob();
+        
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const base64 = reader.result as string;
+            // Remove the data:image/jpeg;base64, prefix if present
+            const base64Data = base64.split(',')[1] || base64;
+            resolve(base64Data);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      } catch (error) {
+        console.error('Error converting image to base64:', error);
+        throw error;
+      }
+    };
+
     const pickImage = async () => {
-      Alert.alert(
-        'Funcionalidade Temporariamente Indisponível',
-        'A análise por IA requer uma nova versão do app. Por favor, use a entrada manual por enquanto.',
-        [
-          { text: 'OK', onPress: handleClose }
-        ]
-      );
+      try {
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [4, 3],
+          quality: 0.7,
+        });
+
+        if (!result.canceled && result.assets[0]) {
+          const processedImage = await convertImageToBase64(result.assets[0].uri);
+          setSelectedImage(processedImage);
+          setCurrentStep('preview');
+        }
+      } catch (error) {
+        Alert.alert('Erro', 'Não foi possível selecionar a imagem');
+      }
     };
 
     const analyzeImage = async () => {
@@ -64,6 +94,12 @@ export const AIFoodAnalysisBottomSheet = forwardRef<BottomSheetModal, AIFoodAnal
       setIsAnalyzing(true);
 
       try {
+        console.log('Starting AI analysis...');
+        console.log('Selected image length:', selectedImage.length);
+        console.log('User UID:', user.uid);
+        console.log('Selected meal type:', selectedMealType);
+        console.log('Date:', date);
+        
         const firebaseUser = getAuth().currentUser;
         const token = firebaseUser ? await firebaseUser.getIdToken() : '';
         
@@ -71,6 +107,9 @@ export const AIFoodAnalysisBottomSheet = forwardRef<BottomSheetModal, AIFoodAnal
           Alert.alert('Erro', 'Token de autenticação não disponível');
           return;
         }
+
+        console.log('Auth token length:', token.length);
+        console.log('Sending image data (first 100 chars):', selectedImage.substring(0, 100));
 
         const result = await api.analyzeFoodImage(
           user.uid,
@@ -126,7 +165,7 @@ export const AIFoodAnalysisBottomSheet = forwardRef<BottomSheetModal, AIFoodAnal
 
           {currentStep === 'preview' && selectedImage && (
             <View style={styles.previewContainer}>
-              <Image source={{ uri: selectedImage }} style={styles.selectedImage} />
+              <Image source={{ uri: `data:image/jpeg;base64,${selectedImage}` }} style={styles.selectedImage} />
               
               <View style={styles.previewContent}>
                 <Text style={styles.previewTitle}>Pronto para analisar este alimento?</Text>
@@ -163,23 +202,16 @@ export const AIFoodAnalysisBottomSheet = forwardRef<BottomSheetModal, AIFoodAnal
 
           {currentStep === 'initial' && (
             <View style={styles.initialContainer}>
-              <FontAwesome6 name="robot" size={48} color="#A0AEC0" />
-              <Text style={styles.initialTitle}>
-                Análise por IA
-              </Text>
               <Text style={styles.initialSubtitle}>
-                Funcionalidade em desenvolvimento
-              </Text>
-              <Text style={styles.initialDescription}>
-                A análise por IA de alimentos requer uma nova versão do app com suporte a câmera e galeria. Por favor, use a entrada manual por enquanto.
+                Selecione uma imagem do seu alimento para análise
               </Text>
               
               <TouchableOpacity
                 style={styles.galleryButton}
                 onPress={pickImage}
               >
-                <FontAwesome6 name="info-circle" size={24} color={CORAL} />
-                <Text style={styles.galleryButtonText}>Mais Informações</Text>
+                <FontAwesome6 name="image" size={32} color={CORAL} />
+                <Text style={styles.galleryButtonText}>Selecionar da Galeria</Text>
               </TouchableOpacity>
             </View>
           )}

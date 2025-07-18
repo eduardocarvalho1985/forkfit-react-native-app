@@ -1,10 +1,12 @@
 // app/auth/login.tsx   (repeat for register.tsx, index.tsx, _layout.tsx,
 // dashboard.tsx, settings.tsx, etc.)
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
+import { api } from '../../services/api';
+import { getAuth } from '@react-native-firebase/auth';
 
 const CORAL = '#FF725E';
 const OFF_WHITE = '#FFF8F6';
@@ -30,29 +32,49 @@ const ACTIVITY_OPTIONS = [
 ];
 
 export default function ProfileScreen() {
-  const { signOut, user } = useAuth();
+  const { signOut, user, syncUser } = useAuth();
+  const [loading, setLoading] = useState(false);
 
   // Profile fields
   const [name, setName] = useState(user?.displayName || '');
   const [email, setEmail] = useState(user?.email || '');
-  const [age, setAge] = useState('');
-  const [gender, setGender] = useState(null);
+  const [age, setAge] = useState(user?.age?.toString() || '');
+  const [gender, setGender] = useState(user?.gender || null);
   const [openGender, setOpenGender] = useState(false);
-  const [height, setHeight] = useState('');
-  const [weight, setWeight] = useState('');
+  const [height, setHeight] = useState(user?.height?.toString() || '');
+  const [weight, setWeight] = useState(user?.weight?.toString() || '');
   const [profession, setProfession] = useState('');
   // Goals
-  const [goal, setGoal] = useState(null);
+  const [goal, setGoal] = useState(user?.goal || null);
   const [openGoal, setOpenGoal] = useState(false);
-  const [targetWeight, setTargetWeight] = useState('');
+  const [targetWeight, setTargetWeight] = useState(user?.targetWeight?.toString() || '');
   const [targetFat, setTargetFat] = useState('');
-  const [activity, setActivity] = useState(null);
+  const [activity, setActivity] = useState(user?.activityLevel || null);
   const [openActivity, setOpenActivity] = useState(false);
   // Nutrition
   const [calories, setCalories] = useState(user?.calories?.toString() || '');
   const [protein, setProtein] = useState(user?.protein?.toString() || '');
   const [carbs, setCarbs] = useState(user?.carbs?.toString() || '');
   const [fat, setFat] = useState(user?.fat?.toString() || '');
+
+  // Load user data when component mounts or user changes
+  useEffect(() => {
+    if (user) {
+      setName(user.displayName || '');
+      setEmail(user.email || '');
+      setAge(user.age?.toString() || '');
+      setGender(user.gender || null);
+      setHeight(user.height?.toString() || '');
+      setWeight(user.weight?.toString() || '');
+      setGoal(user.goal || null);
+      setTargetWeight(user.targetWeight?.toString() || '');
+      setActivity(user.activityLevel || null);
+      setCalories(user.calories?.toString() || '');
+      setProtein(user.protein?.toString() || '');
+      setCarbs(user.carbs?.toString() || '');
+      setFat(user.fat?.toString() || '');
+    }
+  }, [user]);
 
   const handleLogout = async () => {
     Alert.alert(
@@ -78,6 +100,44 @@ export default function ProfileScreen() {
     );
   };
 
+  const handleSaveProfile = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const token = await getAuth().currentUser?.getIdToken();
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+
+      const userData = {
+        age: age ? parseInt(age) : undefined,
+        gender: gender || undefined,
+        height: height ? parseFloat(height) : undefined,
+        weight: weight ? parseFloat(weight) : undefined,
+        targetWeight: targetWeight ? parseFloat(targetWeight) : undefined,
+        activityLevel: activity || undefined,
+        goal: goal || undefined,
+        calories: calories ? parseInt(calories) : undefined,
+        protein: protein ? parseInt(protein) : undefined,
+        carbs: carbs ? parseInt(carbs) : undefined,
+        fat: fat ? parseInt(fat) : undefined,
+      };
+
+      await api.updateUserProfile(user.uid, userData, token);
+      
+      // Sync user data to update the context
+      await syncUser();
+      
+      Alert.alert('Sucesso', 'Perfil atualizado com sucesso!');
+    } catch (error: any) {
+      console.error('Error saving profile:', error);
+      Alert.alert('Erro', 'Não foi possível salvar o perfil. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <ScrollView style={{ flex: 1, backgroundColor: OFF_WHITE, paddingTop: 36 }} contentContainerStyle={{ paddingBottom: 32 }}>
       {/* Header with Title and Logout */}
@@ -99,22 +159,11 @@ export default function ProfileScreen() {
           <View style={styles.profileInfoBox}><Text style={styles.profileInfoText}>{weight || '--'} <Text style={styles.profileInfoUnit}>kg</Text></Text></View>
           <View style={styles.profileInfoBox}><Text style={styles.profileInfoText}>{age || '--'} <Text style={styles.profileInfoUnit}>anos</Text></Text></View>
         </View>
-        <DropDownPicker
-          open={openGoal}
-          value={goal}
-          items={GOAL_OPTIONS}
-          setOpen={setOpenGoal}
-          setValue={setGoal}
-          setItems={() => { }}
-          placeholder="Meta: Perder Peso"
-          style={styles.dropdown}
-          dropDownContainerStyle={styles.dropdownContainer}
-          textStyle={styles.dropdownText}
-          placeholderStyle={styles.dropdownPlaceholder}
-          listItemLabelStyle={styles.dropdownText}
-          zIndex={2000}
-          zIndexInverse={1000}
-        />
+        <View style={styles.goalDisplay}>
+          <Text style={styles.goalText}>
+            Meta: {goal ? GOAL_OPTIONS.find(g => g.value === goal)?.label || goal : 'Não definida'}
+          </Text>
+        </View>
       </View>
       {/* Edit Profile Section */}
       <View style={styles.sectionCard}>
@@ -228,8 +277,14 @@ export default function ProfileScreen() {
             <TextInput style={styles.input} value={fat} onChangeText={setFat} placeholder="Gordura" keyboardType="numeric" placeholderTextColor="#A0AEC0" />
           </View>
         </View>
-        <TouchableOpacity style={styles.saveButton}>
-          <Text style={styles.saveButtonText}>Salvar Todas as Alterações</Text>
+        <TouchableOpacity 
+          style={[styles.saveButton, loading && styles.saveButtonDisabled]} 
+          onPress={handleSaveProfile}
+          disabled={loading}
+        >
+          <Text style={styles.saveButtonText}>
+            {loading ? 'Salvando...' : 'Salvar Todas as Alterações'}
+          </Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -309,6 +364,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#64748b',
   },
+  goalDisplay: {
+    marginTop: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: BORDER,
+  },
+  goalText: {
+    fontSize: 14,
+    color: TEXT,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
   sectionCard: {
     backgroundColor: '#fff',
     borderRadius: 16,
@@ -373,6 +443,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     marginTop: 18,
     alignItems: 'center',
+  },
+  saveButtonDisabled: {
+    backgroundColor: '#ccc',
   },
   saveButtonText: {
     color: '#fff',
