@@ -212,7 +212,7 @@ export default function ProfileScreen() {
       </View>
       {/* Goals & Objectives Section */}
       <View style={styles.sectionCard}>
-        <Text style={styles.sectionTitle}>🍓 Metas e Objetivos</Text>
+        <Text style={styles.sectionTitle}>💪 Metas e Objetivos</Text>
         <Text style={styles.label}>Objetivo Principal</Text>
         <DropDownPicker
           open={openGoal}
