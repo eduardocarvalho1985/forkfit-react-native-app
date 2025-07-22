@@ -9,9 +9,17 @@ const OFF_WHITE = '#FFF8F6';
 const BORDER = '#FFA28F';
 const TEXT = '#1F2937';
 
+const GENDER_OPTIONS: Array<{ label: string; value: 'male' | 'female' | 'other' }> = [
+  { label: 'Masculino', value: 'male' },
+  { label: 'Feminino', value: 'female' },
+  { label: 'Outro', value: 'other' },
+];
+
 export default function OnboardingScreen() {
   const { user, syncUser } = useAuth();
+  const [currentStep, setCurrentStep] = useState(1); // 1 = name, 2 = gender
   const [name, setName] = useState(user?.name || '');
+  const [gender, setGender] = useState<'male' | 'female' | 'other' | null>(user?.gender || null);
   const [loading, setLoading] = useState(false);
 
   // Update name when user data changes
@@ -21,7 +29,14 @@ export default function OnboardingScreen() {
     }
   }, [user?.name]);
 
-  const handleCompleteOnboarding = async () => {
+  // Update gender when user data changes
+  useEffect(() => {
+    if (user?.gender) {
+      setGender(user.gender);
+    }
+  }, [user?.gender]);
+
+  const handleNameStep = async () => {
     if (!user) {
       Alert.alert('Erro', 'Usuário não encontrado. Tente fazer login novamente.');
       return;
@@ -44,13 +59,64 @@ export default function OnboardingScreen() {
         throw new Error('No authentication token available');
       }
 
-      // Update user profile with name and complete onboarding
-      console.log('Updating user profile with name and onboarding status...');
+      // Update user profile with name
+      console.log('Updating user profile with name...');
       console.log('Name being saved:', name.trim());
       console.log('User UID:', user.uid);
       
       const userProfileData = {
         name: name.trim(),
+      };
+      console.log('User profile data being sent:', userProfileData);
+      
+      await api.updateUserProfile(user.uid, userProfileData, token);
+      console.log('User profile updated successfully');
+
+      // Move to next step
+      setCurrentStep(2);
+      console.log('Moving to gender selection step');
+      
+    } catch (error: any) {
+      console.error('Error updating name:', error);
+      
+      // More specific error messages
+      if (error.message.includes('JSON Parse error')) {
+        Alert.alert('Erro de Servidor', 'O servidor está retornando dados inválidos. Tente novamente em alguns instantes.');
+      } else if (error.message.includes('timeout')) {
+        Alert.alert('Erro de Conexão', 'A conexão com o servidor demorou muito. Verifique sua internet e tente novamente.');
+      } else {
+        Alert.alert('Erro', 'Não foi possível salvar o nome. Tente novamente.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCompleteOnboarding = async () => {
+    if (!user) {
+      Alert.alert('Erro', 'Usuário não encontrado. Tente fazer login novamente.');
+      return;
+    }
+
+    if (!gender) {
+      Alert.alert('Erro', 'Por favor, selecione seu gênero para continuar.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = await getAuth().currentUser?.getIdToken();
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+
+      // Update user profile with gender and complete onboarding
+      console.log('Completing onboarding with gender...');
+      console.log('Gender being saved:', gender);
+      console.log('User UID:', user.uid);
+      
+      const userProfileData = {
+        gender: gender,
         onboardingCompleted: true
       };
       console.log('User profile data being sent:', userProfileData);
@@ -92,43 +158,90 @@ export default function OnboardingScreen() {
     }
   };
 
+  const renderNameStep = () => (
+    <View style={styles.content}>
+      <Text style={styles.title}>Bem-vindo ao ForkFit! 🍓</Text>
+      <Text style={styles.subtitle}>
+        Vamos começar configurando seu perfil para personalizar sua experiência.
+      </Text>
+
+      <View style={styles.formSection}>
+        <Text style={styles.label}>
+          {user?.name ? 'Atualizar seu nome' : 'Como devemos te chamar?'}
+        </Text>
+        <TextInput
+          style={styles.input}
+          value={name}
+          onChangeText={setName}
+          placeholder={user?.name ? "Seu nome atualizado" : "Seu nome"}
+          placeholderTextColor="#A0AEC0"
+          autoFocus
+          autoCapitalize="words"
+        />
+      </View>
+
+      <TouchableOpacity
+        style={[styles.button, loading && styles.buttonDisabled]}
+        onPress={handleNameStep}
+        disabled={loading}
+      >
+        <Text style={styles.buttonText}>
+          {loading ? 'Salvando...' : 'Continuar'}
+        </Text>
+      </TouchableOpacity>
+
+      <Text style={styles.note}>
+        Você poderá adicionar mais informações sobre seus objetivos e preferências depois.
+      </Text>
+    </View>
+  );
+
+  const renderGenderStep = () => (
+    <View style={styles.content}>
+      <Text style={styles.title}>Escolha seu gênero</Text>
+      <Text style={styles.subtitle}>
+        Isso será usado para calibrar seu plano personalizado.
+      </Text>
+
+      <View style={styles.formSection}>
+        {GENDER_OPTIONS.map((option) => (
+          <TouchableOpacity
+            key={option.value}
+            style={[
+              styles.genderButton,
+              gender === option.value && styles.genderButtonSelected
+            ]}
+            onPress={() => setGender(option.value)}
+          >
+            <Text style={[
+              styles.genderButtonText,
+              gender === option.value && styles.genderButtonTextSelected
+            ]}>
+              {option.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <TouchableOpacity
+        style={[styles.button, (!gender || loading) && styles.buttonDisabled]}
+        onPress={handleCompleteOnboarding}
+        disabled={!gender || loading}
+      >
+        <Text style={styles.buttonText}>
+          {loading ? 'Salvando...' : 'Continuar'}
+        </Text>
+      </TouchableOpacity>
+
+      <Text style={styles.note}>
+        Você poderá alterar essas informações no seu perfil a qualquer momento.
+      </Text>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Bem-vindo ao ForkFit! 🍓</Text>
-        <Text style={styles.subtitle}>
-          Vamos começar configurando seu perfil para personalizar sua experiência.
-        </Text>
-
-        <View style={styles.formSection}>
-          <Text style={styles.label}>
-            {user?.name ? 'Atualizar seu nome' : 'Como devemos te chamar?'}
-          </Text>
-          <TextInput
-            style={styles.input}
-            value={name}
-            onChangeText={setName}
-            placeholder={user?.name ? "Seu nome atualizado" : "Seu nome"}
-            placeholderTextColor="#A0AEC0"
-            autoFocus
-            autoCapitalize="words"
-          />
-        </View>
-
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleCompleteOnboarding}
-          disabled={loading}
-        >
-          <Text style={styles.buttonText}>
-            {loading ? 'Salvando...' : 'Começar'}
-          </Text>
-        </TouchableOpacity>
-
-        <Text style={styles.note}>
-          Você poderá adicionar mais informações sobre seus objetivos e preferências depois.
-        </Text>
-      </View>
+      {currentStep === 1 ? renderNameStep() : renderGenderStep()}
     </View>
   );
 }
@@ -137,7 +250,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: OFF_WHITE,
-    paddingTop: 60,
   },
   content: {
     flex: 1,
@@ -198,5 +310,27 @@ const styles = StyleSheet.create({
     color: '#64748b',
     textAlign: 'center',
     lineHeight: 20,
+  },
+  genderButton: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: BORDER,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  genderButtonSelected: {
+    backgroundColor: CORAL,
+    borderColor: CORAL,
+  },
+  genderButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: TEXT,
+  },
+  genderButtonTextSelected: {
+    color: '#fff',
   },
 }); 
