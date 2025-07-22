@@ -37,6 +37,7 @@ export interface BackendUser {
   id?: number;
   uid: string;
   email: string;
+  name?: string;
   onboardingCompleted?: boolean;
   age?: number;
   gender?: 'male' | 'female' | 'other';
@@ -57,6 +58,7 @@ export interface SyncUserRequest {
   email: string;
   displayName?: string | null;
   photoURL?: string | null;
+  onboardingCompleted?: boolean;
 }
 
 class ForkFitAPI {
@@ -168,6 +170,14 @@ class ForkFitAPI {
     return this.request(`/users/${uid}`, {
       method: "PUT",
       body: userData,
+      token,
+    });
+  }
+
+  async updateOnboardingStatus(uid: string, onboardingCompleted: boolean, token: string): Promise<BackendUser> {
+    return this.request(`/users/${uid}/onboarding`, {
+      method: "PUT",
+      body: { onboardingCompleted },
       token,
     });
   }

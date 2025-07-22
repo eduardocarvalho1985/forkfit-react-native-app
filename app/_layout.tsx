@@ -20,15 +20,22 @@ function RootLayoutContent() {
       console.log('RootLayout: No user found, redirecting to login.');
       router.replace('/auth/login');
     } else {
-      console.log('RootLayout: User found, redirecting to dashboard. User data:', {
-        uid: user.uid,
-        email: user.email,
-        calories: user.calories,
-        protein: user.protein,
-        carbs: user.carbs,
-        fat: user.fat
-      });
-      router.replace('/(tabs)/dashboard');
+      // Check if user has completed onboarding
+      if (!user.onboardingCompleted) {
+        console.log('RootLayout: User found but onboarding not completed, redirecting to onboarding.');
+        router.replace('/onboarding');
+      } else {
+        console.log('RootLayout: User found and onboarding completed, redirecting to dashboard. User data:', {
+          uid: user.uid,
+          email: user.email,
+          onboardingCompleted: user.onboardingCompleted,
+          calories: user.calories,
+          protein: user.protein,
+          carbs: user.carbs,
+          fat: user.fat
+        });
+        router.replace('/(tabs)/dashboard');
+      }
     }
   }, [user, loading]);
 
@@ -44,6 +51,7 @@ function RootLayoutContent() {
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="auth" options={{ headerShown: false }} />
+      <Stack.Screen name="onboarding" options={{ headerShown: false }} />
       <Stack.Screen name="index" options={{ headerShown: false }} />
     </Stack>
   );

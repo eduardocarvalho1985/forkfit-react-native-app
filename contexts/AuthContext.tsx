@@ -50,6 +50,7 @@ interface AuthContextData {
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
   syncUser: () => Promise<void>;
+  updateUserState: (updates: Partial<AppUser>) => void; // Temporary workaround for backend issues
 }
 
 interface AuthProviderProps {
@@ -107,16 +108,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
       console.log('User synced with backend:', backendUser);
 
+      // TEMPORARY FIX: Handle duplicate field issue from backend
+      // Backend is still returning both "onboardingCompleted" and "onboarding_completed"
+      // Prioritize "onboardingCompleted" (camelCase) and fallback to "onboarding_completed" (snake_case)
+      const onboardingStatus = (backendUser as any).onboardingCompleted ?? (backendUser as any).onboarding_completed ?? false;
+      
+      // Create a clean user object without duplicate fields
+      const cleanBackendUser = {
+        ...backendUser,
+        onboardingCompleted: onboardingStatus,
+        // Remove the duplicate field if it exists
+        ...((backendUser as any).onboarding_completed !== undefined && { onboarding_completed: undefined })
+      };
+
       // Combine Firebase user with backend data
       const combinedUser: AppUser = {
-        ...backendUser,
+        ...cleanBackendUser,
         uid: firebaseUser.uid,
         email: firebaseUser.email,
         displayName: firebaseUser.displayName,
         photoURL: firebaseUser.photoURL,
       };
 
-      console.log('Combined user data:', combinedUser);
+      console.log('Combined user data (cleaned):', combinedUser);
       setUser(combinedUser);
     } catch (backendError) {
       console.error('Failed to sync with backend:', backendError);
@@ -253,10 +267,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (firebaseUser) {
       console.log('AuthContext: Manual sync triggered for user:', firebaseUser.uid);
       await syncUserWithBackend(firebaseUser);
+      console.log('AuthContext: Manual sync completed');
     } else {
       console.log('AuthContext: Manual sync failed - no Firebase user');
     }
   };
+
+  // Temporary workaround function for backend issues
+  const updateUserState = (updates: Partial<AppUser>) => {
+    if (user) {
+      console.log('AuthContext: Updating user state with:', updates);
+      setUser({ ...user, ...updates });
+    }
+  };
+
+
 
   return (
     <AuthContext.Provider value={{
@@ -267,7 +292,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       signOut,
       signInWithGoogle,
       signInWithApple,
-      syncUser
+      syncUser,
+      updateUserState
     }}>
       {children}
     </AuthContext.Provider>
