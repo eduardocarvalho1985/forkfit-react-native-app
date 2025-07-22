@@ -5,7 +5,7 @@ import { api } from '../../services/api';
 import { getAuth } from '@react-native-firebase/auth';
 
 const CORAL = '#FF725E';
-const OFF_WHITE = '#FFF8F6';
+const OFF_WHITE = '#FDF6F3';
 const BORDER = '#FFA28F';
 const TEXT = '#1F2937';
 
