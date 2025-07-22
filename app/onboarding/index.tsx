@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
@@ -11,12 +11,29 @@ const TEXT = '#1F2937';
 
 export default function OnboardingScreen() {
   const { user, syncUser } = useAuth();
-  const [name, setName] = useState(user?.displayName || '');
+  const [name, setName] = useState(user?.name || '');
   const [loading, setLoading] = useState(false);
 
+  // Update name when user data changes
+  useEffect(() => {
+    if (user?.name) {
+      setName(user.name);
+    }
+  }, [user?.name]);
+
   const handleCompleteOnboarding = async () => {
-    if (!user || !name.trim()) {
+    if (!user) {
+      Alert.alert('Erro', 'Usuário não encontrado. Tente fazer login novamente.');
+      return;
+    }
+
+    if (!name.trim()) {
       Alert.alert('Erro', 'Por favor, insira seu nome para continuar.');
+      return;
+    }
+
+    if (name.trim().length < 2) {
+      Alert.alert('Erro', 'O nome deve ter pelo menos 2 caracteres.');
       return;
     }
 
@@ -29,10 +46,17 @@ export default function OnboardingScreen() {
 
       // Update user profile with name and complete onboarding
       console.log('Updating user profile with name and onboarding status...');
-      await api.updateUserProfile(user.uid, {
+      console.log('Name being saved:', name.trim());
+      console.log('User UID:', user.uid);
+      
+      const userProfileData = {
         name: name.trim(),
         onboardingCompleted: true
-      }, token);
+      };
+      console.log('User profile data being sent:', userProfileData);
+      
+      await api.updateUserProfile(user.uid, userProfileData, token);
+      console.log('User profile updated successfully');
 
       // Try to update onboarding status specifically
       try {
@@ -48,6 +72,7 @@ export default function OnboardingScreen() {
       
       // Sync the updated user data to AuthContext
       await syncUser();
+      console.log('User data synced after onboarding completion');
 
       console.log('Onboarding flow completed - redirect should happen now');
       
@@ -76,12 +101,14 @@ export default function OnboardingScreen() {
         </Text>
 
         <View style={styles.formSection}>
-          <Text style={styles.label}>Como devemos te chamar?</Text>
+          <Text style={styles.label}>
+            {user?.name ? 'Atualizar seu nome' : 'Como devemos te chamar?'}
+          </Text>
           <TextInput
             style={styles.input}
             value={name}
             onChangeText={setName}
-            placeholder="Seu nome"
+            placeholder={user?.name ? "Seu nome atualizado" : "Seu nome"}
             placeholderTextColor="#A0AEC0"
             autoFocus
             autoCapitalize="words"

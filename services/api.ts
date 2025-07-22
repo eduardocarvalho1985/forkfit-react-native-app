@@ -56,6 +56,7 @@ export interface BackendUser {
 export interface SyncUserRequest {
   uid: string;
   email: string;
+  name?: string;
   displayName?: string | null;
   photoURL?: string | null;
   onboardingCompleted?: boolean;

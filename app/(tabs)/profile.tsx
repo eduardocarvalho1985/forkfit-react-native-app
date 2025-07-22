@@ -36,7 +36,7 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(false);
 
   // Profile fields
-  const [name, setName] = useState(user?.displayName || '');
+  const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [age, setAge] = useState(user?.age?.toString() || '');
   const [gender, setGender] = useState(user?.gender || null);
@@ -60,7 +60,7 @@ export default function ProfileScreen() {
   // Load user data when component mounts or user changes
   useEffect(() => {
     if (user) {
-      setName(user.displayName || '');
+      setName(user.name || '');
       setEmail(user.email || '');
       setAge(user.age?.toString() || '');
       setGender(user.gender || null);
@@ -111,6 +111,7 @@ export default function ProfileScreen() {
       }
 
       const userData = {
+        name: name.trim() || undefined,
         age: age ? parseInt(age) : undefined,
         gender: gender || undefined,
         height: height ? parseFloat(height) : undefined,

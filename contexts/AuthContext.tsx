@@ -26,6 +26,7 @@ interface AppUser {
   photoURL: string | null;
   // Backend user data
   id?: number;
+  name?: string;
   onboardingCompleted?: boolean;
   age?: number;
   gender?: 'male' | 'female' | 'other';
@@ -103,34 +104,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const backendUser = await api.syncUser({
         uid: firebaseUser.uid,
         email: firebaseUser.email || '',
+        name: firebaseUser.displayName || undefined,
         displayName: firebaseUser.displayName,
         photoURL: firebaseUser.photoURL
       });
       console.log('User synced with backend:', backendUser);
 
-      // TEMPORARY FIX: Handle duplicate field issue from backend
-      // Backend is still returning both "onboardingCompleted" and "onboarding_completed"
-      // Prioritize "onboardingCompleted" (camelCase) and fallback to "onboarding_completed" (snake_case)
-      const onboardingStatus = (backendUser as any).onboardingCompleted ?? (backendUser as any).onboarding_completed ?? false;
-      
-      // Create a clean user object without duplicate fields
-      const cleanBackendUser = {
-        ...backendUser,
-        onboardingCompleted: onboardingStatus,
-        // Remove the duplicate field if it exists
-        ...((backendUser as any).onboarding_completed !== undefined && { onboarding_completed: undefined })
-      };
-
       // Combine Firebase user with backend data
       const combinedUser: AppUser = {
-        ...cleanBackendUser,
+        ...backendUser,
         uid: firebaseUser.uid,
         email: firebaseUser.email,
         displayName: firebaseUser.displayName,
         photoURL: firebaseUser.photoURL,
       };
 
-      console.log('Combined user data (cleaned):', combinedUser);
+      console.log('Combined user data:', combinedUser);
+      console.log('Name field from backend:', backendUser.name);
+      console.log('Name field in combined user:', combinedUser.name);
       setUser(combinedUser);
     } catch (backendError) {
       console.error('Failed to sync with backend:', backendError);
@@ -140,6 +131,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         email: firebaseUser.email,
         displayName: firebaseUser.displayName,
         photoURL: firebaseUser.photoURL,
+        name: firebaseUser.displayName || undefined,
         onboardingCompleted: false,
         calories: 2000,
         protein: 150,
