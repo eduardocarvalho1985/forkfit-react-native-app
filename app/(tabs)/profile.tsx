@@ -6,6 +6,7 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
+import { parseWeight, formatWeightWithUnit } from '../../utils/weightUtils';
 import { getAuth } from '@react-native-firebase/auth';
 
 const CORAL = '#FF725E';
@@ -118,8 +119,8 @@ export default function ProfileScreen() {
         age: age ? parseInt(age) : undefined,
         gender: gender || undefined,
         height: height ? parseFloat(height) : undefined,
-        weight: weight ? parseFloat(weight) : undefined,
-        targetWeight: targetWeight ? parseFloat(targetWeight) : undefined,
+        weight: weight ? parseWeight(weight) : undefined,
+        targetWeight: targetWeight ? parseWeight(targetWeight) : undefined,
         activityLevel: activity || undefined,
         goal: goal || undefined,
         calories: calories ? parseInt(calories) : undefined,
@@ -169,7 +170,7 @@ export default function ProfileScreen() {
           </View>
           <View style={styles.profileRow}>
             <View style={styles.profileInfoBox}><Text style={styles.profileInfoText}>{height || '--'} <Text style={styles.profileInfoUnit}>cm</Text></Text></View>
-            <View style={styles.profileInfoBox}><Text style={styles.profileInfoText}>{weight || '--'} <Text style={styles.profileInfoUnit}>kg</Text></Text></View>
+            <View style={styles.profileInfoBox}><Text style={styles.profileInfoText}>{weight ? formatWeightWithUnit(parseWeight(weight)) : '--'}</Text></View>
             <View style={styles.profileInfoBox}><Text style={styles.profileInfoText}>{age || '--'} <Text style={styles.profileInfoUnit}>anos</Text></Text></View>
           </View>
           <View style={styles.goalDisplay}>

@@ -33,6 +33,43 @@ export interface SavedFood {
   fat: number;
 }
 
+// New interfaces for progress tracking
+export interface WeightEntry {
+  id: string;
+  weight: number;
+  date: string;
+  createdAt: string;
+  userId: string;
+}
+
+export interface CalorieData {
+  date: string;
+  goal: number;
+  consumed: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+  metGoal?: boolean;
+}
+
+export interface ProgressSummary {
+  period: string;
+  startDate: string;
+  endDate: string;
+  averageCalories: number;
+  daysOnTarget: number;
+  totalDays: number;
+  weightChange: number;
+  startWeight: number;
+  currentWeight: number;
+  caloriesGoal: number;
+  proteinGoal: number;
+  carbsGoal: number;
+  fatGoal: number;
+  dayStreak: number;
+  weeklyStreakData: boolean[];
+}
+
 export interface BackendUser {
   id?: number;
   uid: string;
@@ -331,6 +368,47 @@ class ForkFitAPI {
       },
       token,
     });
+  }
+
+  // Weight Tracking
+  async getWeightHistory(uid: string, token: string): Promise<WeightEntry[]> {
+    return this.request(`/users/${uid}/weight-logs`, { token });
+  }
+
+  async addWeightEntry(uid: string, weight: number, date: string, token: string): Promise<WeightEntry> {
+    return this.request(`/users/${uid}/weight-logs`, {
+      method: "POST",
+      body: { weight, date },
+      token,
+    });
+  }
+
+  async deleteWeightEntry(uid: string, weightId: string, token: string): Promise<void> {
+    return this.request(`/users/${uid}/weight-logs/${weightId}`, {
+      method: "DELETE",
+      token,
+    });
+  }
+
+  // Progress Analytics
+  async getCalorieProgress(
+    uid: string, 
+    period: string, 
+    startDate: string, 
+    endDate: string,
+    token: string
+  ): Promise<CalorieData[]> {
+    return this.request(`/users/${uid}/progress/calories?period=${period}&startDate=${startDate}&endDate=${endDate}`, { token });
+  }
+
+  async getProgressSummary(
+    uid: string, 
+    period: string, 
+    startDate: string, 
+    endDate: string,
+    token: string
+  ): Promise<ProgressSummary> {
+    return this.request(`/users/${uid}/progress/summary?period=${period}&startDate=${startDate}&endDate=${endDate}`, { token });
   }
 }
 

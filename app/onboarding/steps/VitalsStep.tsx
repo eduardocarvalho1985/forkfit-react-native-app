@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { useOnboarding } from '../OnboardingContext';
+import { parseWeight } from '../../../utils/weightUtils';
 
 const CORAL = '#FF725E';
 const OFF_WHITE = '#FDF6F3';
@@ -69,7 +70,7 @@ export default function VitalsStep({ onNext }: VitalsStepProps) {
       return;
     }
 
-    const weightNumber = parseFloat(weight);
+    const weightNumber = parseWeight(weight);
     if (!weight.trim() || isNaN(weightNumber) || weightNumber < 30 || weightNumber > 300) {
       Alert.alert('Erro', 'Por favor, insira um peso válido entre 30 e 300 kg.');
       return;

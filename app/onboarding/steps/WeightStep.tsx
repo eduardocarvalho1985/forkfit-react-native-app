@@ -4,6 +4,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { api } from '../../../services/api';
 import { getAuth } from '@react-native-firebase/auth';
 import { useOnboarding } from '../OnboardingContext';
+import { parseWeight } from '../../../utils/weightUtils';
 
 const CORAL = '#FF725E';
 const OFF_WHITE = '#FDF6F3';
@@ -34,7 +35,7 @@ export default function WeightStep({ onComplete }: WeightStepProps) {
       return;
     }
 
-    const weightNumber = parseFloat(weight);
+    const weightNumber = parseWeight(weight);
     
     if (!weight.trim()) {
       Alert.alert('Erro', 'Por favor, insira seu peso para continuar.');

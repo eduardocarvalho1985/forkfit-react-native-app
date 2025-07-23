@@ -4,7 +4,9 @@ import React from 'react';
 import { Stack, router } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
+import { ProgressProvider } from '../contexts/ProgressContext';
 
 function RootLayoutContent() {
   const { user, loading } = useAuth();
@@ -60,9 +62,13 @@ function RootLayoutContent() {
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <AuthProvider>
-        <RootLayoutContent />
-      </AuthProvider>
+      <BottomSheetModalProvider>
+        <AuthProvider>
+          <ProgressProvider>
+            <RootLayoutContent />
+          </ProgressProvider>
+        </AuthProvider>
+      </BottomSheetModalProvider>
     </GestureHandlerRootView>
   );
 }
