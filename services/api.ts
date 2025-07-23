@@ -40,16 +40,18 @@ export interface BackendUser {
   name?: string;
   onboardingCompleted?: boolean;
   age?: number;
+  birthDate?: string; // ISO date string
   gender?: 'male' | 'female' | 'other';
   height?: number;
   weight?: number;
   targetWeight?: number;
   activityLevel?: string;
-  goal?: string;
+  goal?: 'lose_weight' | 'maintain' | 'gain_muscle';
   calories?: number;
   protein?: number;
   carbs?: number;
   fat?: number;
+  notificationsEnabled?: boolean;
   createdAt?: Date;
 }
 

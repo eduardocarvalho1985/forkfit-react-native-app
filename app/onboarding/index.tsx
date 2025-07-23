@@ -3,20 +3,20 @@ import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
 import { OnboardingProvider } from './OnboardingContext';
-import NameStep from './steps/NameStep';
-import GenderStep from './steps/GenderStep';
-import AgeStep from './steps/AgeStep';
-import HeightStep from './steps/HeightStep';
-import WeightStep from './steps/WeightStep';
+import GoalStep from './steps/GoalStep';
+import VitalsStep from './steps/VitalsStep';
+import ActivityStep from './steps/ActivityStep';
+import PlanStep from './steps/PlanStep';
+import NotificationsStep from './steps/NotificationsStep';
 
 const OFF_WHITE = '#FDF6F3';
 
-type OnboardingStep = 'name' | 'gender' | 'age' | 'height' | 'weight';
+type OnboardingStep = 'goal' | 'vitals' | 'activity' | 'plan' | 'notifications';
 
 export default function OnboardingManager() {
   const { user } = useAuth();
   const router = useRouter();
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>('name');
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>('goal');
 
   // Check if user is already onboarded
   useEffect(() => {
@@ -33,12 +33,12 @@ export default function OnboardingManager() {
 
   const getNextStep = (current: OnboardingStep): OnboardingStep => {
     switch (current) {
-      case 'name': return 'gender';
-      case 'gender': return 'age';
-      case 'age': return 'height';
-      case 'height': return 'weight';
-      case 'weight': return 'weight'; // This will trigger completion
-      default: return 'name';
+      case 'goal': return 'vitals';
+      case 'vitals': return 'activity';
+      case 'activity': return 'plan';
+      case 'plan': return 'notifications';
+      case 'notifications': return 'notifications'; // This will trigger completion
+      default: return 'goal';
     }
   };
 
@@ -54,18 +54,18 @@ export default function OnboardingManager() {
 
   const renderCurrentStep = () => {
     switch (currentStep) {
-      case 'name':
-        return <NameStep onNext={handleNext} />;
-      case 'gender':
-        return <GenderStep onNext={handleNext} />;
-      case 'age':
-        return <AgeStep onNext={handleNext} />;
-      case 'height':
-        return <HeightStep onNext={handleNext} />;
-      case 'weight':
-        return <WeightStep onComplete={handleComplete} />;
+      case 'goal':
+        return <GoalStep onNext={handleNext} />;
+      case 'vitals':
+        return <VitalsStep onNext={handleNext} />;
+      case 'activity':
+        return <ActivityStep onNext={handleNext} />;
+      case 'plan':
+        return <PlanStep onNext={handleNext} />;
+      case 'notifications':
+        return <NotificationsStep onComplete={handleComplete} />;
       default:
-        return <NameStep onNext={handleNext} />;
+        return <GoalStep onNext={handleNext} />;
     }
   };
 
