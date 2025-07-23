@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { useAuth } from '../../../contexts/AuthContext';
-import { api } from '../../../services/api';
-import { getAuth } from '@react-native-firebase/auth';
 import { useOnboarding } from '../OnboardingContext';
 
 const CORAL = '#FF725E';
@@ -17,12 +14,11 @@ const GENDER_OPTIONS: Array<{ label: string; value: 'male' | 'female' | 'other' 
 ];
 
 interface GenderStepProps {
-  onComplete: () => void;
+  onNext: () => void;
 }
 
-export default function GenderStep({ onComplete }: GenderStepProps) {
-  const { user, syncUser } = useAuth();
-  const { getStepData, updateStepData, getCurrentStepData, clearOnboardingData } = useOnboarding();
+export default function GenderStep({ onNext }: GenderStepProps) {
+  const { getStepData, updateStepData } = useOnboarding();
   const [gender, setGender] = useState<'male' | 'female' | 'other' | null>(getStepData('gender') || null);
   const [loading, setLoading] = useState(false);
 
@@ -34,12 +30,7 @@ export default function GenderStep({ onComplete }: GenderStepProps) {
     }
   }, []);
 
-  const handleComplete = async () => {
-    if (!user) {
-      Alert.alert('Erro', 'Usuário não encontrado. Tente fazer login novamente.');
-      return;
-    }
-
+  const handleNext = async () => {
     if (!gender) {
       Alert.alert('Erro', 'Por favor, selecione seu gênero para continuar.');
       return;
@@ -49,50 +40,13 @@ export default function GenderStep({ onComplete }: GenderStepProps) {
     try {
       // Update context with gender data
       updateStepData('gender', { gender });
+      console.log('Gender step completed, moving to next step');
       
-      // Get all onboarding data from context
-      const completeOnboardingData = getCurrentStepData();
-      console.log('Complete onboarding data to save:', completeOnboardingData);
-
-      // Get authentication token
-      const token = await getAuth().currentUser?.getIdToken();
-      if (!token) {
-        throw new Error('No authentication token available');
-      }
-
-      // SINGLE API CALL with ALL onboarding data
-      const userProfileData = {
-        ...completeOnboardingData,
-        onboardingCompleted: true
-      };
-      
-      console.log('Saving complete user profile:', userProfileData);
-      console.log('User UID:', user.uid);
-      
-      await api.updateUserProfile(user.uid, userProfileData, token);
-      console.log('User profile updated successfully with all onboarding data');
-
-      // Sync updated user data to AuthContext
-      await syncUser();
-      console.log('User data synced after onboarding completion');
-
-      // Clear onboarding context data
-      clearOnboardingData();
-      
-      // Call the onComplete callback to finish onboarding
-      onComplete();
-      
-    } catch (error: any) {
-      console.error('Error completing onboarding:', error);
-      
-      // More specific error messages
-      if (error.message.includes('JSON Parse error')) {
-        Alert.alert('Erro de Servidor', 'O servidor está retornando dados inválidos. Tente novamente em alguns instantes.');
-      } else if (error.message.includes('timeout')) {
-        Alert.alert('Erro de Conexão', 'A conexão com o servidor demorou muito. Verifique sua internet e tente novamente.');
-      } else {
-        Alert.alert('Erro', 'Não foi possível completar o onboarding. Tente novamente.');
-      }
+      // Call the onNext callback to move to next step
+      onNext();
+    } catch (error) {
+      console.error('Error in gender step:', error);
+      Alert.alert('Erro', 'Não foi possível salvar o gênero. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -130,7 +84,7 @@ export default function GenderStep({ onComplete }: GenderStepProps) {
 
         <TouchableOpacity
           style={[styles.button, (!gender || loading) && styles.buttonDisabled]}
-          onPress={handleComplete}
+          onPress={handleNext}
           disabled={!gender || loading}
         >
           <Text style={styles.buttonText}>
