@@ -1,7 +1,7 @@
 // app/auth/login.tsx   (repeat for register.tsx, index.tsx, _layout.tsx,
 // dashboard.tsx, settings.tsx, etc.)
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Image, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
@@ -19,16 +19,15 @@ const GENDER_OPTIONS = [
   { label: 'Outro', value: 'other' },
 ];
 const GOAL_OPTIONS = [
-  { label: 'Perder Peso', value: 'lose' },
-  { label: 'Ganhar Massa', value: 'gain' },
+  { label: 'Perder Peso', value: 'lose_weight' },
+  { label: 'Ganhar Massa', value: 'gain_muscle' },
   { label: 'Manter Peso', value: 'maintain' },
 ];
 const ACTIVITY_OPTIONS = [
   { label: 'Sedentário', value: 'sedentary' },
   { label: 'Levemente ativo', value: 'light' },
   { label: 'Moderadamente ativo', value: 'moderate' },
-  { label: 'Muito ativo', value: 'active' },
-  { label: 'Extremamente ativo', value: 'very_active' },
+  { label: 'Muito ativo', value: 'very_active' },
 ];
 
 export default function ProfileScreen() {
@@ -45,11 +44,15 @@ export default function ProfileScreen() {
   const [weight, setWeight] = useState(user?.weight?.toString() || '');
   const [profession, setProfession] = useState('');
   // Goals
-  const [goal, setGoal] = useState(user?.goal || null);
+  const [goal, setGoal] = useState<'lose_weight' | 'gain_muscle' | 'maintain' | null>(
+    (user?.goal as 'lose_weight' | 'gain_muscle' | 'maintain') || null
+  );
   const [openGoal, setOpenGoal] = useState(false);
   const [targetWeight, setTargetWeight] = useState(user?.targetWeight?.toString() || '');
   const [targetFat, setTargetFat] = useState('');
-  const [activity, setActivity] = useState(user?.activityLevel || null);
+  const [activity, setActivity] = useState<'sedentary' | 'light' | 'moderate' | 'very_active' | null>(
+    (user?.activityLevel as 'sedentary' | 'light' | 'moderate' | 'very_active') || null
+  );
   const [openActivity, setOpenActivity] = useState(false);
   // Nutrition
   const [calories, setCalories] = useState(user?.calories?.toString() || '');
@@ -66,9 +69,9 @@ export default function ProfileScreen() {
       setGender(user.gender || null);
       setHeight(user.height?.toString() || '');
       setWeight(user.weight?.toString() || '');
-      setGoal(user.goal || null);
+      setGoal((user.goal as 'lose_weight' | 'gain_muscle' | 'maintain') || null);
       setTargetWeight(user.targetWeight?.toString() || '');
-      setActivity(user.activityLevel || null);
+      setActivity((user.activityLevel as 'sedentary' | 'light' | 'moderate' | 'very_active') || null);
       setCalories(user.calories?.toString() || '');
       setProtein(user.protein?.toString() || '');
       setCarbs(user.carbs?.toString() || '');
@@ -140,155 +143,177 @@ export default function ProfileScreen() {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: OFF_WHITE, paddingTop: 36 }} contentContainerStyle={{ paddingBottom: 32 }}>
-      {/* Header with Title and Logout */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Perfil</Text>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <FontAwesome6 name="arrow-right-from-bracket" size={20} color={CORAL} />
-        </TouchableOpacity>
-      </View>
-      {/* Profile Card */}
-      <View style={styles.profileCard}>
-        <View style={{ alignItems: 'center', marginBottom: 8 }}>
-          <Image source={require('../../assets/images/partial-react-logo.png')} style={styles.avatar} />
-          <Text style={styles.profileName}>{name || 'Seu nome'}</Text>
-          <Text style={styles.profileSince}>Membro desde junho 2025</Text>
+    <KeyboardAvoidingView 
+      style={{ flex: 1, backgroundColor: OFF_WHITE }} 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView 
+        style={{ flex: 1 }} 
+        contentContainerStyle={{ paddingTop: 36, paddingBottom: 32 }}
+        showsVerticalScrollIndicator={false}
+        nestedScrollEnabled={true}
+      >
+        {/* Header with Title and Logout */}
+        <View style={styles.header}>
+          <Text style={styles.title}>Perfil</Text>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <FontAwesome6 name="arrow-right-from-bracket" size={20} color={CORAL} />
+          </TouchableOpacity>
         </View>
-        <View style={styles.profileRow}>
-          <View style={styles.profileInfoBox}><Text style={styles.profileInfoText}>{height || '--'} <Text style={styles.profileInfoUnit}>cm</Text></Text></View>
-          <View style={styles.profileInfoBox}><Text style={styles.profileInfoText}>{weight || '--'} <Text style={styles.profileInfoUnit}>kg</Text></Text></View>
-          <View style={styles.profileInfoBox}><Text style={styles.profileInfoText}>{age || '--'} <Text style={styles.profileInfoUnit}>anos</Text></Text></View>
-        </View>
-        <View style={styles.goalDisplay}>
-          <Text style={styles.goalText}>
-            Meta: {goal ? GOAL_OPTIONS.find(g => g.value === goal)?.label || goal : 'Não definida'}
-          </Text>
-        </View>
-      </View>
-      {/* Edit Profile Section */}
-      <View style={styles.sectionCard}>
-        <Text style={styles.sectionTitle}>Editar Perfil</Text>
-        <Text style={styles.label}>Nome</Text>
-        <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Seu nome" placeholderTextColor="#A0AEC0" />
-        <Text style={styles.label}>Email</Text>
-        <TextInput style={[styles.input, { backgroundColor: '#f3f3f3', color: '#A0AEC0' }]} value={email} onChangeText={setEmail} placeholder="Seu email" placeholderTextColor="#A0AEC0" editable={false} />
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.label}>Idade</Text>
-            <TextInput style={styles.input} value={age} onChangeText={setAge} placeholder="Idade" keyboardType="numeric" placeholderTextColor="#A0AEC0" />
+        {/* Profile Card */}
+        <View style={styles.profileCard}>
+          <View style={{ alignItems: 'center', marginBottom: 8 }}>
+            <Image source={require('../../assets/images/partial-react-logo.png')} style={styles.avatar} />
+            <Text style={styles.profileName}>{name || 'Seu nome'}</Text>
+            <Text style={styles.profileSince}>Membro desde junho 2025</Text>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.label}>Gênero</Text>
-            <DropDownPicker
-              open={openGender}
-              value={gender}
-              items={GENDER_OPTIONS}
-              setOpen={setOpenGender}
-              setValue={setGender}
-              setItems={() => { }}
-              placeholder="Selecione"
-              style={styles.dropdown}
-              dropDownContainerStyle={styles.dropdownContainer}
-              textStyle={styles.dropdownText}
-              placeholderStyle={styles.dropdownPlaceholder}
-              listItemLabelStyle={styles.dropdownText}
-              zIndex={1500}
-              zIndexInverse={1500}
-            />
+          <View style={styles.profileRow}>
+            <View style={styles.profileInfoBox}><Text style={styles.profileInfoText}>{height || '--'} <Text style={styles.profileInfoUnit}>cm</Text></Text></View>
+            <View style={styles.profileInfoBox}><Text style={styles.profileInfoText}>{weight || '--'} <Text style={styles.profileInfoUnit}>kg</Text></Text></View>
+            <View style={styles.profileInfoBox}><Text style={styles.profileInfoText}>{age || '--'} <Text style={styles.profileInfoUnit}>anos</Text></Text></View>
+          </View>
+          <View style={styles.goalDisplay}>
+            <Text style={styles.goalText}>
+              Meta: {goal ? GOAL_OPTIONS.find(g => g.value === goal)?.label || goal : 'Não definida'}
+            </Text>
           </View>
         </View>
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.label}>Altura (cm)</Text>
-            <TextInput style={styles.input} value={height} onChangeText={setHeight} placeholder="Altura" keyboardType="numeric" placeholderTextColor="#A0AEC0" />
+        {/* Edit Profile Section */}
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>Editar Perfil</Text>
+          <Text style={styles.label}>Nome</Text>
+          <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Seu nome" placeholderTextColor="#A0AEC0" />
+          <Text style={styles.label}>Email</Text>
+          <TextInput style={[styles.input, { backgroundColor: '#f3f3f3', color: '#A0AEC0' }]} value={email} onChangeText={setEmail} placeholder="Seu email" placeholderTextColor="#A0AEC0" editable={false} />
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Idade</Text>
+              <TextInput style={styles.input} value={age} onChangeText={setAge} placeholder="Idade" keyboardType="numeric" placeholderTextColor="#A0AEC0" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Gênero</Text>
+              <DropDownPicker
+                open={openGender}
+                value={gender}
+                items={GENDER_OPTIONS}
+                setOpen={setOpenGender}
+                setValue={setGender}
+                setItems={() => { }}
+                placeholder="Selecione"
+                style={styles.dropdown}
+                dropDownContainerStyle={styles.dropdownContainer}
+                textStyle={styles.dropdownText}
+                placeholderStyle={styles.dropdownPlaceholder}
+                listItemLabelStyle={styles.dropdownText}
+                zIndex={1500}
+                zIndexInverse={1500}
+                listMode="SCROLLVIEW"
+                scrollViewProps={{
+                  nestedScrollEnabled: true,
+                }}
+              />
+            </View>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.label}>Peso (kg)</Text>
-            <TextInput style={styles.input} value={weight} onChangeText={setWeight} placeholder="Peso" keyboardType="numeric" placeholderTextColor="#A0AEC0" />
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Altura (cm)</Text>
+              <TextInput style={styles.input} value={height} onChangeText={setHeight} placeholder="Altura" keyboardType="numeric" placeholderTextColor="#A0AEC0" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Peso (kg)</Text>
+              <TextInput style={styles.input} value={weight} onChangeText={setWeight} placeholder="Peso" keyboardType="numeric" placeholderTextColor="#A0AEC0" />
+            </View>
           </View>
+          <Text style={styles.label}>Profissão (opcional)</Text>
+          <TextInput style={styles.input} value={profession} onChangeText={setProfession} placeholder="Profissão" placeholderTextColor="#A0AEC0" />
         </View>
-        <Text style={styles.label}>Profissão (opcional)</Text>
-        <TextInput style={styles.input} value={profession} onChangeText={setProfession} placeholder="Profissão" placeholderTextColor="#A0AEC0" />
-      </View>
-      {/* Goals & Objectives Section */}
-      <View style={styles.sectionCard}>
-        <Text style={styles.sectionTitle}>💪 Metas e Objetivos</Text>
-        <Text style={styles.label}>Objetivo Principal</Text>
-        <DropDownPicker
-          open={openGoal}
-          value={goal}
-          items={GOAL_OPTIONS}
-          setOpen={setOpenGoal}
-          setValue={setGoal}
-          setItems={() => { }}
-          placeholder="Selecione seu objetivo"
-          style={styles.dropdown}
-          dropDownContainerStyle={styles.dropdownContainer}
-          textStyle={styles.dropdownText}
-          placeholderStyle={styles.dropdownPlaceholder}
-          listItemLabelStyle={styles.dropdownText}
-          zIndex={1200}
-          zIndexInverse={1200}
-        />
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.label}>Peso Alvo (kg)</Text>
-            <TextInput style={styles.input} value={targetWeight} onChangeText={setTargetWeight} placeholder="Peso alvo" keyboardType="numeric" placeholderTextColor="#A0AEC0" />
+        {/* Goals & Objectives Section */}
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>💪 Metas e Objetivos</Text>
+          <Text style={styles.label}>Objetivo Principal</Text>
+          <DropDownPicker
+            open={openGoal}
+            value={goal}
+            items={GOAL_OPTIONS}
+            setOpen={setOpenGoal}
+            setValue={setGoal}
+            setItems={() => { }}
+            placeholder="Selecione seu objetivo"
+            style={styles.dropdown}
+            dropDownContainerStyle={styles.dropdownContainer}
+            textStyle={styles.dropdownText}
+            placeholderStyle={styles.dropdownPlaceholder}
+            listItemLabelStyle={styles.dropdownText}
+            zIndex={1200}
+            zIndexInverse={1200}
+            listMode="SCROLLVIEW"
+            scrollViewProps={{
+              nestedScrollEnabled: true,
+            }}
+          />
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Peso Alvo (kg)</Text>
+              <TextInput style={styles.input} value={targetWeight} onChangeText={setTargetWeight} placeholder="Peso alvo" keyboardType="numeric" placeholderTextColor="#A0AEC0" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>% Gordura Alvo</Text>
+              <TextInput style={styles.input} value={targetFat} onChangeText={setTargetFat} placeholder="% gordura" keyboardType="numeric" placeholderTextColor="#A0AEC0" />
+            </View>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.label}>% Gordura Alvo</Text>
-            <TextInput style={styles.input} value={targetFat} onChangeText={setTargetFat} placeholder="% gordura" keyboardType="numeric" placeholderTextColor="#A0AEC0" />
-          </View>
+          <Text style={styles.label}>Nível de Atividade</Text>
+          <DropDownPicker
+            open={openActivity}
+            value={activity}
+            items={ACTIVITY_OPTIONS}
+            setOpen={setOpenActivity}
+            setValue={setActivity}
+            setItems={() => { }}
+            placeholder="Selecione seu nível de atividade"
+            style={styles.dropdown}
+            dropDownContainerStyle={styles.dropdownContainer}
+            textStyle={styles.dropdownText}
+            placeholderStyle={styles.dropdownPlaceholder}
+            listItemLabelStyle={styles.dropdownText}
+            zIndex={1100}
+            zIndexInverse={1100}
+            listMode="SCROLLVIEW"
+            scrollViewProps={{
+              nestedScrollEnabled: true,
+            }}
+          />
         </View>
-        <Text style={styles.label}>Nível de Atividade</Text>
-        <DropDownPicker
-          open={openActivity}
-          value={activity}
-          items={ACTIVITY_OPTIONS}
-          setOpen={setOpenActivity}
-          setValue={setActivity}
-          setItems={() => { }}
-          placeholder="Selecione seu nível de atividade"
-          style={styles.dropdown}
-          dropDownContainerStyle={styles.dropdownContainer}
-          textStyle={styles.dropdownText}
-          placeholderStyle={styles.dropdownPlaceholder}
-          listItemLabelStyle={styles.dropdownText}
-          zIndex={1100}
-          zIndexInverse={1100}
-        />
-      </View>
-      {/* Nutritional Goals Section */}
-      <View style={styles.sectionCard}>
-        <Text style={styles.sectionTitle}>🍓 Metas Nutricionais</Text>
-        <Text style={styles.label}>Calorias Diárias (kcal)</Text>
-        <TextInput style={styles.input} value={calories} onChangeText={setCalories} placeholder="Calorias" keyboardType="numeric" placeholderTextColor="#A0AEC0" />
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.label}>Proteína (g)</Text>
-            <TextInput style={styles.input} value={protein} onChangeText={setProtein} placeholder="Proteína" keyboardType="numeric" placeholderTextColor="#A0AEC0" />
+        {/* Nutritional Goals Section */}
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>🍓 Metas Nutricionais</Text>
+          <Text style={styles.label}>Calorias Diárias (kcal)</Text>
+          <TextInput style={styles.input} value={calories} onChangeText={setCalories} placeholder="Calorias" keyboardType="numeric" placeholderTextColor="#A0AEC0" />
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Proteína (g)</Text>
+              <TextInput style={styles.input} value={protein} onChangeText={setProtein} placeholder="Proteína" keyboardType="numeric" placeholderTextColor="#A0AEC0" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Carboidratos (g)</Text>
+              <TextInput style={styles.input} value={carbs} onChangeText={setCarbs} placeholder="Carboidratos" keyboardType="numeric" placeholderTextColor="#A0AEC0" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Gordura (g)</Text>
+              <TextInput style={styles.input} value={fat} onChangeText={setFat} placeholder="Gordura" keyboardType="numeric" placeholderTextColor="#A0AEC0" />
+            </View>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.label}>Carboidratos (g)</Text>
-            <TextInput style={styles.input} value={carbs} onChangeText={setCarbs} placeholder="Carboidratos" keyboardType="numeric" placeholderTextColor="#A0AEC0" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.label}>Gordura (g)</Text>
-            <TextInput style={styles.input} value={fat} onChangeText={setFat} placeholder="Gordura" keyboardType="numeric" placeholderTextColor="#A0AEC0" />
-          </View>
+          <TouchableOpacity 
+            style={[styles.saveButton, loading && styles.saveButtonDisabled]} 
+            onPress={handleSaveProfile}
+            disabled={loading}
+          >
+            <Text style={styles.saveButtonText}>
+              {loading ? 'Salvando...' : 'Salvar Todas as Alterações'}
+            </Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity 
-          style={[styles.saveButton, loading && styles.saveButtonDisabled]} 
-          onPress={handleSaveProfile}
-          disabled={loading}
-        >
-          <Text style={styles.saveButtonText}>
-            {loading ? 'Salvando...' : 'Salvar Todas as Alterações'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

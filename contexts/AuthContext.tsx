@@ -29,16 +29,18 @@ interface AppUser {
   name?: string;
   onboardingCompleted?: boolean;
   age?: number;
+  birthDate?: string;
   gender?: 'male' | 'female' | 'other';
   height?: number;
   weight?: number;
   targetWeight?: number;
-  activityLevel?: string;
-  goal?: string;
+  activityLevel?: 'sedentary' | 'light' | 'moderate' | 'very_active';
+  goal?: 'lose_weight' | 'maintain' | 'gain_muscle';
   calories?: number;
   protein?: number;
   carbs?: number;
   fat?: number;
+  notificationsEnabled?: boolean;
   createdAt?: Date;
 }
 
@@ -117,6 +119,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         email: firebaseUser.email,
         displayName: firebaseUser.displayName,
         photoURL: firebaseUser.photoURL,
+        activityLevel: backendUser.activityLevel as 'sedentary' | 'light' | 'moderate' | 'very_active' | undefined,
+        goal: backendUser.goal as 'lose_weight' | 'maintain' | 'gain_muscle' | undefined,
       };
 
       console.log('Combined user data:', combinedUser);
