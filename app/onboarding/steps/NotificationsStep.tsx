@@ -5,6 +5,25 @@ import { api } from '../../../services/api';
 import { getAuth } from '@react-native-firebase/auth';
 import { useOnboarding } from '../OnboardingContext';
 
+// Helper function to calculate age from birth date
+const calculateAge = (birthDate: string): number => {
+  const today = new Date();
+  
+  // Parse YYYY-MM-DD format directly to avoid timezone issues
+  const [year, month, day] = birthDate.split('-').map(Number);
+  if (!year || !month || !day) return 0;
+  
+  const birth = new Date(year, month - 1, day); // month is 0-indexed
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  
+  return age;
+};
+
 const CORAL = '#FF725E';
 const OFF_WHITE = '#FDF6F3';
 const BORDER = '#FFA28F';
@@ -51,15 +70,20 @@ export default function NotificationsStep({ onComplete }: NotificationsStepProps
       const completeOnboardingData = getCurrentStepData();
       console.log('Complete onboarding data to save:', completeOnboardingData);
 
+      // Calculate age from birth date
+      const calculatedAge = completeOnboardingData.birthDate ? calculateAge(completeOnboardingData.birthDate) : 0;
+      console.log('Calculated age from birth date:', completeOnboardingData.birthDate, '=', calculatedAge);
+
       // Get authentication token
       const token = await getAuth().currentUser?.getIdToken();
       if (!token) {
         throw new Error('No authentication token available');
       }
 
-      // SINGLE API CALL with ALL onboarding data
+      // Direct API call with all onboarding data including calculated age
       const userProfileData = {
         ...completeOnboardingData,
+        age: calculatedAge, // Add calculated age
         notificationsEnabled,
         onboardingCompleted: true
       };
@@ -83,14 +107,11 @@ export default function NotificationsStep({ onComplete }: NotificationsStepProps
     } catch (error: any) {
       console.error('Error completing onboarding:', error);
       
-      // More specific error messages
-      if (error.message.includes('JSON Parse error')) {
-        Alert.alert('Erro de Servidor', 'O servidor está retornando dados inválidos. Tente novamente em alguns instantes.');
-      } else if (error.message.includes('timeout')) {
-        Alert.alert('Erro de Conexão', 'A conexão com o servidor demorou muito. Verifique sua internet e tente novamente.');
-      } else {
-        Alert.alert('Erro', 'Não foi possível completar o onboarding. Tente novamente.');
-      }
+      // Simple, clear error message for MVP
+      Alert.alert(
+        'Erro de Conexão', 
+        'Parece que você está sem conexão. Verifique sua internet e tente novamente.'
+      );
     } finally {
       setLoading(false);
     }
@@ -140,6 +161,16 @@ export default function NotificationsStep({ onComplete }: NotificationsStepProps
         >
           <Text style={styles.buttonText}>
             {loading ? 'Finalizando...' : 'Continuar'}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.skipButton}
+          onPress={handleComplete}
+          disabled={loading}
+        >
+          <Text style={styles.skipButtonText}>
+            Pular por enquanto
           </Text>
         </TouchableOpacity>
 
@@ -248,6 +279,17 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 18,
+  },
+  skipButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  skipButtonText: {
+    color: '#64748b',
+    fontSize: 16,
+    textDecorationLine: 'underline',
   },
   note: {
     fontSize: 14,

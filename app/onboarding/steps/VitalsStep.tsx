@@ -2,6 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { useOnboarding } from '../OnboardingContext';
 import { parseWeight } from '../../../utils/weightUtils';
+import DatePicker from '../../../components/DatePicker';
+
+// Helper function to calculate age from birth date
+const calculateAge = (birthDate: string): number => {
+  const today = new Date();
+  
+  // Parse YYYY-MM-DD format directly to avoid timezone issues
+  const [year, month, day] = birthDate.split('-').map(Number);
+  if (!year || !month || !day) return 0;
+  
+  const birth = new Date(year, month - 1, day); // month is 0-indexed
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  
+  return age;
+};
 
 const CORAL = '#FF725E';
 const OFF_WHITE = '#FDF6F3';
@@ -38,6 +58,16 @@ export default function VitalsStep({ onNext }: VitalsStepProps) {
     if (existingHeight) setHeight(existingHeight.toString());
     if (existingWeight) setWeight(existingWeight.toString());
   }, []);
+
+  // Update age when birth date changes
+  useEffect(() => {
+    if (birthDate) {
+      const calculatedAge = calculateAge(birthDate);
+      console.log('Age updated for birth date:', birthDate, '=', calculatedAge);
+      // Update age in context immediately when birth date changes
+      updateStepData('age', { age: calculatedAge });
+    }
+  }, [birthDate]);
 
   const validateBirthDate = (date: string): boolean => {
     const selectedDate = new Date(date);
@@ -78,14 +108,18 @@ export default function VitalsStep({ onNext }: VitalsStepProps) {
 
     setLoading(true);
     try {
-      // Update context with all vitals data
+      // Calculate age from birth date
+      const calculatedAge = calculateAge(birthDate);
+      
+      // Update context with all vitals data including age
       updateStepData('vitals', { 
         gender, 
         birthDate, 
+        age: calculatedAge,
         height: heightNumber, 
         weight: weightNumber 
       });
-      console.log('Vitals step completed, moving to next step');
+      console.log('Vitals step completed with birthDate:', birthDate, 'age:', calculatedAge, 'moving to next step');
       
       // Call the onNext callback to move to next step
       onNext();
@@ -132,15 +166,11 @@ export default function VitalsStep({ onNext }: VitalsStepProps) {
 
         <View style={styles.formSection}>
           <Text style={styles.sectionTitle}>Data de Nascimento</Text>
-          <TextInput
-            style={styles.input}
+          <DatePicker
             value={birthDate}
-            onChangeText={setBirthDate}
-            placeholder="YYYY-MM-DD"
-            placeholderTextColor="#9CA3AF"
-            maxLength={10}
+            onChange={setBirthDate}
+            placeholder="Selecione sua data de nascimento"
           />
-          <Text style={styles.hint}>Formato: AAAA-MM-DD (ex: 1990-05-15)</Text>
         </View>
 
         <View style={styles.formSection}>

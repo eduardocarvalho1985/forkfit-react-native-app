@@ -1,9 +1,11 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface OnboardingData {
   goal?: 'lose_weight' | 'maintain' | 'gain_muscle';
   gender?: 'male' | 'female' | 'other';
   birthDate?: string; // ISO date string
+  age?: number; // Calculated age from birth date
   height?: number;
   weight?: number;
   activityLevel?: 'sedentary' | 'light' | 'moderate' | 'very_active';
@@ -36,11 +38,40 @@ const OnboardingContext = createContext<OnboardingContextType | undefined>(undef
 export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({});
 
+  // Load saved onboarding data on mount
+  useEffect(() => {
+    loadOnboardingData();
+  }, []);
+
+  const loadOnboardingData = async () => {
+    try {
+      const savedData = await AsyncStorage.getItem('onboarding_data');
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        setOnboardingData(parsedData);
+        console.log('Loaded saved onboarding data:', parsedData);
+      }
+    } catch (error) {
+      console.error('Error loading onboarding data:', error);
+    }
+  };
+
+  const saveOnboardingData = async (data: OnboardingData) => {
+    try {
+      await AsyncStorage.setItem('onboarding_data', JSON.stringify(data));
+      console.log('Saved onboarding data:', data);
+    } catch (error) {
+      console.error('Error saving onboarding data:', error);
+    }
+  };
+
   const updateStepData = (stepId: string, data: Partial<OnboardingData>) => {
     console.log(`Updating step ${stepId} with data:`, data);
     setOnboardingData(prev => {
       const updated = { ...prev, ...data };
       console.log('Updated onboarding data:', updated);
+      // Save to AsyncStorage
+      saveOnboardingData(updated);
       return updated;
     });
   };
@@ -50,6 +81,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       case 'goal': return onboardingData.goal;
       case 'gender': return onboardingData.gender;
       case 'birthDate': return onboardingData.birthDate;
+      case 'age': return onboardingData.age;
       case 'height': return onboardingData.height;
       case 'weight': return onboardingData.weight;
       case 'activityLevel': return onboardingData.activityLevel;
@@ -64,7 +96,12 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
 
   const calculateAge = (birthDate: string): number => {
     const today = new Date();
-    const birth = new Date(birthDate);
+    
+    // Parse YYYY-MM-DD format directly to avoid timezone issues
+    const [year, month, day] = birthDate.split('-').map(Number);
+    if (!year || !month || !day) return 0;
+    
+    const birth = new Date(year, month - 1, day); // month is 0-indexed
     let age = today.getFullYear() - birth.getFullYear();
     const monthDiff = today.getMonth() - birth.getMonth();
     
@@ -72,6 +109,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       age--;
     }
     
+    console.log(`Age calculation: birthDate=${birthDate}, parsed=${year}-${month}-${day}, age=${age}`);
     return age;
   };
 
@@ -162,9 +200,15 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
 
   const getCurrentStepData = () => onboardingData;
 
-  const clearOnboardingData = () => {
+  const clearOnboardingData = async () => {
     console.log('Clearing onboarding data');
     setOnboardingData({});
+    try {
+      await AsyncStorage.removeItem('onboarding_data');
+      console.log('Cleared onboarding data from storage');
+    } catch (error) {
+      console.error('Error clearing onboarding data:', error);
+    }
   };
 
   return (
