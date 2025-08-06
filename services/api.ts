@@ -410,6 +410,15 @@ class ForkFitAPI {
   ): Promise<ProgressSummary> {
     return this.request(`/users/${uid}/progress/summary?period=${period}&startDate=${startDate}&endDate=${endDate}`, { token });
   }
+
+  // Food Database Methods
+  async getFoodsByCategory(category: string): Promise<FoodItem[]> {
+    return this.request(`/food-database/category/${encodeURIComponent(category)}`);
+  }
+
+  async getAllFoods(): Promise<FoodItem[]> {
+    return this.request("/food-database/foods");
+  }
 }
 
 export const api = new ForkFitAPI();

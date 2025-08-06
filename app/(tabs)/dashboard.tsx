@@ -21,6 +21,7 @@ import { SafeAreaView as SafeAreaViewContext } from 'react-native-safe-area-cont
 import { FoodBottomSheet } from '../../components/FoodBottomSheet';
 import { SavedFoodsBottomSheet } from '../../components/SavedFoodsBottomSheet';
 import { AIFoodAnalysisBottomSheet, AIAnalysisResult } from '../../components/AIFoodAnalysisBottomSheet';
+import SearchBottomSheet, { SearchBottomSheetRef } from '../../components/SearchBottomSheet';
 
 import Svg, { Circle } from 'react-native-svg';
 import { useAuth } from '../../contexts/AuthContext';
@@ -113,6 +114,7 @@ export default function DashboardScreen() {
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const savedFoodsBottomSheetRef = useRef<BottomSheetModal>(null);
   const aiFoodAnalysisBottomSheetRef = useRef<BottomSheetModal>(null);
+  const searchBottomSheetRef = useRef<SearchBottomSheetRef>(null);
   
   const [currentDate, setCurrentDate] = useState(new Date());
   const [addFoodVisible, setAddFoodVisible] = useState(false);
@@ -122,10 +124,6 @@ export default function DashboardScreen() {
   const [searchModalVisible, setSearchModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredFoods, setFilteredFoods] = useState<FoodItem[]>([]);
-  const [quantityModalVisible, setQuantityModalVisible] = useState(false);
-  const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
-  const [foodQuantity, setFoodQuantity] = useState('100');
-  const [foodUnit, setFoodUnit] = useState('g');
   const [foodEditInitialData, setFoodEditInitialData] = useState<any>(null);
 
   // Food database loading state
@@ -265,7 +263,7 @@ export default function DashboardScreen() {
         savedFoodsBottomSheetRef.current?.present();
         break;
       case 'banco':
-        setSearchModalVisible(true);
+        searchBottomSheetRef.current?.present();
         break;
       case 'ai':
         aiFoodAnalysisBottomSheetRef.current?.present();
@@ -305,65 +303,28 @@ export default function DashboardScreen() {
   };
 
   const handleSelectFood = (food: FoodItem) => {
-    setSelectedFood(food);
-    setSearchModalVisible(false);
-    setQuantityModalVisible(true);
-  };
-
-  const handleConfirmQuantity = async () => {
-    if (!selectedFood || !selectedMealType) {
-      return;
-    }
-
-    const quantity = parseFloat(foodQuantity);
-    const unit = foodUnit;
+    console.log('handleSelectFood called with:', food);
+    console.log('Current selectedMealType:', selectedMealType);
     
-    // Calculate macros based on quantity (assuming 100g base)
-    const multiplier = quantity / 100;
-    
-    // Ensure all macro values are numbers
-    const proteinValue = typeof selectedFood.protein === 'string' ? parseFloat(selectedFood.protein) : selectedFood.protein;
-    const carbsValue = typeof selectedFood.carbs === 'string' ? parseFloat(selectedFood.carbs) : selectedFood.carbs;
-    const fatValue = typeof selectedFood.fat === 'string' ? parseFloat(selectedFood.fat) : selectedFood.fat;
-    const caloriesValue = typeof selectedFood.calories === 'string' ? parseFloat(selectedFood.calories) : selectedFood.calories;
-    
-    const newFoodLog: FoodLog = {
-      id: Math.floor(Math.random() * 1000000) + 1, // Smaller ID range
-      name: selectedFood.name,
-      quantity: quantity,
-      unit: unit,
-      calories: Math.round(caloriesValue * multiplier),
-      protein: Math.round(proteinValue * multiplier * 10) / 10,
-      carbs: Math.round(carbsValue * multiplier * 10) / 10,
-      fat: Math.round(fatValue * multiplier * 10) / 10,
-      mealType: selectedMealType,
+    // Convert FoodItem to FoodLog format and pre-fill the FoodBottomSheet
+    const foodData = {
+      name: food.name,
+      quantity: 100, // Default 100g
+      unit: 'g',
+      calories: food.calories,
+      protein: food.protein,
+      carbs: food.carbs,
+      fat: food.fat,
+      mealType: selectedMealType || 'Almoço', // Default to Almoço if not set
       date: dateKey,
     };
-
-    try {
-      // Save to backend
-      const firebaseUser = getAuth().currentUser;
-      const token = firebaseUser ? await firebaseUser.getIdToken() : '';
-      
-      if (user?.uid && token) {
-        const createdFoodLog = await api.createFoodLog(user.uid, newFoodLog, token);
-        // Update local state with the backend response (which has the correct ID)
-        setFoodLogs(prev => [...prev, createdFoodLog]);
-      } else {
-        // Fallback to local state if no backend
-        setFoodLogs(prev => [...prev, newFoodLog]);
-      }
-      setQuantityModalVisible(false);
-      setSelectedFood(null);
-      setFoodQuantity('100');
-      setFoodUnit('g');
-      
-      Alert.alert('Sucesso!', `${selectedFood.name} adicionado ao ${selectedMealType}`);
-    } catch (error) {
-      console.error('Failed to save food log:', error);
-      Alert.alert('Erro', 'Falha ao salvar alimento. Tente novamente.');
-    }
+    
+    setFoodEditInitialData(foodData);
+    searchBottomSheetRef.current?.dismiss();
+    bottomSheetRef.current?.present();
   };
+
+
 
   const handleEditFood = (food: FoodLog) => {
     setFoodEditInitialData(food);
@@ -820,61 +781,7 @@ export default function DashboardScreen() {
 
 
 
-      {/* Quantity Modal */}
-      <Modal
-        isVisible={quantityModalVisible}
-        onBackdropPress={() => setQuantityModalVisible(false)}
-        style={styles.modal}
-        backdropOpacity={0.4}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Quantidade</Text>
-            <TouchableOpacity onPress={() => setQuantityModalVisible(false)}>
-              <Icon name="close" size={24} color="#6b7280" />
-            </TouchableOpacity>
-          </View>
-          
-          {selectedFood && (
-            <View style={styles.quantityContent}>
-              <Text style={styles.quantityFoodName}>{selectedFood.name}</Text>
-              
-              <View style={styles.quantityInputContainer}>
-                <TextInput
-                  style={styles.quantityInput}
-                  value={foodQuantity}
-                  onChangeText={setFoodQuantity}
-                  keyboardType="numeric"
-                  placeholder="100"
-                />
-                <Text style={styles.quantityUnit}>{foodUnit}</Text>
-              </View>
-              
-              <View style={styles.quantityMacros}>
-                <Text style={styles.quantityMacroText}>
-                  Calorias: {Math.round(selectedFood.calories * parseFloat(foodQuantity || '0') / 100)} kcal
-                </Text>
-                <Text style={styles.quantityMacroText}>
-                  Proteína: {Math.round(selectedFood.protein * parseFloat(foodQuantity || '0') / 100 * 10) / 10}g
-                </Text>
-                <Text style={styles.quantityMacroText}>
-                  Carboidratos: {Math.round(selectedFood.carbs * parseFloat(foodQuantity || '0') / 100 * 10) / 10}g
-                </Text>
-                <Text style={styles.quantityMacroText}>
-                  Gordura: {Math.round(selectedFood.fat * parseFloat(foodQuantity || '0') / 100 * 10) / 10}g
-                </Text>
-              </View>
-              
-              <TouchableOpacity 
-                style={styles.confirmButton}
-                onPress={handleConfirmQuantity}
-              >
-                <Text style={styles.confirmButtonText}>Confirmar</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-      </Modal>
+
 
       {/* FoodBottomSheet */}
       <FoodBottomSheet
@@ -899,6 +806,13 @@ export default function DashboardScreen() {
         onFoodAnalyzed={handleFoodAnalyzed}
         selectedMealType={selectedMealType || 'Almoço'}
         date={dateKey}
+      />
+
+      {/* SearchBottomSheet */}
+      <SearchBottomSheet
+        ref={searchBottomSheetRef}
+        onSelectFood={handleSelectFood}
+        selectedMealType={selectedMealType || 'Almoço'}
       />
       </View>
     </BottomSheetModalProvider>
