@@ -321,15 +321,21 @@ export default function DashboardScreen() {
     // Calculate macros based on quantity (assuming 100g base)
     const multiplier = quantity / 100;
     
+    // Ensure all macro values are numbers
+    const proteinValue = typeof selectedFood.protein === 'string' ? parseFloat(selectedFood.protein) : selectedFood.protein;
+    const carbsValue = typeof selectedFood.carbs === 'string' ? parseFloat(selectedFood.carbs) : selectedFood.carbs;
+    const fatValue = typeof selectedFood.fat === 'string' ? parseFloat(selectedFood.fat) : selectedFood.fat;
+    const caloriesValue = typeof selectedFood.calories === 'string' ? parseFloat(selectedFood.calories) : selectedFood.calories;
+    
     const newFoodLog: FoodLog = {
       id: Math.floor(Math.random() * 1000000) + 1, // Smaller ID range
       name: selectedFood.name,
       quantity: quantity,
       unit: unit,
-      calories: Math.round(selectedFood.calories * multiplier),
-      protein: Math.round(selectedFood.protein * multiplier * 10) / 10,
-      carbs: Math.round(selectedFood.carbs * multiplier * 10) / 10,
-      fat: Math.round(selectedFood.fat * multiplier * 10) / 10,
+      calories: Math.round(caloriesValue * multiplier),
+      protein: Math.round(proteinValue * multiplier * 10) / 10,
+      carbs: Math.round(carbsValue * multiplier * 10) / 10,
+      fat: Math.round(fatValue * multiplier * 10) / 10,
       mealType: selectedMealType,
       date: dateKey,
     };
@@ -416,22 +422,24 @@ export default function DashboardScreen() {
         setFoodLogs((prev: any[]) => prev.map(f => f.id === foodEditInitialData.id ? updatedFoodLog : f));
         Alert.alert('Sucesso!', `${food.name} atualizado com sucesso`);
       } else {
-        // Add mode
+        // Add mode - ensure all macro values are numbers
         const newFoodLog: FoodLog = {
           id: Math.floor(Math.random() * 1000000) + 1, // Smaller ID range
           name: food.name,
-          quantity: food.quantity,
+          quantity: typeof food.quantity === 'string' ? parseFloat(food.quantity) : food.quantity,
           unit: food.unit,
-          calories: food.calories,
-          protein: food.protein,
-          carbs: food.carbs,
-          fat: food.fat,
+          calories: typeof food.calories === 'string' ? parseFloat(food.calories) : food.calories,
+          protein: typeof food.protein === 'string' ? parseFloat(food.protein) : food.protein,
+          carbs: typeof food.carbs === 'string' ? parseFloat(food.carbs) : food.carbs,
+          fat: typeof food.fat === 'string' ? parseFloat(food.fat) : food.fat,
           mealType: food.mealType,
           date: dateKey,
         };
         
+        let createdFoodLog: FoodLog | null = null;
+        
         if (user?.uid && token) {
-          await api.createFoodLog(user.uid, newFoodLog, token);
+          createdFoodLog = await api.createFoodLog(user.uid, newFoodLog, token);
           
           // If user wants to save this food for future use
           if (food.saveFood) {
@@ -456,7 +464,7 @@ export default function DashboardScreen() {
         }
         
         // Update local state
-        setFoodLogs((prev: any[]) => [...prev, newFoodLog]);
+        setFoodLogs((prev: any[]) => [...prev, createdFoodLog || newFoodLog]);
         
         // Show success message
         if (food.saveFood) {
@@ -504,12 +512,12 @@ export default function DashboardScreen() {
     const newFoodLog: FoodLog = {
       id: Math.floor(Math.random() * 1000000) + 1,
       name: savedFood.name,
-      quantity: savedFood.quantity,
+      quantity: typeof savedFood.quantity === 'string' ? parseFloat(savedFood.quantity) : savedFood.quantity,
       unit: savedFood.unit,
-      calories: savedFood.calories,
-      protein: savedFood.protein,
-      carbs: savedFood.carbs,
-      fat: savedFood.fat,
+      calories: typeof savedFood.calories === 'string' ? parseFloat(savedFood.calories) : savedFood.calories,
+      protein: typeof savedFood.protein === 'string' ? parseFloat(savedFood.protein) : savedFood.protein,
+      carbs: typeof savedFood.carbs === 'string' ? parseFloat(savedFood.carbs) : savedFood.carbs,
+      fat: typeof savedFood.fat === 'string' ? parseFloat(savedFood.fat) : savedFood.fat,
       mealType: selectedMealType || 'Almoço',
       date: dateKey,
     };
@@ -526,7 +534,7 @@ export default function DashboardScreen() {
           setFoodLogs((prev: any[]) => [...prev, createdFoodLog]);
         } else {
           // Fallback to local state if no backend
-          setFoodLogs((prev: any[]) => [...prev, newFoodLog]);
+          setFoodLogs((prev: any[]) => [...prev, createdFoodLog]);
         }
       } catch (error) {
         console.error('Failed to save food log from saved food:', error);
