@@ -7,11 +7,13 @@ import auth, {
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   signInWithCredential,
+  sendPasswordResetEmail,
 } from '@react-native-firebase/auth';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { appleAuth } from '@invertase/react-native-apple-authentication';
 import { AppleAuthProvider, GoogleAuthProvider } from '@react-native-firebase/auth';
 import { api, BackendUser } from '../services/api';
+import { getFirebaseErrorMessage } from '../utils/firebaseErrors';
 
 // Configure Google Sign-In
 GoogleSignin.configure({
@@ -52,6 +54,7 @@ interface AuthContextData {
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
   syncUser: () => Promise<void>;
   updateUserState: (updates: Partial<AppUser>) => void; // Temporary workaround for backend issues
 }
@@ -72,28 +75,39 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const unsubscribe = onAuthStateChanged(
       getAuth(),
       async (firebaseUser) => {
-        console.log('AuthContext: Auth state changed, firebaseUser:', firebaseUser ? firebaseUser.uid : 'null');
-        if (firebaseUser) {
-          try {
-            console.log('AuthContext: Refreshing token...');
-            // Refresh the user's token to check if they are still valid
-            await firebaseUser.getIdToken(true);
-            console.log('AuthContext: Token refreshed successfully');
+        try {
+          console.log('AuthContext: Auth state changed, firebaseUser:', firebaseUser ? firebaseUser.uid : 'null');
+          if (firebaseUser) {
+            try {
+              console.log('AuthContext: Refreshing token...');
+              // Refresh the user's token to check if they are still valid
+              await firebaseUser.getIdToken(true);
+              console.log('AuthContext: Token refreshed successfully');
 
-            // Sync with backend and combine data
-            await syncUserWithBackend(firebaseUser);
-          } catch (error) {
-            console.error('AuthContext: Error refreshing token or syncing user:', error);
-            // If there's an error getting the token, the user is likely disabled/deleted
-            console.log('AuthContext: User is disabled or deleted, signing out...');
-            await firebaseSignOut(getAuth());
+              // Sync with backend and combine data
+              await syncUserWithBackend(firebaseUser);
+            } catch (error) {
+              console.error('AuthContext: Error refreshing token or syncing user:', error);
+              // If there's an error getting the token, the user is likely disabled/deleted
+              console.log('AuthContext: User is disabled or deleted, signing out...');
+              try {
+                await firebaseSignOut(getAuth());
+              } catch (signOutError) {
+                console.error('AuthContext: Error during sign out:', signOutError);
+              }
+              setUser(null);
+            }
+          } else {
+            console.log('AuthContext: No firebase user, setting user to null');
             setUser(null);
           }
-        } else {
-          console.log('AuthContext: No firebase user, setting user to null');
+        } catch (error) {
+          console.error('AuthContext: Unexpected error in auth state listener:', error);
+          // Set user to null as a fallback
           setUser(null);
+        } finally {
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
@@ -155,7 +169,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // User will be set through onAuthStateChanged listener
     } catch (error: any) {
       console.error('Email sign in error:', error);
-      throw new Error(error.message || 'Failed to sign in');
+      throw new Error(getFirebaseErrorMessage(error.code));
     }
   };
 
@@ -167,7 +181,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // User will be set through onAuthStateChanged listener
     } catch (error: any) {
       console.error('Email sign up error:', error);
-      throw new Error(error.message || 'Failed to create account');
+      throw new Error(getFirebaseErrorMessage(error.code));
     }
   };
 
@@ -202,7 +216,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // User will be set through onAuthStateChanged listener
     } catch (error: any) {
       console.error('Error during Google Sign-In:', error);
-      throw new Error(error.message || 'Failed to sign in with Google');
+      throw new Error(getFirebaseErrorMessage(error.code));
     }
   };
 
@@ -237,7 +251,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // User will be set through onAuthStateChanged listener
     } catch (error: any) {
       console.error('Error during Apple Sign-In:', error);
-      throw new Error(error.message || 'Failed to sign in with Apple');
+      throw new Error(getFirebaseErrorMessage(error.code));
     }
   };
 
@@ -255,6 +269,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch (error: any) {
       console.error('Sign out error:', error);
       throw new Error('Failed to sign out');
+    }
+  };
+
+  const forgotPassword = async (email: string) => {
+    try {
+      console.log('AuthContext: Starting password reset process...');
+      console.log('AuthContext: Email:', email);
+      console.log('AuthContext: Firebase Auth instance:', getAuth());
+      
+      // Check if Firebase is properly initialized
+      const currentUser = getAuth().currentUser;
+      console.log('AuthContext: Current user:', currentUser ? currentUser.uid : 'null');
+      
+      console.log('AuthContext: Sending password reset email to:', email);
+      await sendPasswordResetEmail(getAuth(), email);
+      console.log('AuthContext: Password reset email sent successfully');
+    } catch (error: any) {
+      console.error('AuthContext: Password reset error:', error);
+      console.error('AuthContext: Error code:', error.code);
+      console.error('AuthContext: Error message:', error.message);
+      console.error('AuthContext: Full error object:', JSON.stringify(error, null, 2));
+      throw new Error(getFirebaseErrorMessage(error.code));
     }
   };
 
@@ -288,6 +324,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       signOut,
       signInWithGoogle,
       signInWithApple,
+      forgotPassword,
       syncUser,
       updateUserState
     }}>

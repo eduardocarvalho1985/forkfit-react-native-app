@@ -76,6 +76,13 @@ export default function Login() {
         <Text style={styles.buttonText}>{loading === "email" ? "Entrando..." : "Entrar"}</Text>
       </TouchableOpacity>
 
+      <TouchableOpacity 
+        style={styles.forgotPasswordButton} 
+        onPress={() => router.push('/auth/forgot-password')}
+      >
+        <Text style={styles.forgotPasswordText}>Esqueceu sua senha?</Text>
+      </TouchableOpacity>
+
       <View style={styles.divider}>
         <View style={styles.dividerLine} />
         <Text style={styles.dividerText}>ou</Text>
@@ -176,5 +183,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 16,
     fontWeight: '600',
+  },
+  forgotPasswordButton: {
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  forgotPasswordText: {
+    color: '#FF725E',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

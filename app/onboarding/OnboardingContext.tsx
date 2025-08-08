@@ -232,4 +232,7 @@ export const useOnboarding = () => {
     throw new Error('useOnboarding must be used within OnboardingProvider');
   }
   return context;
-}; 
+};
+
+// Default export to satisfy Expo Router
+export default OnboardingProvider; 
