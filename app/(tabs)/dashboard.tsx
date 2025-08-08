@@ -334,8 +334,8 @@ export default function DashboardScreen() {
 
   // Open bottom sheet for add
   const openAddFoodModal = (mealType?: string) => {
-    setFoodEditInitialData(mealType ? { mealType } : null);
-    bottomSheetRef.current?.present();
+    setSelectedMealType(mealType || 'Almoço');
+    setAddFoodVisible(true);
   };
 
   // Open bottom sheet for edit
