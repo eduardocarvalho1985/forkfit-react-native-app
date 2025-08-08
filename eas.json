@@ -11,6 +11,10 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "ios": {
+        "distribution": "internal",
+        "buildConfiguration": "Release"
       }
     },
     "production": {}
