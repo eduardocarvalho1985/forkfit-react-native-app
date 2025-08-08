@@ -85,6 +85,25 @@ export const AIFoodAnalysisBottomSheet = forwardRef<BottomSheetModal, AIFoodAnal
       }
     };
 
+    const takePhoto = async () => {
+      try {
+        const result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [4, 3],
+          quality: 0.7,
+        });
+
+        if (!result.canceled && result.assets[0]) {
+          const processedImage = await convertImageToBase64(result.assets[0].uri);
+          setSelectedImage(processedImage);
+          setCurrentStep('preview');
+        }
+      } catch (error) {
+        Alert.alert('Erro', 'Não foi possível capturar a foto');
+      }
+    };
+
     const analyzeImage = async () => {
       if (!selectedImage || !user?.uid) {
         Alert.alert('Erro', 'Selecione uma imagem primeiro');
@@ -226,15 +245,27 @@ export const AIFoodAnalysisBottomSheet = forwardRef<BottomSheetModal, AIFoodAnal
                 Selecione uma imagem do seu alimento para análise
               </Text>
               
-              <TouchableOpacity
-                style={styles.galleryButton}
-                onPress={pickImage}
-              >
-                <FontAwesome6 name="image" size={32} color={CORAL} />
-                <Text style={styles.galleryButtonText}>Selecionar da Galeria</Text>
-              </TouchableOpacity>
+              <View style={styles.optionsGrid}>
+                <TouchableOpacity
+                  style={styles.optionButton}
+                  onPress={pickImage}
+                >
+                  <FontAwesome6 name="image" size={32} color={CORAL} />
+                  <Text style={styles.optionText}>Galeria</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={styles.optionButton}
+                  onPress={takePhoto}
+                >
+                  <FontAwesome6 name="camera" size={32} color={CORAL} />
+                  <Text style={styles.optionText}>Câmera</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           )}
+
+
         </View>
       </BottomSheetModal>
     );
@@ -305,7 +336,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: TEXT,
-    marginTop: 12,
+    marginTop: 8,
   },
   previewContainer: {
     flex: 1,
@@ -375,21 +406,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 15,
-  },
-  galleryButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 24,
-    borderWidth: 1.5,
-    borderColor: BORDER,
-    flexDirection: 'row',
-    gap: 12,
-  },
-  galleryButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: TEXT,
   },
 }); 
