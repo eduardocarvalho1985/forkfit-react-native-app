@@ -111,13 +111,14 @@ class ForkFitAPI {
       method?: "GET" | "POST" | "PUT" | "DELETE";
       body?: any;
       token?: string;
+      timeout?: number;
     } = {}
   ): Promise<T> {
-    const { method = "GET", body, token } = options;
+    const { method = "GET", body, token, timeout = 10000 } = options;
 
     // Create AbortController for timeout (React Native compatible)
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), timeout); // Configurable timeout
 
     const config: RequestInit = {
       method,
@@ -367,6 +368,7 @@ class ForkFitAPI {
         date,
       },
       token,
+      timeout: 30000, // 30 seconds timeout for AI analysis
     });
   }
 

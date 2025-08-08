@@ -8,6 +8,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { calculateDateRange, PeriodKey, getCurrentDate } from '../../utils/dateUtils';
 import { WeightInputModal } from '../../components/WeightInputModal';
 import { formatWeightWithUnit } from '../../utils/weightUtils';
+import { formatNumber } from '../../utils/formatters';
 
 const CORAL = '#FF725E';
 const OFF_WHITE = '#FFF8F6';
@@ -244,7 +245,7 @@ export default function ProgressScreen() {
         <View style={styles.topCard}>
           <View style={styles.streakIconContainer}>
             <Text style={styles.streakIcon}>🔥</Text>
-            <Text style={styles.streakNumber}>{dayStreak}</Text>
+            <Text style={styles.streakNumber}>{formatNumber(dayStreak)}</Text>
           </View>
           <Text style={styles.streakLabel}>Sequência de Dias</Text>
           <View style={styles.weekDotsContainer}>

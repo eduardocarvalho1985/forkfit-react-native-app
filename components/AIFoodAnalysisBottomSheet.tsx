@@ -133,7 +133,19 @@ export const AIFoodAnalysisBottomSheet = forwardRef<BottomSheetModal, AIFoodAnal
           ]
         );
       } catch (error: any) {
-        Alert.alert('Erro na análise', error.message || 'Não foi possível analisar a imagem');
+        console.error('AI Analysis error:', error);
+        
+        // Provide more specific error messages
+        let errorMessage = 'Não foi possível analisar a imagem';
+        if (error.message?.includes('timeout')) {
+          errorMessage = 'A análise demorou muito tempo. Tente novamente ou use uma imagem mais clara.';
+        } else if (error.message?.includes('network')) {
+          errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        Alert.alert('Erro na análise', errorMessage);
       } finally {
         setIsAnalyzing(false);
       }
@@ -172,6 +184,11 @@ export const AIFoodAnalysisBottomSheet = forwardRef<BottomSheetModal, AIFoodAnal
                 <Text style={styles.previewSubtitle}>
                   A IA irá identificar o alimento e calcular os valores nutricionais
                 </Text>
+                {isAnalyzing && (
+                  <Text style={styles.analyzingText}>
+                    ⏱️ A análise pode levar alguns segundos. Quase lá!
+                  </Text>
+                )}
 
                 <View style={styles.previewButtons}>
                   <TouchableOpacity
@@ -187,7 +204,10 @@ export const AIFoodAnalysisBottomSheet = forwardRef<BottomSheetModal, AIFoodAnal
                     disabled={isAnalyzing}
                   >
                     {isAnalyzing ? (
-                      <ActivityIndicator size="small" color="#fff" />
+                      <>
+                        <ActivityIndicator size="small" color="#fff" style={{ marginRight: 8 }} />
+                        <Text style={styles.analyzeButtonText}>Analisando...</Text>
+                      </>
                     ) : (
                       <>
                         <FontAwesome6 name="robot" size={16} color="#fff" style={{ marginRight: 8 }} />
@@ -313,6 +333,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 30,
     paddingHorizontal: 20,
+  },
+  analyzingText: {
+    fontSize: 13,
+    color: '#f97316',
+    textAlign: 'center',
+    marginBottom: 20,
+    paddingHorizontal: 20,
+    fontStyle: 'italic',
   },
   previewButtons: {
     flexDirection: 'row',

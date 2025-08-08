@@ -5,6 +5,7 @@ import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'reac
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Dropdown } from 'react-native-element-dropdown';
 import { FontAwesome6 } from '@expo/vector-icons';
+import { formatNumber } from '../utils/formatters';
 
 // Define your constants
 const CORAL = '#FF725E';
@@ -104,10 +105,10 @@ export const FoodBottomSheet = forwardRef<BottomSheetModal, FoodBottomSheetProps
         
         const multiplier = newQuantityNum / originalMacros.quantity;
         
-        setCalories((originalMacros.calories * multiplier).toFixed(1));
-        setProtein((originalMacros.protein * multiplier).toFixed(1));
-        setCarbs((originalMacros.carbs * multiplier).toFixed(1));
-        setFat((originalMacros.fat * multiplier).toFixed(1));
+        setCalories(formatNumber(originalMacros.calories * multiplier, 0));
+        setProtein(formatNumber(originalMacros.protein * multiplier, 1));
+        setCarbs(formatNumber(originalMacros.carbs * multiplier, 1));
+        setFat(formatNumber(originalMacros.fat * multiplier, 1));
     };
 
     // Handle quantity change with auto-recalculation
@@ -139,10 +140,10 @@ export const FoodBottomSheet = forwardRef<BottomSheetModal, FoodBottomSheetProps
             setName(initialData.name || '');
             setQuantity(initialQuantity.toString());
             setUnit(initialData.unit || 'g');
-            setCalories(initialCalories.toString());
-            setProtein(initialProtein.toString());
-            setCarbs(initialCarbs.toString());
-            setFat(initialFat.toString());
+            setCalories(formatNumber(initialCalories, 0));
+            setProtein(formatNumber(initialProtein, 1));
+            setCarbs(formatNumber(initialCarbs, 1));
+            setFat(formatNumber(initialFat, 1));
             setSaveFood(false); // Reset save food option for edit mode
             
             // Store original macros for auto-recalculation

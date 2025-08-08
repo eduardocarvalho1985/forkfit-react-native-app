@@ -27,6 +27,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { useAuth } from '../../contexts/AuthContext';
 import { api, FoodItem, FoodLog, SavedFood } from '../../services/api';
 import { getAuth } from '@react-native-firebase/auth';
+import { formatNumber } from '../../utils/formatters';
 
 const MEAL_TYPES = [
   'Café da Manhã',
@@ -59,7 +60,7 @@ function MealSection({
     <View style={styles.mealSection}>
       <View style={styles.mealHeader}>
         <Text style={styles.mealTitle}>{title}</Text>
-        <Text style={styles.mealCalories}>{calories} kcal</Text>
+        <Text style={styles.mealCalories}>{formatNumber(calories)} kcal</Text>
       </View>
       
       {!foods || foods.length === 0 ? (
@@ -79,19 +80,19 @@ function MealSection({
                 <View style={styles.foodMiniCardMacrosRow}>
                   <View style={styles.foodMacroItem}>
                     <FontAwesome6 name="fire-flame-curved" size={18} color="#FF725E" />
-                    <Text style={styles.foodMacroValue}>{food.calories}</Text>
+                    <Text style={styles.foodMacroValue}>{formatNumber(food.calories)}</Text>
                   </View>
                   <View style={styles.foodMacroItem}>
                     <FontAwesome6 name="drumstick-bite" size={18} color="#3b82f6" />
-                    <Text style={styles.foodMacroValue}>{food.protein}g</Text>
+                    <Text style={styles.foodMacroValue}>{formatNumber(food.protein, 1)}g</Text>
                   </View>
                   <View style={styles.foodMacroItem}>
                     <FontAwesome6 name="wheat-awn" size={18} color="#FFA28F" />
-                    <Text style={styles.foodMacroValue}>{food.carbs}g</Text>
+                    <Text style={styles.foodMacroValue}>{formatNumber(food.carbs, 1)}g</Text>
                   </View>
                   <View style={styles.foodMacroItem}>
                     <FontAwesome6 name="bottle-droplet" size={18} color="#ef4444" />
-                    <Text style={styles.foodMacroValue}>{food.fat}g</Text>
+                    <Text style={styles.foodMacroValue}>{formatNumber(food.fat, 1)}g</Text>
                   </View>
                 </View>
               </View>
@@ -651,14 +652,14 @@ export default function DashboardScreen() {
               <View style={styles.caloriesCenter}>
                 <View style={styles.caloriesRow}>
                   <FontAwesome6 name="fire-flame-curved" size={30} color="#f97316" />
-                  <Text style={styles.caloriesNumber}>{totals.calories}</Text>
+                  <Text style={styles.caloriesNumber}>{formatNumber(totals.calories)}</Text>
                 </View>
-                <Text style={styles.caloriesTarget}>/ {targets.calories} kcal</Text>
+                <Text style={styles.caloriesTarget}>/ {formatNumber(targets.calories)} kcal</Text>
               </View>
             </View>
             <View style={styles.restanteBadge}>
               <Text style={styles.restanteText}>
-                Restante: <Text style={styles.restanteNumber}>{remainingCalories} kcal</Text>
+                Restante: <Text style={styles.restanteNumber}>{formatNumber(remainingCalories)} kcal</Text>
               </Text>
             </View>
           </View>

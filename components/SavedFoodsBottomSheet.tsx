@@ -7,6 +7,7 @@ import { FontAwesome6 } from '@expo/vector-icons';
 import { api, SavedFood } from '../services/api';
 import { getAuth } from '@react-native-firebase/auth';
 import { useAuth } from '../contexts/AuthContext';
+import { formatNumber } from '../utils/formatters';
 
 // Define your constants
 const CORAL = '#FF725E';
@@ -152,10 +153,10 @@ export const SavedFoodsBottomSheet = forwardRef<BottomSheetModal, SavedFoodsBott
         <View style={styles.foodInfo}>
           <Text style={styles.foodName}>{item.name}</Text>
           <Text style={styles.foodDetails}>
-            {item.quantity}{item.unit} • {item.calories} kcal
+            {formatNumber(item.quantity)}{item.unit} • {formatNumber(item.calories)} kcal
           </Text>
           <Text style={styles.macros}>
-            P: {item.protein}g • C: {item.carbs}g • G: {item.fat}g
+            P: {formatNumber(item.protein, 1)}g • C: {formatNumber(item.carbs, 1)}g • G: {formatNumber(item.fat, 1)}g
           </Text>
         </View>
         <View style={styles.actionButtons}>

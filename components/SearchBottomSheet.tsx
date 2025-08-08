@@ -11,6 +11,7 @@ import {
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { api, FoodItem } from '../services/api';
+import { formatNumber } from '../utils/formatters';
 
 const CORAL = '#FF725E';
 const OFF_WHITE = '#FDF6F3';
@@ -136,10 +137,10 @@ const SearchBottomSheet = forwardRef<SearchBottomSheetRef, SearchBottomSheetProp
                         <Text style={styles.foodCategory}>{item.category}</Text>
                       </View>
                       <View style={styles.foodMacros}>
-                        <Text style={styles.macroText}>{item.calories} kcal</Text>
-                        <Text style={styles.macroText}>P: {item.protein}g</Text>
-                        <Text style={styles.macroText}>C: {item.carbs}g</Text>
-                        <Text style={styles.macroText}>G: {item.fat}g</Text>
+                        <Text style={styles.macroText}>{formatNumber(item.calories)} kcal</Text>
+                        <Text style={styles.macroText}>P: {formatNumber(item.protein, 1)}g</Text>
+                        <Text style={styles.macroText}>C: {formatNumber(item.carbs, 1)}g</Text>
+                        <Text style={styles.macroText}>G: {formatNumber(item.fat, 1)}g</Text>
                       </View>
                     </TouchableOpacity>
                   )}

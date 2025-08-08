@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { FontAwesome6 } from '@expo/vector-icons';
+import { formatNumber } from '../utils/formatters';
 
 interface MacroProgressProps {
   label: string;
@@ -22,9 +23,10 @@ export const MacroProgress = ({ label, current, target, unit, color, iconName }:
   const lowerLabel = label.toLowerCase();
   const colorSet = COLOR_MAP[lowerLabel] || { ring: color, text: color, bg: '#f1f5f9' };
 
-  const roundedCurrent = Math.round(current * 10) / 10;
-  const roundedTarget = Math.round(target * 10) / 10;
-  const percentage = Math.min((roundedCurrent / (roundedTarget || 1)) * 100, 100);
+  // Use formatNumber for consistent formatting
+  const formattedCurrent = formatNumber(current, unit === 'kcal' ? 0 : 1);
+  const formattedTarget = formatNumber(target, unit === 'kcal' ? 0 : 1);
+  const percentage = Math.min((current / (target || 1)) * 100, 100);
   const radius = 22;
   const stroke = 5;
   const circumference = 2 * Math.PI * radius;
@@ -65,8 +67,8 @@ export const MacroProgress = ({ label, current, target, unit, color, iconName }:
       {/* Label and Values */}
       <View style={styles.textBlock}>
         <Text style={[styles.label, { color: colorSet.text }]}>{label.toUpperCase()}</Text>
-        <Text style={styles.value}>{roundedCurrent}{unit}</Text>
-        <Text style={styles.target}>de {roundedTarget}{unit}</Text>
+        <Text style={styles.value}>{formattedCurrent}{unit}</Text>
+        <Text style={styles.target}>de {formattedTarget}{unit}</Text>
       </View>
     </View>
   );
