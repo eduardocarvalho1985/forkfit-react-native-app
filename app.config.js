@@ -1,25 +1,11 @@
 const getBundleId = () => {
-  const appName = process.env.APP_NAME || 'ForkFit';
-  
-  if (appName.includes('Dev')) {
-    return 'forkfit.app.forkfitprod.dev';
-  } else if (appName.includes('Preview')) {
-    return 'forkfit.app.forkfitprod.preview';
-  } else {
-    return 'forkfit.app.forkfitprod';
-  }
+  // Use the same bundle ID for all builds to avoid Firebase config issues
+  return 'forkfit.app.forkfitprod';
 };
 
 const getPackageName = () => {
-  const appName = process.env.APP_NAME || 'ForkFit';
-  
-  if (appName.includes('Dev')) {
-    return 'forkfit.app.forkfitprod.dev';
-  } else if (appName.includes('Preview')) {
-    return 'forkfit.app.forkfitprod.preview';
-  } else {
-    return 'forkfit.app.forkfitprod';
-  }
+  // Use the same package name for all builds to avoid Firebase config issues
+  return 'forkfit.app.forkfitprod';
 };
 
 export default {
