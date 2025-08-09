@@ -320,18 +320,20 @@ export default function ProgressScreen() {
                   </View>
                   
                   {/* Bars */}
-                  <View style={styles.barsContainer}>
+                  <View style={period === '7d' ? styles.barsContainer : styles.barsContainer30}>
                     {(() => {
-                      // Create array of last 7 days ending with today
+                      // Determine number of days based on period
+                      const numDays = period === '7d' ? 7 : period === '30d' ? 30 : 90;
                       const today = new Date();
-                      const last7Days = [];
-                      for (let i = 6; i >= 0; i--) {
+                      const lastDays = [];
+                      
+                      for (let i = numDays - 1; i >= 0; i--) {
                         const date = new Date(today);
                         date.setDate(today.getDate() - i);
-                        last7Days.push(date);
+                        lastDays.push(date);
                       }
                       
-                      return last7Days.map((date, index) => {
+                      return lastDays.map((date, index) => {
                         // Find matching calorie data for this date
                         const dateStr = date.toISOString().split('T')[0];
                         const entry = calorieProgress.find(entry => entry.date === dateStr);
@@ -343,20 +345,20 @@ export default function ProgressScreen() {
                         const consumedHeight = entry ? (entry.consumed / maxCalories) * 140 : 0;
                         
                         return (
-                          <View key={index} style={styles.barGroup}>
+                          <View key={index} style={period === '7d' ? styles.barGroup : styles.barGroup30}>
                             {/* Goal bar (gray) - always show for every day */}
                             <View 
                               style={[
-                                styles.bar, 
+                                period === '7d' ? styles.bar : styles.bar30, 
                                 styles.goalBar,
-                                { height: Math.max(goalHeight, 5) } // Minimum height for visibility
+                                { height: Math.max(goalHeight, 2) } // Smaller minimum for 30-day
                               ]} 
                             />
                             {/* Consumed bar (coral) - only show if there's data */}
                             {entry && consumedHeight > 0 && (
                               <View 
                                 style={[
-                                  styles.bar, 
+                                  period === '7d' ? styles.bar : styles.bar30, 
                                   styles.consumedBar,
                                   { height: consumedHeight }
                                 ]} 
@@ -369,27 +371,29 @@ export default function ProgressScreen() {
                   </View>
                 </View>
                 
-                {/* X-axis labels */}
-                <View style={styles.xAxisLabels}>
-                  {(() => {
-                    // Create array of last 7 days ending with today
-                    const today = new Date();
-                    const last7Days = [];
-                    for (let i = 6; i >= 0; i--) {
-                      const date = new Date(today);
-                      date.setDate(today.getDate() - i);
-                      last7Days.push(date);
-                    }
-                    
-                    const dayAbbreviations = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-                    
-                    return last7Days.map((date, index) => (
-                      <Text key={index} style={styles.xAxisLabel}>
-                        {dayAbbreviations[date.getDay()]}
-                      </Text>
-                    ));
-                  })()}
-                </View>
+                {/* X-axis labels - only show for 7-day period */}
+                {period === '7d' && (
+                  <View style={styles.xAxisLabels}>
+                    {(() => {
+                      // Create array of last 7 days ending with today
+                      const today = new Date();
+                      const last7Days = [];
+                      for (let i = 6; i >= 0; i--) {
+                        const date = new Date(today);
+                        date.setDate(today.getDate() - i);
+                        last7Days.push(date);
+                      }
+                      
+                      const dayAbbreviations = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                      
+                      return last7Days.map((date, index) => (
+                        <Text key={index} style={styles.xAxisLabel}>
+                          {dayAbbreviations[date.getDay()]}
+                        </Text>
+                      ));
+                    })()}
+                  </View>
+                )}
               </View>
             </View>
           ) : (
@@ -971,5 +975,26 @@ const styles = StyleSheet.create({
     color: TEXT_DARK,
     textAlign: 'center',
     flex: 1,
+  },
+  // 30-day specific styles
+  barsContainer30: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    height: 140,
+    paddingHorizontal: 4,
+  },
+  barGroup30: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    width: 8,
+    height: 140,
+  },
+  bar30: {
+    width: 6,
+    borderRadius: 1,
+    position: 'absolute',
+    bottom: 0,
   },
 });
