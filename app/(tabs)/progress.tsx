@@ -320,7 +320,11 @@ export default function ProgressScreen() {
                   </View>
                   
                   {/* Bars */}
-                  <View style={period === '7d' ? styles.barsContainer : styles.barsContainer30}>
+                  <View style={
+                    period === '7d' ? styles.barsContainer : 
+                    period === '30d' ? styles.barsContainer30 : 
+                    styles.barsContainer90
+                  }>
                     {(() => {
                       // Determine number of days based on period
                       const numDays = period === '7d' ? 7 : period === '30d' ? 30 : 90;
