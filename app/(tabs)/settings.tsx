@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Platform, Alert } from 'react-native';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { PrivacyBottomSheet } from '../../components/PrivacyBottomSheet';
 import { HelpBottomSheet } from '../../components/HelpBottomSheet';
+import { useAuth } from '../../contexts/AuthContext';
 
 const CORAL = '#FF725E';
 const TEXT_DARK = '#1F2937';
@@ -15,6 +16,7 @@ export default function SettingsScreen() {
   const [weeklyReports, setWeeklyReports] = useState(true);
   const privacyBottomSheetRef = useRef<BottomSheetModal>(null);
   const helpBottomSheetRef = useRef<BottomSheetModal>(null);
+  const { signOut } = useAuth();
 
   const handlePrivacyPress = () => {
     privacyBottomSheetRef.current?.present();
@@ -22,6 +24,30 @@ export default function SettingsScreen() {
 
   const handleHelpPress = () => {
     helpBottomSheetRef.current?.present();
+  };
+
+  const handleLogout = async () => {
+    Alert.alert(
+      'Sair da conta',
+      'Tem certeza que deseja sair da sua conta?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Sair',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await signOut();
+            } catch (error: any) {
+              Alert.alert('Erro', 'Não foi possível sair da conta. Tente novamente.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -137,7 +163,7 @@ export default function SettingsScreen() {
           
           {/* Logout Section */}
           <View style={styles.section}>
-            <TouchableOpacity style={styles.logoutCard}>
+            <TouchableOpacity style={styles.logoutCard} onPress={handleLogout}>
               <FontAwesome6 name="arrow-right-from-bracket" size={20} color={CORAL} style={styles.logoutIcon} />
               <Text style={styles.logoutText}>Sair da conta</Text>
             </TouchableOpacity>
