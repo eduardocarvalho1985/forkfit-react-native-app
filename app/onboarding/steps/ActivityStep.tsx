@@ -35,13 +35,12 @@ const ACTIVITY_OPTIONS = [
 ];
 
 interface ActivityStepProps {
-  onNext: () => void;
+  onSetLoading: (loading: boolean) => void;
 }
 
-export default function ActivityStep({ onNext }: ActivityStepProps) {
+export default function ActivityStep({ onSetLoading }: ActivityStepProps) {
   const { getStepData, updateStepData } = useOnboarding();
   const [activityLevel, setActivityLevel] = useState<'sedentary' | 'light' | 'moderate' | 'very_active' | null>(getStepData('activityLevel') || null);
-  const [loading, setLoading] = useState(false);
 
   // Load existing data when component mounts
   useEffect(() => {
@@ -51,27 +50,13 @@ export default function ActivityStep({ onNext }: ActivityStepProps) {
     }
   }, []);
 
-  const handleNext = async () => {
-    if (!activityLevel) {
-      Alert.alert('Erro', 'Por favor, selecione seu nível de atividade para continuar.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Update context with activity data
+  // Update activity level in context whenever it changes
+  useEffect(() => {
+    if (activityLevel) {
       updateStepData('activity', { activityLevel });
-      console.log('Activity step completed, moving to next step');
-      
-      // Call the onNext callback to move to next step
-      onNext();
-    } catch (error) {
-      console.error('Error in activity step:', error);
-      Alert.alert('Erro', 'Não foi possível salvar seu nível de atividade. Tente novamente.');
-    } finally {
-      setLoading(false);
+      console.log('Activity level updated in context:', activityLevel);
     }
-  };
+  }, [activityLevel]);
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -112,16 +97,6 @@ export default function ActivityStep({ onNext }: ActivityStepProps) {
           ))}
         </View>
 
-        <TouchableOpacity
-          style={[styles.button, (!activityLevel || loading) && styles.buttonDisabled]}
-          onPress={handleNext}
-          disabled={!activityLevel || loading}
-        >
-          <Text style={styles.buttonText}>
-            {loading ? 'Salvando...' : 'Continuar'}
-          </Text>
-        </TouchableOpacity>
-
         <Text style={styles.note}>
           Você poderá alterar essas informações no seu perfil a qualquer momento.
         </Text>
@@ -139,7 +114,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
     paddingTop: 40,
-    paddingBottom: 40,
+    paddingBottom: 120, // Extra padding for fixed footer
   },
   title: {
     fontSize: 28,
@@ -202,22 +177,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     opacity: 0.9,
   },
-  button: {
-    backgroundColor: CORAL,
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  buttonDisabled: {
-    backgroundColor: '#ccc',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 18,
-  },
+
   note: {
     fontSize: 14,
     color: '#64748b',

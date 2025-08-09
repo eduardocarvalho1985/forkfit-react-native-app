@@ -1,5 +1,8 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
+import { api } from '../../services/api';
+import { getAuth } from '@react-native-firebase/auth';
 
 export interface OnboardingData {
   goal?: 'lose_weight' | 'maintain' | 'gain_muscle';
@@ -31,6 +34,7 @@ interface OnboardingContextType {
   isStepValid: (stepId: string) => boolean;
   getCurrentStepData: () => OnboardingData;
   calculatePlan: () => CalculatedPlan | null;
+  completeOnboarding: (notificationsEnabled: boolean) => Promise<void>;
 }
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
@@ -211,6 +215,12 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     }
   };
 
+  const completeOnboarding = async (notificationsEnabled: boolean) => {
+    // This function needs access to AuthContext, so it will be implemented 
+    // in the parent component instead
+    throw new Error('completeOnboarding must be implemented in parent component');
+  };
+
   return (
     <OnboardingContext.Provider value={{
       onboardingData,
@@ -219,7 +229,8 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       clearOnboardingData,
       isStepValid,
       getCurrentStepData,
-      calculatePlan
+      calculatePlan,
+      completeOnboarding
     }}>
       {children}
     </OnboardingContext.Provider>

@@ -30,14 +30,13 @@ const BORDER = '#FFA28F';
 const TEXT = '#1F2937';
 
 interface NotificationsStepProps {
-  onComplete: () => void;
+  onSetLoading: (loading: boolean) => void;
 }
 
-export default function NotificationsStep({ onComplete }: NotificationsStepProps) {
+export default function NotificationsStep({ onSetLoading }: NotificationsStepProps) {
   const { user, syncUser } = useAuth();
-  const { getCurrentStepData, clearOnboardingData } = useOnboarding();
+  const { getCurrentStepData, clearOnboardingData, updateStepData } = useOnboarding();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   const requestNotifications = async () => {
     try {
@@ -58,64 +57,11 @@ export default function NotificationsStep({ onComplete }: NotificationsStepProps
     }
   };
 
-  const handleComplete = async () => {
-    if (!user) {
-      Alert.alert('Erro', 'Usuário não encontrado. Tente fazer login novamente.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Get all onboarding data from context
-      const completeOnboardingData = getCurrentStepData();
-      console.log('Complete onboarding data to save:', completeOnboardingData);
-
-      // Calculate age from birth date
-      const calculatedAge = completeOnboardingData.birthDate ? calculateAge(completeOnboardingData.birthDate) : 0;
-      console.log('Calculated age from birth date:', completeOnboardingData.birthDate, '=', calculatedAge);
-
-      // Get authentication token
-      const token = await getAuth().currentUser?.getIdToken();
-      if (!token) {
-        throw new Error('No authentication token available');
-      }
-
-      // Direct API call with all onboarding data including calculated age
-      const userProfileData = {
-        ...completeOnboardingData,
-        age: calculatedAge, // Add calculated age
-        notificationsEnabled,
-        onboardingCompleted: true
-      };
-      
-      console.log('Saving complete user profile:', userProfileData);
-      console.log('User UID:', user.uid);
-      
-      await api.updateUserProfile(user.uid, userProfileData, token);
-      console.log('User profile updated successfully with all onboarding data');
-
-      // Sync updated user data to AuthContext
-      await syncUser();
-      console.log('User data synced after onboarding completion');
-
-      // Clear onboarding context data
-      clearOnboardingData();
-      
-      // Call the onComplete callback to finish onboarding
-      onComplete();
-      
-    } catch (error: any) {
-      console.error('Error completing onboarding:', error);
-      
-      // Simple, clear error message for MVP
-      Alert.alert(
-        'Erro de Conexão', 
-        'Parece que você está sem conexão. Verifique sua internet e tente novamente.'
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Update notifications preference in context
+  useEffect(() => {
+    updateStepData('notifications', { notificationsEnabled });
+    console.log('Notifications preference updated:', notificationsEnabled);
+  }, [notificationsEnabled]);
 
   return (
     <View style={styles.container}>
@@ -154,26 +100,6 @@ export default function NotificationsStep({ onComplete }: NotificationsStepProps
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleComplete}
-          disabled={loading}
-        >
-          <Text style={styles.buttonText}>
-            {loading ? 'Finalizando...' : 'Continuar'}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.skipButton}
-          onPress={handleComplete}
-          disabled={loading}
-        >
-          <Text style={styles.skipButtonText}>
-            Pular por enquanto
-          </Text>
-        </TouchableOpacity>
-
         <Text style={styles.note}>
           Você pode alterar as configurações de notificação a qualquer momento nos Ajustes.
         </Text>
@@ -191,6 +117,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
     paddingTop: 40,
+    paddingBottom: 120, // Extra padding for fixed footer
   },
   iconContainer: {
     alignItems: 'center',
@@ -264,33 +191,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: CORAL,
   },
-  button: {
-    backgroundColor: CORAL,
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  buttonDisabled: {
-    backgroundColor: '#ccc',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 18,
-  },
-  skipButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  skipButtonText: {
-    color: '#64748b',
-    fontSize: 16,
-    textDecorationLine: 'underline',
-  },
+
   note: {
     fontSize: 14,
     color: '#64748b',

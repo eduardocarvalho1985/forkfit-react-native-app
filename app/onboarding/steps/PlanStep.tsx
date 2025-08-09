@@ -8,13 +8,12 @@ const BORDER = '#FFA28F';
 const TEXT = '#1F2937';
 
 interface PlanStepProps {
-  onNext: () => void;
+  onSetLoading: (loading: boolean) => void;
 }
 
-export default function PlanStep({ onNext }: PlanStepProps) {
+export default function PlanStep({ onSetLoading }: PlanStepProps) {
   const { calculatePlan, updateStepData } = useOnboarding();
   const [plan, setPlan] = useState<{ calories: number; protein: number; carbs: number; fat: number } | null>(null);
-  const [loading, setLoading] = useState(false);
 
   // Calculate plan when component mounts
   useEffect(() => {
@@ -26,25 +25,7 @@ export default function PlanStep({ onNext }: PlanStepProps) {
     }
   }, []);
 
-  const handleNext = async () => {
-    if (!plan) {
-      Alert.alert('Erro', 'Não foi possível calcular seu plano. Tente novamente.');
-      return;
-    }
 
-    setLoading(true);
-    try {
-      console.log('Plan step completed, moving to next step');
-      
-      // Call the onNext callback to move to next step
-      onNext();
-    } catch (error) {
-      console.error('Error in plan step:', error);
-      Alert.alert('Erro', 'Não foi possível continuar. Tente novamente.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (!plan) {
     return (
@@ -103,16 +84,6 @@ export default function PlanStep({ onNext }: PlanStepProps) {
           </Text>
         </View>
 
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleNext}
-          disabled={loading}
-        >
-          <Text style={styles.buttonText}>
-            {loading ? 'Continuando...' : 'Continuar'}
-          </Text>
-        </TouchableOpacity>
-
         <Text style={styles.note}>
           Seu plano será salvo automaticamente e estará disponível no dashboard.
         </Text>
@@ -130,7 +101,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
     paddingTop: 40,
-    paddingBottom: 40,
+    paddingBottom: 120, // Extra padding for fixed footer
   },
   celebrationContainer: {
     alignItems: 'center',
@@ -236,22 +207,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
-  button: {
-    backgroundColor: CORAL,
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  buttonDisabled: {
-    backgroundColor: '#ccc',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 18,
-  },
+
   note: {
     fontSize: 14,
     color: '#64748b',

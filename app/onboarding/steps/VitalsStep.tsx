@@ -35,16 +35,15 @@ const GENDER_OPTIONS = [
 ];
 
 interface VitalsStepProps {
-  onNext: () => void;
+  onSetLoading: (loading: boolean) => void;
 }
 
-export default function VitalsStep({ onNext }: VitalsStepProps) {
+export default function VitalsStep({ onSetLoading }: VitalsStepProps) {
   const { getStepData, updateStepData } = useOnboarding();
   const [gender, setGender] = useState<'male' | 'female' | 'other' | null>(getStepData('gender') || null);
   const [birthDate, setBirthDate] = useState(getStepData('birthDate') || '');
   const [height, setHeight] = useState(getStepData('height')?.toString() || '');
   const [weight, setWeight] = useState(getStepData('weight')?.toString() || '');
-  const [loading, setLoading] = useState(false);
 
   // Load existing data when component mounts
   useEffect(() => {
@@ -77,59 +76,29 @@ export default function VitalsStep({ onNext }: VitalsStepProps) {
     return selectedDate >= minDate && selectedDate <= today;
   };
 
-  const handleNext = async () => {
-    // Validation
-    if (!gender) {
-      Alert.alert('Erro', 'Por favor, selecione seu gênero.');
-      return;
-    }
-
-    if (!birthDate) {
-      Alert.alert('Erro', 'Por favor, insira sua data de nascimento.');
-      return;
-    }
-
-    if (!validateBirthDate(birthDate)) {
-      Alert.alert('Erro', 'Por favor, insira uma data de nascimento válida.');
-      return;
-    }
-
-    const heightNumber = parseInt(height);
-    if (!height.trim() || isNaN(heightNumber) || heightNumber < 100 || heightNumber > 250) {
-      Alert.alert('Erro', 'Por favor, insira uma altura válida entre 100 e 250 cm.');
-      return;
-    }
-
-    const weightNumber = parseWeight(weight);
-    if (!weight.trim() || isNaN(weightNumber) || weightNumber < 30 || weightNumber > 300) {
-      Alert.alert('Erro', 'Por favor, insira um peso válido entre 30 e 300 kg.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Calculate age from birth date
-      const calculatedAge = calculateAge(birthDate);
+  // Update vitals data in context whenever any field changes and is valid
+  useEffect(() => {
+    if (gender && birthDate && height && weight) {
+      const heightNumber = parseInt(height);
+      const weightNumber = parseWeight(weight);
       
-      // Update context with all vitals data including age
-      updateStepData('vitals', { 
-        gender, 
-        birthDate, 
-        age: calculatedAge,
-        height: heightNumber, 
-        weight: weightNumber 
-      });
-      console.log('Vitals step completed with birthDate:', birthDate, 'age:', calculatedAge, 'moving to next step');
-      
-      // Call the onNext callback to move to next step
-      onNext();
-    } catch (error) {
-      console.error('Error in vitals step:', error);
-      Alert.alert('Erro', 'Não foi possível salvar suas informações. Tente novamente.');
-    } finally {
-      setLoading(false);
+      // Only update if all validations pass
+      if (validateBirthDate(birthDate) && 
+          !isNaN(heightNumber) && heightNumber >= 100 && heightNumber <= 250 &&
+          !isNaN(weightNumber) && weightNumber >= 30 && weightNumber <= 300) {
+        
+        const calculatedAge = calculateAge(birthDate);
+        updateStepData('vitals', { 
+          gender, 
+          birthDate, 
+          age: calculatedAge,
+          height: heightNumber, 
+          weight: weightNumber 
+        });
+        console.log('Vitals data updated in context');
+      }
     }
-  };
+  }, [gender, birthDate, height, weight]);
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -201,16 +170,6 @@ export default function VitalsStep({ onNext }: VitalsStepProps) {
           <Text style={styles.hint}>Digite seu peso em quilogramas</Text>
         </View>
 
-        <TouchableOpacity
-          style={[styles.button, (!gender || !birthDate || !height.trim() || !weight.trim() || loading) && styles.buttonDisabled]}
-          onPress={handleNext}
-          disabled={!gender || !birthDate || !height.trim() || !weight.trim() || loading}
-        >
-          <Text style={styles.buttonText}>
-            {loading ? 'Salvando...' : 'Continuar'}
-          </Text>
-        </TouchableOpacity>
-
         <Text style={styles.note}>
           Você poderá alterar essas informações no seu perfil a qualquer momento.
         </Text>
@@ -228,7 +187,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
     paddingTop: 40,
-    paddingBottom: 40,
+    paddingBottom: 120, // Extra padding for fixed footer
   },
   title: {
     fontSize: 28,
@@ -296,22 +255,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontStyle: 'italic',
   },
-  button: {
-    backgroundColor: CORAL,
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  buttonDisabled: {
-    backgroundColor: '#ccc',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 18,
-  },
+
   note: {
     fontSize: 14,
     color: '#64748b',
