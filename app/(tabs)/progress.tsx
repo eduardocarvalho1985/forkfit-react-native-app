@@ -277,61 +277,126 @@ export default function ProgressScreen() {
       </View>
       {/* Goal Progress Chart */}
       <View style={[styles.card, { paddingHorizontal: 8, overflow: 'hidden' }]}>
-        <Text style={styles.cardTitle}>Progresso da Meta</Text>
-        {/* Progress Insight - COMMENTED OUT FOR MVP
-        TODO: Re-enable when weight progress analysis is fully implemented
-        This provides insights about weight change over the selected period */}
-        {/* {progressSummary && (
-          <Text style={styles.progressInsight}>
-            {progressSummary.weightChange ? 
-              `Você ${progressSummary.weightChange > 0 ? 'ganhou' : 'perdeu'} ${formatWeightWithUnit(Math.abs(progressSummary.weightChange))} este período. Continue assim!` :
-              'Mantenha o foco na sua meta de peso!'
-            }
-          </Text>
-        )} */}
-        {/* Weight Chart with Placeholder Overlay */}
-        <View style={{ position: 'relative', marginTop: 12 }}>
-          {loading.weight ? (
-            <View style={{ height: 120, justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={styles.cardTitle}>Calorias - Meta Diária e Consumo</Text>
+        
+        {/* Calorie Chart */}
+        <View style={{ marginTop: 12 }}>
+          {loading.calories ? (
+            <View style={{ height: 180, justifyContent: 'center', alignItems: 'center' }}>
               <Text style={{ color: '#64748b' }}>Carregando dados...</Text>
             </View>
-          ) : weights && weights.length > 1 ? (
-            <LineChart
-              data={{
-                labels: dateRange.labels,
-                datasets: [{ data: weights || [] }],
-              }}
-              width={screenWidth - 24}
-              height={120}
-              yAxisSuffix="kg"
-              yAxisLabel=""
-              chartConfig={{
-                ...chartConfig,
-                color: () => CORAL,
-                propsForDots: { r: '3', strokeWidth: '2', stroke: CORAL },
-              }}
-              bezier
-              style={{ borderRadius: 12 }}
-              withInnerLines={false}
-              withHorizontalLabels={false}
-            />
-          ) : (
-            <Text style={styles.noWeight}>Nenhum dado de peso disponível</Text>
-          )}
-          
-          {/* Placeholder Overlay */}
-          <View style={styles.chartPlaceholder}>
-            <View style={styles.comingSoonBadge}>
-              <Text style={styles.comingSoonText}>EM BREVE</Text>
+          ) : calorieProgress && calorieProgress.length > 0 ? (
+            <View>
+              {/* Chart Legend */}
+              <View style={styles.chartLegend}>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendDot, { backgroundColor: '#e5e7eb' }]} />
+                  <Text style={styles.legendText}>Meta</Text>
+                </View>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendDot, { backgroundColor: CORAL }]} />
+                  <Text style={styles.legendText}>Consumido</Text>
+                </View>
+              </View>
+
+              {/* Custom Calorie Bar Chart */}
+              <View style={styles.customChart}>
+                {/* Y-axis labels */}
+                <View style={styles.yAxisLabels}>
+                  <Text style={styles.yAxisLabel}>2200</Text>
+                  <Text style={styles.yAxisLabel}>1650</Text>
+                  <Text style={styles.yAxisLabel}>1100</Text>
+                  <Text style={styles.yAxisLabel}>550</Text>
+                  <Text style={styles.yAxisLabel}>0</Text>
+                </View>
+                
+                {/* Chart area */}
+                <View style={styles.chartArea}>
+                  {/* Grid lines */}
+                  <View style={styles.gridLines}>
+                    {[0, 1, 2, 3, 4].map(i => (
+                      <View key={i} style={styles.gridLine} />
+                    ))}
+                  </View>
+                  
+                  {/* Bars */}
+                  <View style={styles.barsContainer}>
+                    {(() => {
+                      // Create array of last 7 days ending with today
+                      const today = new Date();
+                      const last7Days = [];
+                      for (let i = 6; i >= 0; i--) {
+                        const date = new Date(today);
+                        date.setDate(today.getDate() - i);
+                        last7Days.push(date);
+                      }
+                      
+                      return last7Days.map((date, index) => {
+                        // Find matching calorie data for this date
+                        const dateStr = date.toISOString().split('T')[0];
+                        const entry = calorieProgress.find(entry => entry.date === dateStr);
+                        
+                        const maxCalories = 2200;
+                        // Use user's calorie goal or entry goal or default to 2000
+                        const userGoal = user?.calories || entry?.goal || 2000;
+                        const goalHeight = (userGoal / maxCalories) * 140;
+                        const consumedHeight = entry ? (entry.consumed / maxCalories) * 140 : 0;
+                        
+                        return (
+                          <View key={index} style={styles.barGroup}>
+                            {/* Goal bar (gray) - always show for every day */}
+                            <View 
+                              style={[
+                                styles.bar, 
+                                styles.goalBar,
+                                { height: Math.max(goalHeight, 5) } // Minimum height for visibility
+                              ]} 
+                            />
+                            {/* Consumed bar (coral) - only show if there's data */}
+                            {entry && consumedHeight > 0 && (
+                              <View 
+                                style={[
+                                  styles.bar, 
+                                  styles.consumedBar,
+                                  { height: consumedHeight }
+                                ]} 
+                              />
+                            )}
+                          </View>
+                        );
+                      });
+                    })()}
+                  </View>
+                </View>
+                
+                {/* X-axis labels */}
+                <View style={styles.xAxisLabels}>
+                  {(() => {
+                    // Create array of last 7 days ending with today
+                    const today = new Date();
+                    const last7Days = [];
+                    for (let i = 6; i >= 0; i--) {
+                      const date = new Date(today);
+                      date.setDate(today.getDate() - i);
+                      last7Days.push(date);
+                    }
+                    
+                    const dayAbbreviations = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                    
+                    return last7Days.map((date, index) => (
+                      <Text key={index} style={styles.xAxisLabel}>
+                        {dayAbbreviations[date.getDay()]}
+                      </Text>
+                    ));
+                  })()}
+                </View>
+              </View>
             </View>
-            <Text style={styles.placeholderTitle}>📊 Gráficos Avançados</Text>
-            <Text style={styles.placeholderText}>
-              Novos gráficos interativos serão disponibilizados em breve!
-            </Text>
-            <Text style={styles.placeholderSubtext}>
-              Estamos trabalhando para trazer análises mais detalhadas do seu progresso.
-            </Text>
-          </View>
+          ) : (
+            <View style={{ height: 180, justifyContent: 'center', alignItems: 'center' }}>
+              <Text style={styles.noWeight}>Nenhum dado de calorias disponível para este período</Text>
+            </View>
+          )}
         </View>
       </View>
 
@@ -810,5 +875,101 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 10,
     fontWeight: 'bold',
+  },
+  chartLegend: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginBottom: 8,
+    paddingHorizontal: 8,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 16,
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  legendText: {
+    fontSize: 12,
+    color: TEXT_DARK,
+  },
+  customChart: {
+    flexDirection: 'row',
+    height: 180,
+    marginHorizontal: 8,
+  },
+  yAxisLabels: {
+    width: 40,
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    paddingRight: 8,
+    paddingVertical: 20,
+  },
+  yAxisLabel: {
+    fontSize: 11,
+    color: TEXT_LIGHT,
+  },
+  chartArea: {
+    flex: 1,
+    position: 'relative',
+    marginVertical: 20,
+  },
+  gridLines: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'space-between',
+  },
+  gridLine: {
+    height: 1,
+    backgroundColor: '#f1f5f9',
+  },
+  barsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'flex-end',
+    height: 140,
+    paddingHorizontal: 12,
+  },
+  barGroup: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    flex: 1,
+    height: 140,
+  },
+  bar: {
+    width: 20,
+    borderRadius: 2,
+    position: 'absolute',
+    bottom: 0,
+  },
+  goalBar: {
+    backgroundColor: '#e5e7eb',
+  },
+  consumedBar: {
+    backgroundColor: CORAL,
+  },
+  xAxisLabels: {
+    position: 'absolute',
+    bottom: 0,
+    left: 40,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: 12,
+  },
+  xAxisLabel: {
+    fontSize: 9,
+    color: TEXT_DARK,
+    textAlign: 'center',
+    flex: 1,
   },
 });
