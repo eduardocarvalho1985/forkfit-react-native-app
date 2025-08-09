@@ -115,8 +115,8 @@ export const FoodBottomSheet = forwardRef<BottomSheetModal, FoodBottomSheetProps
     const handleQuantityChange = (newQuantity: string) => {
         setQuantity(newQuantity);
         
-        // Only auto-recalculate if we have original macros (edit mode)
-        if (isEdit && originalMacros.quantity > 0) {
+        // Auto-recalculate if we have original macros (either edit mode or database food)
+        if (originalMacros.quantity > 0 && originalMacros.calories > 0) {
             recalculateMacros(newQuantity);
         }
         
@@ -289,8 +289,8 @@ export const FoodBottomSheet = forwardRef<BottomSheetModal, FoodBottomSheetProps
             </View>
           </View>
 
-          {/* Auto-recalculation notice (only in edit mode) */}
-          {isEdit && originalMacros.quantity > 0 && (
+          {/* Auto-recalculation notice (edit mode or database food) */}
+          {originalMacros.quantity > 0 && originalMacros.calories > 0 && (
             <Text style={styles.infoText}>
               💡 As calorias e macros serão recalculadas automaticamente quando você alterar a quantidade
             </Text>
