@@ -301,14 +301,77 @@ export default function ProgressScreen() {
 
               {/* Custom Calorie Bar Chart */}
               <View style={styles.customChart}>
-                {/* Y-axis labels */}
-                <View style={styles.yAxisLabels}>
-                  <Text style={styles.yAxisLabel}>2200</Text>
-                  <Text style={styles.yAxisLabel}>1650</Text>
-                  <Text style={styles.yAxisLabel}>1100</Text>
-                  <Text style={styles.yAxisLabel}>550</Text>
-                  <Text style={styles.yAxisLabel}>0</Text>
-                </View>
+                {(() => {
+                  // Helper function to calculate dynamic max calories for all periods
+                  const calculateDynamicMaxCalories = () => {
+                    // Determine number of days based on period
+                    const numDays = period === '7d' ? 7 : period === '30d' ? 30 : 90;
+                    const today = new Date();
+                    const lastDays = [];
+                    
+                    for (let i = numDays - 1; i >= 0; i--) {
+                      const date = new Date(today);
+                      date.setDate(today.getDate() - i);
+                      lastDays.push(date);
+                    }
+                    
+                    const periodData = lastDays.map(date => {
+                      const dateStr = date.toISOString().split('T')[0];
+                      return calorieProgress.find(entry => entry.date === dateStr);
+                    }).filter(Boolean);
+                    
+                    const maxGoal = Math.max(
+                      user?.calories || 2000,
+                      ...periodData.map(entry => entry?.goal || 0)
+                    );
+                    
+                    const maxConsumed = Math.max(
+                      0,
+                      ...periodData.map(entry => entry?.consumed || 0)
+                    );
+                    
+                    const absoluteMax = Math.max(maxGoal, maxConsumed);
+                    const bufferedMax = absoluteMax * 1.15; // 15% buffer
+                    const roundedMax = Math.ceil(bufferedMax / 250) * 250;
+                    const dynamicMax = Math.max(2500, Math.min(8000, roundedMax));
+                    
+                    console.log(`${period} Dynamic Scale Calculation:`, {
+                      numDays,
+                      maxGoal,
+                      maxConsumed,
+                      absoluteMax,
+                      bufferedMax,
+                      dynamicMax
+                    });
+                    
+                    return dynamicMax;
+                  };
+                  
+                  const dynamicMaxCalories = calculateDynamicMaxCalories();
+                  
+                  // Generate Y-axis labels based on dynamic max for all periods
+                  const yAxisLabels = [
+                    dynamicMaxCalories,           // 100%
+                    Math.round(dynamicMaxCalories * 0.75),  // 75%
+                    Math.round(dynamicMaxCalories * 0.5),   // 50%
+                    Math.round(dynamicMaxCalories * 0.25),  // 25%
+                    0                             // 0%
+                  ];
+                  
+                  console.log(`${period} Dynamic Scale (Y-axis):`, {
+                    period,
+                    dynamicMaxCalories,
+                    yAxisLabels
+                  });
+                  
+                  return (
+                    <>
+                      {/* Y-axis labels */}
+                      <View style={styles.yAxisLabels}>
+                        {yAxisLabels.map((label, index) => (
+                          <Text key={index} style={styles.yAxisLabel}>{label}</Text>
+                        ))}
+                      </View>
                 
                 {/* Chart area */}
                 <View style={styles.chartArea}>
@@ -342,7 +405,7 @@ export default function ProgressScreen() {
                         const dateStr = date.toISOString().split('T')[0];
                         const entry = calorieProgress.find(entry => entry.date === dateStr);
                         
-                        const maxCalories = 2200;
+                        const maxCalories = dynamicMaxCalories; // Use the shared calculation
                         // Use user's calorie goal or entry goal or default to 2000
                         const userGoal = user?.calories || entry?.goal || 2000;
                         const goalHeight = (userGoal / maxCalories) * 140;
@@ -406,6 +469,9 @@ export default function ProgressScreen() {
                     })()}
                   </View>
                 )}
+                    </>
+                  );
+                })()}
               </View>
             </View>
           ) : (
