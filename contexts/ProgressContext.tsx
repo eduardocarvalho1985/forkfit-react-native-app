@@ -138,12 +138,20 @@ export const ProgressProvider: React.FC<ProgressProviderProps> = ({ children }) 
     setError(prev => ({ ...prev, weight: null }));
     
     try {
+      // Step 1: Delete the entry (this is the critical operation)
       await api.deleteWeightEntry(user.uid, weightId, token);
-      await refreshWeightHistory(); // Refresh the list
-    } catch (err: any) {
-      setError(prev => ({ ...prev, weight: err.message }));
-      console.error('Failed to delete weight entry:', err);
-      throw err; // Re-throw to handle in component
+      
+      // Step 2: Refresh the list (don't let this failure affect the delete success)
+      try {
+        await refreshWeightHistory();
+      } catch (refreshError) {
+        console.warn('ProgressContext: Refresh failed after successful delete:', refreshError);
+        // Don't re-throw refresh errors since delete was successful
+      }
+    } catch (deleteError: any) {
+      console.error('ProgressContext: Delete operation failed:', deleteError);
+      setError(prev => ({ ...prev, weight: deleteError.message }));
+      throw deleteError; // Only re-throw actual delete errors
     } finally {
       setLoading(prev => ({ ...prev, weight: false }));
     }

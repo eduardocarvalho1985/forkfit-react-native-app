@@ -7,6 +7,7 @@ import { useProgress } from '../../contexts/ProgressContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { calculateDateRange, PeriodKey, getCurrentDate } from '../../utils/dateUtils';
 import { WeightInputModal } from '../../components/WeightInputModal';
+import { WeightHistoryBottomSheet } from '../../components/WeightHistoryBottomSheet';
 import { formatWeightWithUnit } from '../../utils/weightUtils';
 import { formatNumber } from '../../utils/formatters';
 
@@ -42,6 +43,7 @@ export default function ProgressScreen() {
   const [hasError, setHasError] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const weightModalRef = useRef<BottomSheetModal>(null);
+  const weightHistoryRef = useRef<BottomSheetModal>(null);
   
   const [period, setPeriod] = useState<PeriodKey>('7d');
   const router = useRouter();
@@ -521,7 +523,11 @@ export default function ProgressScreen() {
       </View>
 
       {/* Weight Journey Chart */}
-      <View style={[styles.card, { paddingHorizontal: 8, overflow: 'hidden' }]}>
+      <TouchableOpacity 
+        style={[styles.card, { paddingHorizontal: 8, overflow: 'hidden' }]}
+        onPress={() => weightHistoryRef.current?.present()}
+        activeOpacity={0.7}
+      >
         <View style={styles.weightChartHeader}>
           <Text style={styles.cardTitle}>Peso - Meta e Histórico</Text>
           {user?.targetWeight && currentWeight && user?.weight && (
@@ -715,7 +721,7 @@ export default function ProgressScreen() {
             }
           </Text>
         )} */}
-      </View>
+      </TouchableOpacity>
       {/* Daily Average and Days on Target - COMMENTED OUT FOR MVP
       TODO: Re-enable when calorie tracking and analysis is fully implemented
       These cards show daily calorie average and days on target vs total days */}
@@ -736,6 +742,12 @@ export default function ProgressScreen() {
         ref={weightModalRef}
         onSave={handleUpdateWeight}
         currentWeight={currentWeight || undefined}
+      />
+
+      {/* Weight History Bottom Sheet */}
+      <WeightHistoryBottomSheet
+        ref={weightHistoryRef}
+        onRefresh={refreshWeightHistory}
       />
     </ScrollView>
   );
