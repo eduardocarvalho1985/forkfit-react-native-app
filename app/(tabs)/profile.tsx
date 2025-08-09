@@ -126,7 +126,7 @@ export default function ProfileScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView 
-        style={{ flex: 1 }} 
+        style={{ flex: 1, paddingTop: 36 }} 
         contentContainerStyle={{ paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled={true}
@@ -301,10 +301,9 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: TEXT_DARK,
-    marginTop: 80,
-    marginBottom: 24,
+    marginTop: 72,
+    marginBottom: 12,
     marginLeft: 20,
-    textAlign: 'left',
   },
   section: {
     marginBottom: 24,

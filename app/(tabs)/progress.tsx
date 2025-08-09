@@ -11,9 +11,9 @@ import { formatWeightWithUnit } from '../../utils/weightUtils';
 import { formatNumber } from '../../utils/formatters';
 
 const CORAL = '#FF725E';
-const OFF_WHITE = '#FFF8F6';
-const BORDER = '#FFA28F';
-const TEXT = '#1F2937';
+const TEXT_DARK = '#1F2937';
+const TEXT_LIGHT = '#64748b';
+const BORDER_LIGHT = '#e2e8f0';
 
 const PERIODS = [
   { label: '7 Dias', value: '7d' },
@@ -143,11 +143,11 @@ export default function ProgressScreen() {
 
   // Chart config
   const chartConfig = {
-    backgroundGradientFrom: OFF_WHITE,
-    backgroundGradientTo: OFF_WHITE,
+    backgroundGradientFrom: '#fff',
+    backgroundGradientTo: '#fff',
     decimalPlaces: 0,
     color: (opacity = 1) => `rgba(255, 114, 94, ${opacity})`,
-    labelColor: () => TEXT,
+    labelColor: () => TEXT_DARK,
     propsForBackgroundLines: {
       stroke: '#eee',
     },
@@ -162,8 +162,8 @@ export default function ProgressScreen() {
   // Error boundary - if there's a critical error, show error screen
   if (hasError) {
     return (
-      <View style={{ flex: 1, backgroundColor: OFF_WHITE, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-        <Text style={{ fontSize: 18, color: TEXT, marginBottom: 20, textAlign: 'center' }}>
+      <View style={{ flex: 1, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <Text style={{ fontSize: 18, color: TEXT_DARK, marginBottom: 20, textAlign: 'center' }}>
           Erro ao carregar dados de progresso
         </Text>
         <TouchableOpacity 
@@ -186,7 +186,7 @@ export default function ProgressScreen() {
   return (
     <ScrollView 
       ref={scrollViewRef}
-      style={{ flex: 1, backgroundColor: OFF_WHITE, paddingTop: 36 }} 
+      style={{ flex: 1, backgroundColor: '#fff', paddingTop: 36 }} 
       contentContainerStyle={{ paddingBottom: 32 }}
     >
       <Text style={styles.title}>Progresso</Text>
@@ -441,10 +441,7 @@ export default function ProgressScreen() {
           <Text style={styles.smallCardValue}>{daysOnTarget} <Text style={{ fontSize: 14, color: '#64748b' }}>/ {totalDays} dias</Text></Text>
         </View>
       </View> */}
-      {/* Back Button */}
-      <TouchableOpacity style={styles.backBtn} onPress={() => router.replace('/(tabs)/dashboard')}>
-        <Text style={styles.backBtnText}>Voltar para o Dashboard</Text>
-      </TouchableOpacity>
+
 
       {/* Weight Input Modal */}
       <WeightInputModal
@@ -460,16 +457,16 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: TEXT,
+    color: TEXT_DARK,
     marginTop: 72,
     marginBottom: 12,
-    marginLeft: 18,
+    marginLeft: 20,
   },
   tabsRow: {
     flexDirection: 'row',
     backgroundColor: '#F9F6F5',
     borderRadius: 12,
-    marginHorizontal: 18,
+    marginHorizontal: 16,
     marginBottom: 12,
     padding: 4,
     alignSelf: 'flex-start',
@@ -493,45 +490,43 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#fff',
-    borderRadius: 16,
-    marginHorizontal: 18,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: BORDER_LIGHT,
+    marginHorizontal: 16,
     marginBottom: 18,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    overflow: 'hidden',
   },
   cardTitle: {
     fontSize: 17,
     fontWeight: 'bold',
-    color: TEXT,
+    color: TEXT_DARK,
     marginBottom: 6,
   },
   rowCards: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginHorizontal: 18,
+    marginHorizontal: 16,
     marginBottom: 18,
   },
   smallCard: {
     flex: 1,
     backgroundColor: '#fff',
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: BORDER_LIGHT,
     marginRight: 10,
     padding: 16,
     alignItems: 'flex-start',
   },
   smallCardLabel: {
-    color: TEXT,
+    color: TEXT_DARK,
     fontSize: 14,
     marginBottom: 6,
   },
   smallCardValue: {
-    color: TEXT,
+    color: TEXT_DARK,
     fontSize: 22,
     fontWeight: 'bold',
   },
@@ -539,8 +534,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: BORDER,
-    marginHorizontal: 18,
+    borderColor: BORDER_LIGHT,
+    marginHorizontal: 16,
     marginBottom: 18,
     padding: 16,
     shadowColor: '#000',
@@ -552,7 +547,7 @@ const styles = StyleSheet.create({
   weightTitle: {
     fontSize: 17,
     fontWeight: 'bold',
-    color: TEXT,
+    color: TEXT_DARK,
     marginBottom: 8,
   },
   weightRow: {
@@ -563,7 +558,7 @@ const styles = StyleSheet.create({
   weightValue: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: TEXT,
+    color: TEXT_DARK,
     marginRight: 12,
   },
   weightUnit: {
@@ -572,12 +567,12 @@ const styles = StyleSheet.create({
   },
   weightInput: {
     borderWidth: 1.5,
-    borderColor: BORDER,
+    borderColor: BORDER_LIGHT,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 6,
     fontSize: 16,
-    color: TEXT,
+    color: TEXT_DARK,
     width: 60,
     marginRight: 8,
     backgroundColor: '#fff',
@@ -601,27 +596,13 @@ const styles = StyleSheet.create({
     marginTop: 16,
     textAlign: 'center',
   },
-  backBtn: {
-    backgroundColor: '#fff',
-    borderWidth: 1.5,
-    borderColor: CORAL,
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    alignSelf: 'center',
-    marginTop: 8,
-  },
-  backBtnText: {
-    color: CORAL,
-    fontWeight: 'bold',
-    fontSize: 15,
-  },
+
   errorContainer: {
     backgroundColor: '#FEF2F2',
     borderWidth: 1,
     borderColor: '#FECACA',
     borderRadius: 8,
-    marginHorizontal: 18,
+    marginHorizontal: 16,
     marginBottom: 12,
     padding: 12,
   },
@@ -646,7 +627,7 @@ const styles = StyleSheet.create({
   topCardsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginHorizontal: 18,
+    marginHorizontal: 16,
     marginBottom: 18,
   },
   topCard: {
@@ -667,7 +648,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   topCardValue: {
-    color: TEXT,
+    color: TEXT_DARK,
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 8,
@@ -695,7 +676,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   logWeightButton: {
-    backgroundColor: TEXT,
+    backgroundColor: TEXT_DARK,
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 12,
@@ -783,7 +764,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: OFF_WHITE,
+    backgroundColor: '#fff',
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
@@ -805,7 +786,7 @@ const styles = StyleSheet.create({
   },
   placeholderText: {
     fontSize: 14,
-    color: TEXT,
+    color: TEXT_DARK,
     textAlign: 'center',
     marginBottom: 4,
     lineHeight: 20,

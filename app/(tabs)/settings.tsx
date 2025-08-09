@@ -55,7 +55,7 @@ export default function SettingsScreen() {
       <View style={styles.container}>
         <ScrollView 
           contentContainerStyle={styles.scrollContent} 
-          style={styles.scrollView}
+          style={[styles.scrollView, { paddingTop: 36 }]}
           showsVerticalScrollIndicator={false}
         >
           {/* Main Title - Left aligned and lower */}
@@ -200,10 +200,9 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: TEXT_DARK,
-    marginTop: 80,
-    marginBottom: 24,
+    marginTop: 72,
+    marginBottom: 12,
     marginLeft: 20,
-    textAlign: 'left',
   },
   section: {
     marginBottom: 24,
