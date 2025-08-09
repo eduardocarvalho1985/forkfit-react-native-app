@@ -248,6 +248,16 @@ export default function ProgressScreen() {
             <Text style={styles.streakNumber}>{formatNumber(dayStreak)}</Text>
           </View>
           <Text style={styles.streakLabel}>Sequência de Dias</Text>
+          
+          {/* Motivational message based on streak */}
+          <Text style={styles.streakMotivation}>
+            {dayStreak === 0 ? 'Comece hoje!' : 
+             dayStreak === 1 ? 'Ótimo começo!' :
+             dayStreak < 7 ? `${dayStreak} dias seguidos!` :
+             dayStreak < 30 ? `${dayStreak} dias - Continue!` :
+             `${dayStreak} dias - Incrível!`}
+          </Text>
+          
           <View style={styles.weekDotsContainer}>
             {weeklyStreakData.map((logged, index) => (
               <View 
@@ -862,7 +872,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     textAlign: 'center',
+    marginBottom: 4,
+  },
+  streakMotivation: {
+    color: '#059669',
+    fontSize: 12,
+    textAlign: 'center',
     marginBottom: 12,
+    fontStyle: 'italic',
   },
   weekDotsContainer: {
     flexDirection: 'row',
@@ -870,13 +887,24 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   weekDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: '#e2e8f0',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
   },
   weekDotFilled: {
     backgroundColor: CORAL,
+    borderColor: CORAL,
+    shadowColor: CORAL,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 2,
   },
   weekDaysText: {
     color: '#64748b',
