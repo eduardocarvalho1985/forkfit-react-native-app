@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Platform } from 'react-native';
 import { FontAwesome6 } from '@expo/vector-icons';
+import { BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { PrivacyBottomSheet } from '../../components/PrivacyBottomSheet';
 
 const CORAL = '#FF725E';
 const OFF_WHITE = '#FFF8F6';
@@ -10,85 +12,95 @@ const TEXT = '#1F2937';
 export default function SettingsScreen() {
   const [dailyReminders, setDailyReminders] = useState(true);
   const [weeklyReports, setWeeklyReports] = useState(true);
+  const privacyBottomSheetRef = useRef<BottomSheetModal>(null);
+
+  const handlePrivacyPress = () => {
+    privacyBottomSheetRef.current?.present();
+  };
 
   return (
-    <View style={{ flex: 1, backgroundColor: OFF_WHITE }}>
-      {/* Coral Bar */}
-      <View style={styles.coralBar} />
-      <ScrollView contentContainerStyle={{ paddingBottom: 32 }} style={{ flex: 1 }}>
-        {/* Big Title */}
-        <Text style={styles.title}>Ajustes</Text>
-        {/* Plano Gratuito Card */}
-        <View style={styles.planCard}>
-          <Text style={styles.planTitle}>Plano Gratuito</Text>
-          <Text style={styles.planDesc}>Ainda não lançamos nosso plano premium. Continue usando gratuitamente e fique ligado para nosso lançamento oficial.</Text>
-        </View>
-        {/* Notificações Section */}
-        <Text style={styles.sectionTitle}>Notificações</Text>
-        <View style={styles.notifyCard}>
-          <View style={styles.notifyRow}>
-            <FontAwesome6 name="bell" size={20} color={CORAL} style={{ marginRight: 12 }} />
-            <Text style={styles.notifyLabel}>Lembretes diários</Text>
-            <View style={{ flex: 1 }} />
-            <Switch
-              value={dailyReminders}
-              onValueChange={setDailyReminders}
-              trackColor={{ false: '#eee', true: CORAL }}
-              thumbColor={Platform.OS === 'android' ? (dailyReminders ? '#fff' : '#ccc') : ''}
-            />
+    <BottomSheetModalProvider>
+      <View style={{ flex: 1, backgroundColor: OFF_WHITE }}>
+        {/* Coral Bar */}
+        <View style={styles.coralBar} />
+        <ScrollView contentContainerStyle={{ paddingBottom: 32 }} style={{ flex: 1 }}>
+          {/* Big Title */}
+          <Text style={styles.title}>Ajustes</Text>
+          {/* Plano Gratuito Card */}
+          <View style={styles.planCard}>
+            <Text style={styles.planTitle}>Plano Gratuito</Text>
+            <Text style={styles.planDesc}>Ainda não lançamos nosso plano premium. Continue usando gratuitamente e fique ligado para nosso lançamento oficial.</Text>
           </View>
-          <View style={styles.notifyRow}>
-            <FontAwesome6 name="bell" size={20} color={CORAL} style={{ marginRight: 12 }} />
-            <Text style={styles.notifyLabel}>Relatórios semanais</Text>
-            <View style={{ flex: 1 }} />
-            <Switch
-              value={weeklyReports}
-              onValueChange={setWeeklyReports}
-              trackColor={{ false: '#eee', true: CORAL }}
-              thumbColor={Platform.OS === 'android' ? (weeklyReports ? '#fff' : '#ccc') : ''}
-            />
+          {/* Notificações Section */}
+          <Text style={styles.sectionTitle}>Notificações</Text>
+          <View style={styles.notifyCard}>
+            <View style={styles.notifyRow}>
+              <FontAwesome6 name="bell" size={20} color={CORAL} style={{ marginRight: 12 }} />
+              <Text style={styles.notifyLabel}>Lembretes diários</Text>
+              <View style={{ flex: 1 }} />
+              <Switch
+                value={dailyReminders}
+                onValueChange={setDailyReminders}
+                trackColor={{ false: '#eee', true: CORAL }}
+                thumbColor={Platform.OS === 'android' ? (dailyReminders ? '#fff' : '#ccc') : ''}
+              />
+            </View>
+            <View style={styles.notifyRow}>
+              <FontAwesome6 name="bell" size={20} color={CORAL} style={{ marginRight: 12 }} />
+              <Text style={styles.notifyLabel}>Relatórios semanais</Text>
+              <View style={{ flex: 1 }} />
+              <Switch
+                value={weeklyReports}
+                onValueChange={setWeeklyReports}
+                trackColor={{ false: '#eee', true: CORAL }}
+                thumbColor={Platform.OS === 'android' ? (weeklyReports ? '#fff' : '#ccc') : ''}
+              />
+            </View>
           </View>
-        </View>
-        {/* Geral Section */}
-        <Text style={styles.sectionTitle}>Geral</Text>
-        <View style={styles.generalCard}>
-          <TouchableOpacity style={styles.generalRow}>
-            <FontAwesome6 name="globe" size={20} color={TEXT} style={{ marginRight: 14 }} />
-            <Text style={styles.generalLabel}>Idioma</Text>
-            <View style={{ flex: 1 }} />
-            <Text style={styles.generalValue}>Português (BR)</Text>
-            <FontAwesome6 name="chevron-right" size={16} color="#A0AEC0" style={{ marginLeft: 8 }} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.generalRow}>
-            <FontAwesome6 name="credit-card" size={20} color={TEXT} style={{ marginRight: 14 }} />
-            <Text style={styles.generalLabel}>Gerenciar Assinatura</Text>
-            <View style={{ flex: 1 }} />
-            <FontAwesome6 name="chevron-right" size={16} color="#A0AEC0" style={{ marginLeft: 8 }} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.generalRow}>
-            <FontAwesome6 name="shield-halved" size={20} color={TEXT} style={{ marginRight: 14 }} />
-            <Text style={styles.generalLabel}>Privacidade</Text>
-            <View style={{ flex: 1 }} />
-            <FontAwesome6 name="chevron-right" size={16} color="#A0AEC0" style={{ marginLeft: 8 }} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.generalRow}>
-            <FontAwesome6 name="circle-question" size={20} color={TEXT} style={{ marginRight: 14 }} />
-            <Text style={styles.generalLabel}>Ajuda</Text>
-            <View style={{ flex: 1 }} />
-            <FontAwesome6 name="chevron-right" size={16} color="#A0AEC0" style={{ marginLeft: 8 }} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.logoutRow}>
-            <FontAwesome6 name="arrow-right-from-bracket" size={18} color={CORAL} style={{ marginRight: 10 }} />
-            <Text style={styles.logoutText}>Sair da conta</Text>
-          </TouchableOpacity>
-        </View>
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>ForkFit v0.1.0</Text>
-          <Text style={styles.footerTextSmall}>© 2025 ForkFit. Todos os direitos reservados.</Text>
-        </View>
-      </ScrollView>
-    </View>
+          {/* Geral Section */}
+          <Text style={styles.sectionTitle}>Geral</Text>
+          <View style={styles.generalCard}>
+            <TouchableOpacity style={styles.generalRow}>
+              <FontAwesome6 name="globe" size={20} color={TEXT} style={{ marginRight: 14 }} />
+              <Text style={styles.generalLabel}>Idioma</Text>
+              <View style={{ flex: 1 }} />
+              <Text style={styles.generalValue}>Português (BR)</Text>
+              <FontAwesome6 name="chevron-right" size={16} color="#A0AEC0" style={{ marginLeft: 8 }} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.generalRow}>
+              <FontAwesome6 name="credit-card" size={20} color={TEXT} style={{ marginRight: 14 }} />
+              <Text style={styles.generalLabel}>Gerenciar Assinatura</Text>
+              <View style={{ flex: 1 }} />
+              <FontAwesome6 name="chevron-right" size={16} color="#A0AEC0" style={{ marginLeft: 8 }} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.generalRow} onPress={handlePrivacyPress}>
+              <FontAwesome6 name="shield-halved" size={20} color={TEXT} style={{ marginRight: 14 }} />
+              <Text style={styles.generalLabel}>Privacidade</Text>
+              <View style={{ flex: 1 }} />
+              <FontAwesome6 name="chevron-right" size={16} color="#A0AEC0" style={{ marginLeft: 8 }} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.generalRow}>
+              <FontAwesome6 name="circle-question" size={20} color={TEXT} style={{ marginRight: 14 }} />
+              <Text style={styles.generalLabel}>Ajuda</Text>
+              <View style={{ flex: 1 }} />
+              <FontAwesome6 name="chevron-right" size={16} color="#A0AEC0" style={{ marginLeft: 8 }} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.logoutRow}>
+              <FontAwesome6 name="arrow-right-from-bracket" size={18} color={CORAL} style={{ marginRight: 10 }} />
+              <Text style={styles.logoutText}>Sair da conta</Text>
+            </TouchableOpacity>
+          </View>
+          {/* Footer */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>ForkFit v0.1.0</Text>
+            <Text style={styles.footerTextSmall}>© 2025 ForkFit. Todos os direitos reservados.</Text>
+          </View>
+        </ScrollView>
+
+        {/* Privacy Bottom Sheet */}
+        <PrivacyBottomSheet ref={privacyBottomSheetRef} />
+      </View>
+    </BottomSheetModalProvider>
   );
 }
 
