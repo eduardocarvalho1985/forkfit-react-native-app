@@ -520,85 +520,188 @@ export default function ProgressScreen() {
         </View>
       </View>
 
-      {/* Weekly Calorie Report */}
+      {/* Weight Journey Chart */}
       <View style={[styles.card, { paddingHorizontal: 8, overflow: 'hidden' }]}>
-        <Text style={styles.cardTitle}>Balanço Semanal</Text>
-        {/* Calorie Chart with Placeholder Overlay */}
-        <View style={{ position: 'relative', height: 180 }}>
-          {loading.calories ? (
-            <View style={{ height: 180, justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{ color: '#64748b' }}>Carregando dados...</Text>
-            </View>
-          ) : calorieProgress && calorieProgress.length > 0 ? (
-            <View style={{ position: 'relative', height: 180, width: chartCardWidth, alignSelf: 'center' }}>
-              {/* Planned (background) bars */}
-              <BarChart
-                data={{
-                  labels: dateRange.labels,
-                  datasets: [
-                    { data: (calorieProgress || []).map(d => d.goal || 0) },
-                  ],
-                }}
-                width={chartCardWidth}
-                height={180}
-                yAxisSuffix=""
-                yAxisLabel=""
-                fromZero
-                showBarTops={false}
-                chartConfig={{
-                  ...chartConfig,
-                  color: () => '#FFE0DA',
-                }}
-                style={{ borderRadius: 16, position: 'absolute', top: 0, left: 0 }}
-                withInnerLines={false}
-                withHorizontalLabels={false}
-                withCustomBarColorFromData={false}
-                segments={5}
-              />
-              {/* Actual (foreground) bars */}
-              <BarChart
-                data={{
-                  labels: dateRange.labels,
-                  datasets: [
-                    { data: (calorieProgress || []).map(d => d.consumed || 0) },
-                  ],
-                }}
-                width={chartCardWidth}
-                height={180}
-                yAxisSuffix=""
-                yAxisLabel=""
-                fromZero
-                showBarTops={false}
-                chartConfig={{
-                  ...chartConfig,
-                  color: () => CORAL,
-                }}
-                style={{ borderRadius: 16, position: 'absolute', top: 0, left: 0 }}
-                withInnerLines={false}
-                withHorizontalLabels={false}
-                withCustomBarColorFromData={false}
-                segments={5}
-              />
-            </View>
-          ) : (
-            <View style={{ height: 180, justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{ color: '#64748b' }}>Nenhum dado de calorias disponível</Text>
+        <View style={styles.weightChartHeader}>
+          <Text style={styles.cardTitle}>Peso - Meta e Histórico</Text>
+          {user?.targetWeight && currentWeight && user?.weight && (
+            <View style={styles.goalProgress}>
+              <Text style={styles.goalProgressText}>
+                {(() => {
+                  const startWeight = user.weight;
+                  const targetWeight = user.targetWeight;
+                  const current = currentWeight;
+                  const totalToLose = startWeight - targetWeight;
+                  const alreadyLost = startWeight - current;
+                  const progress = Math.max(0, Math.min(100, Math.round((alreadyLost / totalToLose) * 100)));
+                  return `${progress}% da meta`;
+                })()}
+              </Text>
             </View>
           )}
-          
-          {/* Placeholder Overlay */}
-          <View style={styles.chartPlaceholder}>
-            <View style={styles.comingSoonBadge}>
-              <Text style={styles.comingSoonText}>EM BREVE</Text>
+        </View>
+        
+        <View style={{ marginTop: 12 }}>
+          {loading.weight ? (
+            <View style={{ height: 200, justifyContent: 'center', alignItems: 'center' }}>
+              <Text style={{ color: '#64748b' }}>Carregando dados de peso...</Text>
             </View>
-            <Text style={styles.placeholderTitle}>📈 Análise Detalhada</Text>
-            <Text style={styles.placeholderText}>
-              Gráficos avançados de calorias e macros em desenvolvimento!
-            </Text>
-            <Text style={styles.placeholderSubtext}>
-              Em breve você terá insights mais profundos sobre sua nutrição.
-            </Text>
-          </View>
+          ) : weightHistory && weightHistory.length > 0 ? (
+            <View>
+              {/* Weight trend chart */}
+              <LineChart
+                data={{
+                  labels: (() => {
+                    // Group by date and get the latest weight for each day
+                    const groupedByDate = weightHistory.reduce((acc, entry) => {
+                      const dateKey = entry.date.split('T')[0]; // Get just the date part
+                      if (!acc[dateKey] || new Date(entry.createdAt || entry.date) > new Date(acc[dateKey].createdAt || acc[dateKey].date)) {
+                        acc[dateKey] = entry;
+                      }
+                      return acc;
+                    }, {} as Record<string, any>);
+                    
+                    // Sort by date (oldest first) and take last 10
+                    const sortedEntries = Object.values(groupedByDate)
+                      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                      .slice(-10);
+                    
+                    return sortedEntries.map(entry => {
+                      const date = new Date(entry.date);
+                      return `${date.getMonth() + 1}/${date.getDate()}`;
+                    });
+                  })(),
+                  datasets: [
+                    {
+                      data: (() => {
+                        // Group by date and get the latest weight for each day
+                        const groupedByDate = weightHistory.reduce((acc, entry) => {
+                          const dateKey = entry.date.split('T')[0];
+                          if (!acc[dateKey] || new Date(entry.createdAt || entry.date) > new Date(acc[dateKey].createdAt || acc[dateKey].date)) {
+                            acc[dateKey] = entry;
+                          }
+                          return acc;
+                        }, {} as Record<string, any>);
+                        
+                        // Sort by date (oldest first) and take last 10
+                        const sortedEntries = Object.values(groupedByDate)
+                          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                          .slice(-10);
+                        
+                        return sortedEntries.map(entry => entry.weight);
+                      })(),
+                      color: (opacity = 1) => `rgba(255, 114, 94, ${opacity})`,
+                      strokeWidth: 3,
+                    },
+                    // Goal line dataset - stronger horizontal line
+                    ...(user?.targetWeight ? [{
+                      data: (() => {
+                        const groupedByDate = weightHistory.reduce((acc, entry) => {
+                          const dateKey = entry.date.split('T')[0];
+                          if (!acc[dateKey] || new Date(entry.createdAt || entry.date) > new Date(acc[dateKey].createdAt || acc[dateKey].date)) {
+                            acc[dateKey] = entry;
+                          }
+                          return acc;
+                        }, {} as Record<string, any>);
+                        
+                        const sortedEntries = Object.values(groupedByDate)
+                          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                          .slice(-10);
+                        
+                        return Array(sortedEntries.length).fill(user.targetWeight);
+                      })(),
+                      color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`, // Blue color for goal
+                      strokeWidth: 4, // Thicker line
+                      withDots: false, // No dots on goal line
+                      strokeDashArray: [0], // Solid line (not dashed)
+                    }] : [])
+                  ],
+                }}
+                width={chartCardWidth}
+                height={200}
+                yAxisSuffix=" kg"
+                chartConfig={{
+                  backgroundColor: '#ffffff',
+                  backgroundGradientFrom: '#ffffff',
+                  backgroundGradientTo: '#ffffff',
+                  decimalPlaces: 1,
+                  color: (opacity = 1) => `rgba(255, 114, 94, ${opacity})`,
+                  labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                  style: {
+                    borderRadius: 16,
+                  },
+                  propsForDots: {
+                    r: '4',
+                    strokeWidth: '2',
+                    stroke: CORAL,
+                    fill: '#ffffff',
+                  },
+                  propsForBackgroundLines: {
+                    strokeDasharray: '5,5',
+                    stroke: '#e2e8f0',
+                    strokeOpacity: 0.5,
+                  },
+                  formatYLabel: (yValue) => `${parseFloat(yValue).toFixed(1)}`,
+                }}
+                bezier
+                style={{
+                  marginVertical: 8,
+                  borderRadius: 16,
+                }}
+                withShadow={false}
+                withInnerLines={true}
+                withOuterLines={false}
+                fromZero={false}
+                yAxisInterval={1}
+                segments={5}
+              />
+              
+              {/* Chart Legend */}
+              {user?.targetWeight && (
+                <View style={styles.chartLegend}>
+                  <View style={styles.legendItem}>
+                    <View style={[styles.legendDot, { backgroundColor: CORAL }]} />
+                    <Text style={styles.legendText}>Peso Atual</Text>
+                  </View>
+                  <View style={styles.legendItem}>
+                    <View style={[styles.legendDot, { backgroundColor: '#3b82f6' }]} />
+                    <Text style={styles.legendText}>Meta: {user.targetWeight}kg</Text>
+                  </View>
+                </View>
+              )}
+              
+              {/* Weight insight */}
+              <View style={styles.weightInsightContainer}>
+                {user?.targetWeight && currentWeight ? (
+                  <Text style={styles.weightInsight}>
+                    {(() => {
+                      const diff = Math.abs(currentWeight - user.targetWeight);
+                      if (currentWeight > user.targetWeight) {
+                        return `Faltam ${diff.toFixed(1)} kg para atingir sua meta!`;
+                      } else if (Math.abs(currentWeight - user.targetWeight) < 0.1) {
+                        return '🎉 Parabéns! Você atingiu sua meta de peso!';
+                      } else {
+                        return `🎉 Você já passou da sua meta! Está ${diff.toFixed(1)} kg abaixo!`;
+                      }
+                    })()}
+                  </Text>
+                ) : (
+                  <Text style={styles.weightInsight}>
+                    {weightHistory.length > 1 ? 
+                      `Sua jornada: ${weightHistory.length} registros de peso` :
+                      'Continue registrando seu peso para ver o progresso!'
+                    }
+                  </Text>
+                )}
+              </View>
+            </View>
+          ) : (
+            <View style={{ height: 200, justifyContent: 'center', alignItems: 'center' }}>
+              <Text style={{ color: '#64748b', textAlign: 'center', paddingHorizontal: 20 }}>
+                Nenhum dado de peso disponível.{'\n'}Registre seu peso para ver o gráfico!
+              </Text>
+            </View>
+          )}
         </View>
         
         {/* Calorie Insight - COMMENTED OUT FOR MVP
@@ -953,6 +1056,38 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     width: 10,
   },
+  // Weight Chart Styles
+  weightChartHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  goalProgress: {
+    backgroundColor: '#f0f9ff',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e0e7ff',
+  },
+  goalProgressText: {
+    color: '#1e40af',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  weightInsightContainer: {
+    backgroundColor: '#f0fdf4',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  weightInsight: {
+    color: '#059669',
+    fontSize: 14,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
   // Insight Styles
   progressInsight: {
     color: '#059669',
@@ -973,60 +1108,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#d1fae5',
     borderRadius: 8,
     textAlign: 'center',
-  },
-  // Placeholder Overlay Styles
-  chartPlaceholder: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  placeholderTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: CORAL,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  placeholderText: {
-    fontSize: 14,
-    color: TEXT_DARK,
-    textAlign: 'center',
-    marginBottom: 4,
-    lineHeight: 20,
-  },
-  placeholderSubtext: {
-    fontSize: 12,
-    color: '#64748b',
-    textAlign: 'center',
-    lineHeight: 16,
-  },
-  comingSoonBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: CORAL,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  comingSoonText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: 'bold',
   },
   chartLegend: {
     flexDirection: 'row',
