@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: TEXT_DARK,
-    marginTop: 70,
+    marginTop: 80,
     marginBottom: 24,
     marginLeft: 20,
     textAlign: 'left',

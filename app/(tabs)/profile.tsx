@@ -10,9 +10,9 @@ import { parseWeight, formatWeightWithUnit } from '../../utils/weightUtils';
 import { getAuth } from '@react-native-firebase/auth';
 
 const CORAL = '#FF725E';
-const OFF_WHITE = '#FFF8F6';
-const BORDER = '#FFA28F';
-const TEXT = '#1F2937';
+const TEXT_DARK = '#1F2937';
+const TEXT_LIGHT = '#64748b';
+const BORDER_LIGHT = '#e2e8f0';
 
 const GENDER_OPTIONS = [
   { label: 'Masculino', value: 'male' },
@@ -122,19 +122,17 @@ export default function ProfileScreen() {
 
   return (
     <KeyboardAvoidingView 
-      style={{ flex: 1, backgroundColor: OFF_WHITE }} 
+      style={{ flex: 1, backgroundColor: '#fff' }} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView 
         style={{ flex: 1 }} 
-        contentContainerStyle={{ paddingTop: 36, paddingBottom: 32 }}
+        contentContainerStyle={{ paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled={true}
       >
-        {/* Header with Title and Logout */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Perfil</Text>
-        </View>
+        {/* Main Title - Left aligned and lower */}
+        <Text style={styles.mainTitle}>Perfil</Text>
         {/* Profile Card */}
         <View style={styles.profileCard}>
           <View style={{ alignItems: 'center', marginBottom: 8 }}>
@@ -154,8 +152,9 @@ export default function ProfileScreen() {
           </View>
         </View>
         {/* Edit Profile Section */}
-        <View style={styles.sectionCard}>
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>Editar Perfil</Text>
+          <View style={styles.sectionCard}>
           <Text style={styles.label}>Nome</Text>
           <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Seu nome" placeholderTextColor="#A0AEC0" />
           <Text style={styles.label}>Email</Text>
@@ -201,10 +200,12 @@ export default function ProfileScreen() {
           </View>
           <Text style={styles.label}>Profissão (opcional)</Text>
           <TextInput style={styles.input} value={profession} onChangeText={setProfession} placeholder="Profissão" placeholderTextColor="#A0AEC0" />
+          </View>
         </View>
         {/* Goals & Objectives Section */}
-        <View style={styles.sectionCard}>
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>💪 Metas e Objetivos</Text>
+          <View style={styles.sectionCard}>
           <Text style={styles.label}>Objetivo Principal</Text>
           <DropDownPicker
             open={openGoal}
@@ -257,10 +258,12 @@ export default function ProfileScreen() {
               nestedScrollEnabled: true,
             }}
           />
+          </View>
         </View>
         {/* Nutritional Goals Section */}
-        <View style={styles.sectionCard}>
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>🍓 Metas Nutricionais</Text>
+          <View style={styles.sectionCard}>
           <Text style={styles.label}>Calorias Diárias (kcal)</Text>
           <TextInput style={styles.input} value={calories} onChangeText={setCalories} placeholder="Calorias" keyboardType="numeric" placeholderTextColor="#A0AEC0" />
           <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -286,6 +289,7 @@ export default function ProfileScreen() {
               {loading ? 'Salvando...' : 'Salvar Todas as Alterações'}
             </Text>
           </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -293,28 +297,24 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginHorizontal: 18,
-    marginTop: 72,
-    marginBottom: 12,
-  },
-  title: {
+  mainTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: TEXT,
-    marginTop: 0,
-    marginBottom: 0,
-    marginLeft: 0,
+    color: TEXT_DARK,
+    marginTop: 80,
+    marginBottom: 24,
+    marginLeft: 20,
+    textAlign: 'left',
+  },
+  section: {
+    marginBottom: 24,
   },
   profileCard: {
     backgroundColor: '#fff',
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: BORDER,
-    marginHorizontal: 18,
+    borderColor: BORDER_LIGHT,
+    marginHorizontal: 16,
     marginBottom: 18,
     padding: 18,
     alignItems: 'center',
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: TEXT,
+    color: TEXT_DARK,
     marginBottom: 2,
   },
   profileSince: {
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
   profileInfoText: {
     fontSize: 17,
     fontWeight: 'bold',
-    color: TEXT,
+    color: TEXT_DARK,
   },
   profileInfoUnit: {
     fontSize: 13,
@@ -363,32 +363,33 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: BORDER_LIGHT,
   },
   goalText: {
     fontSize: 14,
-    color: TEXT,
+    color: TEXT_DARK,
     textAlign: 'center',
     fontWeight: '500',
   },
   sectionCard: {
     backgroundColor: '#fff',
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: BORDER,
-    marginHorizontal: 18,
-    marginBottom: 18,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: BORDER_LIGHT,
+    marginHorizontal: 16,
     padding: 18,
+    overflow: 'hidden',
   },
   sectionTitle: {
-    fontSize: 17,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
     color: CORAL,
-    marginBottom: 8,
+    marginLeft: 20,
+    marginBottom: 12,
   },
   label: {
     fontSize: 14,
-    color: TEXT,
+    color: TEXT_DARK,
     fontWeight: '600',
     marginBottom: 4,
     marginTop: 12,
@@ -397,17 +398,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: BORDER,
+    borderColor: BORDER_LIGHT,
     paddingHorizontal: 12,
     paddingVertical: 12,
     fontSize: 15,
-    color: TEXT,
+    color: TEXT_DARK,
     marginBottom: 0,
     height: 44,
   },
   dropdown: {
     backgroundColor: '#fff',
-    borderColor: BORDER,
+    borderColor: BORDER_LIGHT,
     borderRadius: 10,
     minHeight: 44,
     height: 44,
@@ -416,12 +417,12 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   dropdownContainer: {
-    borderColor: BORDER,
+    borderColor: BORDER_LIGHT,
     borderRadius: 10,
     zIndex: 1000,
   },
   dropdownText: {
-    color: TEXT,
+    color: TEXT_DARK,
     fontSize: 15,
   },
   dropdownPlaceholder: {
