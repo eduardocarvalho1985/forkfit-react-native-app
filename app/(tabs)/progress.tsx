@@ -349,20 +349,28 @@ export default function ProgressScreen() {
                         const consumedHeight = entry ? (entry.consumed / maxCalories) * 140 : 0;
                         
                         return (
-                          <View key={index} style={period === '7d' ? styles.barGroup : styles.barGroup30}>
+                          <View key={index} style={
+                            period === '7d' ? styles.barGroup : 
+                            period === '30d' ? styles.barGroup30 : 
+                            styles.barGroup90
+                          }>
                             {/* Goal bar (gray) - always show for every day */}
                             <View 
                               style={[
-                                period === '7d' ? styles.bar : styles.bar30, 
+                                period === '7d' ? styles.bar : 
+                                period === '30d' ? styles.bar30 : 
+                                styles.bar90,
                                 styles.goalBar,
-                                { height: Math.max(goalHeight, 2) } // Smaller minimum for 30-day
+                                { height: Math.max(goalHeight, period === '3m' ? 1 : 2) } // Even smaller minimum for 3-month
                               ]} 
                             />
                             {/* Consumed bar (coral) - only show if there's data */}
                             {entry && consumedHeight > 0 && (
                               <View 
                                 style={[
-                                  period === '7d' ? styles.bar : styles.bar30, 
+                                  period === '7d' ? styles.bar : 
+                                  period === '30d' ? styles.bar30 : 
+                                  styles.bar90,
                                   styles.consumedBar,
                                   { height: consumedHeight }
                                 ]} 
@@ -998,6 +1006,27 @@ const styles = StyleSheet.create({
   bar30: {
     width: 6,
     borderRadius: 1,
+    position: 'absolute',
+    bottom: 0,
+  },
+  // 3-month (90-day) specific styles
+  barsContainer90: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    height: 140,
+    paddingHorizontal: 2,
+  },
+  barGroup90: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    width: 3,
+    height: 140,
+  },
+  bar90: {
+    width: 2,
+    borderRadius: 0.5,
     position: 'absolute',
     bottom: 0,
   },
