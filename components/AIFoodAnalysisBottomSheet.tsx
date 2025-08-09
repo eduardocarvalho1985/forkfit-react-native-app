@@ -69,7 +69,7 @@ export const AIFoodAnalysisBottomSheet = forwardRef<BottomSheetModal, AIFoodAnal
     const pickImage = async () => {
       try {
         const result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          mediaTypes: ['images'],
           allowsEditing: true,
           aspect: [4, 3],
           quality: 0.7,
@@ -87,8 +87,16 @@ export const AIFoodAnalysisBottomSheet = forwardRef<BottomSheetModal, AIFoodAnal
 
     const takePhoto = async () => {
       try {
+        // Request camera permissions
+        const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+        
+        if (permissionResult.granted === false) {
+          Alert.alert('Permissão Necessária', 'Para tirar fotos dos alimentos, é necessário permitir o acesso à câmera nas configurações do seu dispositivo.');
+          return;
+        }
+
         const result = await ImagePicker.launchCameraAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          mediaTypes: ['images'],
           allowsEditing: true,
           aspect: [4, 3],
           quality: 0.7,
@@ -100,6 +108,7 @@ export const AIFoodAnalysisBottomSheet = forwardRef<BottomSheetModal, AIFoodAnal
           setCurrentStep('preview');
         }
       } catch (error) {
+        console.error('Camera error:', error);
         Alert.alert('Erro', 'Não foi possível capturar a foto');
       }
     };

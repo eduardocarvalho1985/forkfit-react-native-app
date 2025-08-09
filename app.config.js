@@ -67,7 +67,14 @@ export default {
       '@react-native-firebase/app',
       '@react-native-firebase/auth',
       'expo-camera',
-      'expo-image-picker',
+      [
+        'expo-image-picker',
+        {
+          photosPermission: 'O ForkFit acessa suas fotos para permitir a análise de alimentos com IA.',
+          cameraPermission: 'O ForkFit acessa sua câmera para tirar fotos de alimentos para análise com IA.',
+          microphonePermission: false
+        }
+      ],
       [
         'expo-splash-screen',
         {
