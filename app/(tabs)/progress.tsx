@@ -247,7 +247,7 @@ export default function ProgressScreen() {
             <Text style={styles.streakIcon}>🔥</Text>
             <Text style={styles.streakNumber}>{formatNumber(dayStreak)}</Text>
           </View>
-          <Text style={styles.streakLabel}>Sequência de Dias</Text>
+          <Text style={styles.streakLabel}>Day Streak</Text>
           
           {/* Motivational message based on streak */}
           <Text style={styles.streakMotivation}>
@@ -258,18 +258,46 @@ export default function ProgressScreen() {
              `${dayStreak} dias - Incrível!`}
           </Text>
           
+          {/* Week dots with proper Monday-Sunday mapping */}
           <View style={styles.weekDotsContainer}>
-            {weeklyStreakData.map((logged, index) => (
-              <View 
-                key={index} 
-                style={[
-                  styles.weekDot, 
-                  logged && styles.weekDotFilled
-                ]} 
-              />
-            ))}
+            {(() => {
+              // Create Monday-Sunday array
+              // weeklyStreakData from backend: [today, yesterday, day-2, day-3, day-4, day-5, day-6]
+              const today = new Date();
+              const mondayToSundayData = Array(7).fill(false);
+              
+              // For each of the last 7 days, determine which day of week it was
+              for (let i = 0; i < Math.min(7, weeklyStreakData.length); i++) {
+                const date = new Date(today);
+                date.setDate(today.getDate() - i);
+                
+                let dayOfWeek = date.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+                // Convert to our array index where 0=Monday, 6=Sunday
+                const arrayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                
+                mondayToSundayData[arrayIndex] = weeklyStreakData[i];
+              }
+              
+              return mondayToSundayData.map((logged, index) => (
+                <View 
+                  key={index} 
+                  style={[
+                    styles.weekDot, 
+                    logged && styles.weekDotFilled
+                  ]} 
+                />
+              ));
+            })()}
           </View>
-          <Text style={styles.weekDaysText}>S T Q Q S S D</Text>
+          <View style={styles.weekDaysRow}>
+            <Text style={styles.weekDayText}>S</Text>
+            <Text style={styles.weekDayText}>T</Text>
+            <Text style={styles.weekDayText}>Q</Text>
+            <Text style={styles.weekDayText}>Q</Text>
+            <Text style={styles.weekDayText}>S</Text>
+            <Text style={styles.weekDayText}>S</Text>
+            <Text style={styles.weekDayText}>D</Text>
+          </View>
         </View>
       </View>
 
@@ -855,17 +883,25 @@ const styles = StyleSheet.create({
   streakIconContainer: {
     alignItems: 'center',
     marginBottom: 8,
+    position: 'relative',
+    height: 40,
+    justifyContent: 'center',
   },
   streakIcon: {
-    fontSize: 32,
-    marginBottom: 4,
+    fontSize: 40,
+    position: 'absolute',
   },
   streakNumber: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: CORAL,
+    color: '#FFFFFF',
     position: 'absolute',
-    top: 8,
+    textAlign: 'center',
+    width: '100%',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+    zIndex: 1,
   },
   streakLabel: {
     color: CORAL,
@@ -906,10 +942,16 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
-  weekDaysText: {
+  weekDaysRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 2,
+  },
+  weekDayText: {
     color: '#64748b',
     fontSize: 10,
     textAlign: 'center',
+    width: 10,
   },
   // Insight Styles
   progressInsight: {
