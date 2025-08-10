@@ -13,8 +13,7 @@ import {
   clearNotificationData,
   updateNotificationPreferences,
   getNotificationPreferences,
-  pauseNotificationsTemporarily,
-  scheduleTestNotification
+  pauseNotificationsTemporarily
 } from '../../services/notificationService';
 
 const CORAL = '#FF725E';
@@ -180,7 +179,7 @@ export default function SettingsScreen() {
       <View style={styles.container}>
         <ScrollView 
           contentContainerStyle={styles.scrollContent} 
-          style={[styles.scrollView, { paddingTop: 36 }]}
+          style={[styles.scrollView, { paddingTop: 40 }]}
           showsVerticalScrollIndicator={false}
         >
           {/* Main Title - Left aligned and lower */}
@@ -208,6 +207,7 @@ export default function SettingsScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Notificações</Text>
             <View style={styles.card}>
+              {/* Push Notifications Toggle */}
               <View style={styles.settingRow}>
                 <View style={styles.settingInfo}>
                   <FontAwesome6 name="bell" size={20} color={CORAL} style={styles.settingIcon} />
@@ -233,15 +233,17 @@ export default function SettingsScreen() {
                 />
               </View>
               
+              {/* Settings Button for Blocked Permissions */}
               {permissionStatus === 'blocked' && (
-                <View style={[styles.settingRow, styles.lastRow]}>
+                <View style={styles.settingRow}>
                   <TouchableOpacity style={styles.settingsButton} onPress={() => Linking.openSettings()}>
                     <Text style={styles.settingsButtonText}>Ir para Configurações</Text>
                   </TouchableOpacity>
                 </View>
               )}
 
-              <View style={[styles.settingRow, notificationsEnabled ? styles.lastRow : null]}>
+              {/* Daily Reminders Toggle */}
+              <View style={styles.settingRow}>
                 <View style={styles.settingInfo}>
                   <FontAwesome6 name="clock" size={20} color={CORAL} style={styles.settingIcon} />
                   <View style={styles.settingText}>
@@ -259,8 +261,9 @@ export default function SettingsScreen() {
                 />
               </View>
               
+              {/* Weekly Reports Toggle */}
               {notificationsEnabled && (
-                <View style={[styles.settingRow, styles.lastRow]}>
+                <View style={styles.settingRow}>
                   <View style={styles.settingInfo}>
                     <FontAwesome6 name="chart-line" size={20} color={CORAL} style={styles.settingIcon} />
                     <View style={styles.settingText}>
@@ -277,21 +280,19 @@ export default function SettingsScreen() {
                   />
                 </View>
               )}
-            </View>
-            
-            {/* Notification Actions */}
-            {notificationsEnabled && (
-              <View style={styles.card}>
-                <TouchableOpacity style={styles.actionRow} onPress={handlePauseNotifications}>
-                  <FontAwesome6 name="pause" size={20} color={CORAL} style={styles.actionIcon} />
-                  <View style={styles.actionText}>
-                    <Text style={styles.actionLabel}>Pausar Notificações</Text>
-                    <Text style={styles.actionSubtext}>Pausar temporariamente</Text>
+              
+              {/* Pause Notifications Action */}
+              {notificationsEnabled && (
+                <TouchableOpacity style={[styles.settingRow, styles.lastRow]} onPress={handlePauseNotifications}>
+                  <FontAwesome6 name="pause" size={20} color={CORAL} style={styles.settingIcon} />
+                  <View style={styles.settingText}>
+                    <Text style={styles.settingLabel}>Pausar Notificações</Text>
+                    <Text style={styles.settingSubtext}>Pausar temporariamente</Text>
                   </View>
                   <FontAwesome6 name="chevron-right" size={16} color={TEXT_LIGHT} />
                 </TouchableOpacity>
-              </View>
-            )}
+              )}
+            </View>
           </View>
           
           {/* General Section */}
@@ -375,8 +376,9 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: TEXT_DARK,
-    marginBottom: 24,
-    marginLeft: 16,
+    marginTop: 72,
+    marginBottom: 12,
+    marginLeft: 20,
   },
   section: {
     marginBottom: 24,
