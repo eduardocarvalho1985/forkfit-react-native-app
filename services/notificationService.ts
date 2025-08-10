@@ -1,22 +1,20 @@
 import { Platform, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Temporarily disable expo-notifications imports to isolate runtime issues
-// import * as Notifications from 'expo-notifications';
-// import * as Device from 'expo-device';
-// import Constants from 'expo-constants';
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 
 // Configure how notifications are handled when the app is in the foreground
-// Temporarily disabled to isolate runtime issues
-// Notifications.setNotificationHandler({
-//   handleNotification: async () => ({
-//     shouldShowAlert: true,
-//     shouldPlaySound: true,
-//     shouldSetBadge: false,
-//     shouldShowBanner: true,
-//     shouldShowList: true,
-//   }),
-// });
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -44,13 +42,41 @@ export interface PushTokenData {
  * Get the current notification permission status
  */
 export async function getNotificationPermissionStatus(): Promise<NotificationPermissionStatus> {
-  // Temporarily stubbed out to isolate runtime issues
-  console.log('getNotificationPermissionStatus called (stubbed)');
-  return {
-    granted: false,
-    canAskAgain: false,
-    status: 'undetermined',
-  };
+  try {
+    console.log('getNotificationPermissionStatus called - checking real permissions');
+    
+    // Check if we have stored permission status
+    const storedStatus = await AsyncStorage.getItem(STORAGE_KEYS.NOTIFICATION_PERMISSION);
+    if (storedStatus) {
+      const parsed = JSON.parse(storedStatus);
+      console.log('Using stored permission status:', parsed);
+      return parsed;
+    }
+    
+    // Get current permission status from Expo Notifications
+    const { status, canAskAgain } = await Notifications.getPermissionsAsync();
+    
+    const result = {
+      granted: status === 'granted',
+      canAskAgain,
+      status,
+    };
+    
+    console.log('Current permission status from Expo:', result);
+    
+    // Store the status for future use
+    await AsyncStorage.setItem(STORAGE_KEYS.NOTIFICATION_PERMISSION, JSON.stringify(result));
+    
+    return result;
+  } catch (error) {
+    console.error('Error getting notification permission status:', error);
+    // Return a safe default
+    return {
+      granted: false,
+      canAskAgain: false,
+      status: 'undetermined',
+    };
+  }
 }
 
 /**
@@ -300,98 +326,74 @@ export async function openAppSettings(): Promise<void> {
  */
 export async function clearNotificationData(): Promise<void> {
   try {
+    // Don't clear permission status - keep it for when user wants to re-enable
     await AsyncStorage.multiRemove([
       STORAGE_KEYS.PUSH_TOKEN,
-      STORAGE_KEYS.NOTIFICATION_PERMISSION,
       STORAGE_KEYS.LAST_TOKEN_UPDATE,
     ]);
-    console.log('Notification data cleared');
+    console.log('Notification data cleared (permissions preserved)');
   } catch (error) {
     console.error('Error clearing notification data:', error);
   }
 }
 
 /**
- * Schedule a local notification (for testing purposes)
+ * Cancel all meal reminder notifications
  */
-export async function scheduleTestNotification(): Promise<void> {
+export async function cancelMealReminders(): Promise<void> {
   try {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: 'ForkFit',
-        body: 'Esta é uma notificação de teste!',
-        data: { type: 'test' },
-      },
-      trigger: { seconds: 5 },
-    });
-    console.log('Test notification scheduled');
+    // Cancel all scheduled notifications (this will include meal reminders)
+    await Notifications.cancelAllScheduledNotificationsAsync();
+    console.log('Meal reminders cancelled');
   } catch (error) {
-    console.error('Error scheduling test notification:', error);
+    console.error('Error cancelling meal reminders:', error);
   }
 }
 
 /**
- * Get all scheduled notifications
+ * Cancel weekly report notifications
  */
-export async function getScheduledNotifications(): Promise<Notifications.NotificationRequest[]> {
+export async function cancelWeeklyReports(): Promise<void> {
   try {
-    return await Notifications.getAllScheduledNotificationsAsync();
+    // Cancel all scheduled notifications (this will include weekly reports)
+    await Notifications.cancelAllScheduledNotificationsAsync();
+    console.log('Weekly reports cancelled');
   } catch (error) {
-    console.error('Error getting scheduled notifications:', error);
-    return [];
+    console.error('Error cancelling weekly reports:', error);
   }
 }
 
 /**
- * Cancel all scheduled notifications
+ * Schedule daily meal reminders
  */
-export async function cancelAllNotifications(): Promise<void> {
+export async function scheduleDailyReminders(): Promise<void> {
   try {
-    await Notifications.cancelAllScheduledNotificationsAsync();
-    console.log('All scheduled notifications cancelled');
-  } catch (error) {
-    console.error('Error cancelling notifications:', error);
-  }
-} 
-
-/**
- * Schedule daily meal reminder notifications
- */
-export async function scheduleMealReminders(enabled: boolean): Promise<void> {
-  try {
-    if (!enabled) {
-      // Cancel existing meal reminders
-      await Notifications.cancelAllScheduledNotificationsAsync();
-      console.log('Meal reminders cancelled');
-      return;
-    }
-
-    // Cancel existing notifications first
-    await Notifications.cancelAllScheduledNotificationsAsync();
-
-    // Schedule breakfast reminder at 8:00 AM
+    // Cancel existing reminders first
+    await cancelMealReminders();
+    
+    // Schedule breakfast reminder at 9:00 AM
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: 'ForkFit - Bom dia!',
-        body: 'Que tal começar o dia registrando seu café da manhã?',
-        data: { type: 'meal_reminder', meal: 'breakfast' },
+        title: '🍳 Hora do Café da Manhã!',
+        body: 'Não esqueça de registrar sua primeira refeição do dia',
+        data: { type: 'meal_reminder', meal: 'breakfast', screen: 'dashboard' },
       },
       trigger: {
-        hour: 8,
+        hour: 9,
         minute: 0,
         repeats: true,
       },
     });
 
-    // Schedule lunch reminder at 12:00 PM
+    // Schedule lunch reminder at 1:00 PM
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: 'ForkFit - Hora do almoço!',
-        body: 'Registre seu almoço para manter o controle das suas calorias.',
-        data: { type: 'meal_reminder', meal: 'lunch' },
+        title: '🍽️ Hora do Almoço!',
+        body: 'Registre sua refeição principal do dia',
+        data: { type: 'meal_reminder', meal: 'lunch', screen: 'dashboard' },
       },
       trigger: {
-        hour: 12,
+        hour: 13,
         minute: 0,
         repeats: true,
       },
@@ -400,9 +402,9 @@ export async function scheduleMealReminders(enabled: boolean): Promise<void> {
     // Schedule dinner reminder at 7:00 PM
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: 'ForkFit - Jantar!',
-        body: 'Não esqueça de registrar sua última refeição do dia.',
-        data: { type: 'meal_reminder', meal: 'dinner' },
+        title: '🌙 Hora do Jantar!',
+        body: 'Registre sua última refeição do dia',
+        data: { type: 'meal_reminder', meal: 'dinner', screen: 'dashboard' },
       },
       trigger: {
         hour: 19,
@@ -411,23 +413,9 @@ export async function scheduleMealReminders(enabled: boolean): Promise<void> {
       },
     });
 
-    // Schedule evening snack reminder at 9:00 PM
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: 'ForkFit - Lanche da noite',
-        body: 'Se for fazer um lanche, registre para manter o controle.',
-        data: { type: 'meal_reminder', meal: 'snack' },
-      },
-      trigger: {
-        hour: 21,
-        minute: 0,
-        repeats: true,
-      },
-    });
-
-    console.log('Daily meal reminders scheduled successfully');
+    console.log('Daily meal reminders scheduled');
   } catch (error) {
-    console.error('Error scheduling meal reminders:', error);
+    console.error('Error scheduling daily reminders:', error);
   }
 }
 
@@ -450,17 +438,17 @@ export async function scheduleWeeklyReports(enabled: boolean): Promise<void> {
       return;
     }
 
-    // Schedule weekly report every Sunday at 10:00 AM
+    // Schedule weekly progress report on Sundays at 6:00 PM
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: 'ForkFit - Relatório Semanal',
-        body: 'Veja como foi sua semana e mantenha o foco nos seus objetivos!',
-        data: { type: 'weekly_report' },
+        title: '📊 Seu Resumo Semanal',
+        body: 'Veja como foi sua semana de progresso no ForkFit',
+        data: { type: 'weekly_report', screen: 'progress' },
       },
       trigger: {
-        weekday: 0, // Sunday
-        hour: 10,
+        hour: 18,
         minute: 0,
+        weekday: 1, // Sunday (1 = Sunday, 2 = Monday, etc.)
         repeats: true,
       },
     });
@@ -480,7 +468,7 @@ export async function updateNotificationPreferences(
 ): Promise<void> {
   try {
     // Schedule meal reminders
-    await scheduleMealReminders(dailyReminders);
+    await scheduleDailyReminders();
     
     // Schedule weekly reports
     await scheduleWeeklyReports(weeklyReports);

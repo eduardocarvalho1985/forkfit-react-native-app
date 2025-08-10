@@ -5,6 +5,7 @@ import { Stack, router } from 'expo-router';
 import { View, ActivityIndicator, LogBox } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import * as Notifications from 'expo-notifications';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { ProgressProvider } from '../contexts/ProgressContext';
 import { ErrorBoundary } from '../components/ErrorBoundary';
@@ -47,6 +48,38 @@ function RootLayoutContent() {
       router.replace('/auth/login');
     }
   }, [user, loading]);
+
+  // Handle notification responses for navigation
+  React.useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+      const { screen } = response.notification.request.content.data;
+      
+      if (screen && user?.onboardingCompleted) {
+        console.log('Notification tapped, navigating to:', screen);
+        
+        switch (screen) {
+          case 'dashboard':
+            router.push('/(tabs)/dashboard');
+            break;
+          case 'progress':
+            router.push('/(tabs)/progress');
+            break;
+          default:
+            router.push('/(tabs)/dashboard');
+        }
+      }
+    });
+
+    // Handle notifications received while app is in foreground
+    const foregroundSubscription = Notifications.addNotificationReceivedListener(notification => {
+      console.log('Notification received in foreground:', notification.request.content.title);
+    });
+
+    return () => {
+      subscription.remove();
+      foregroundSubscription.remove();
+    };
+  }, [user]);
 
   if (loading) {
     return (

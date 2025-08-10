@@ -2,19 +2,20 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Platform, Alert, Linking } from 'react-native';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { useFocusEffect } from '@react-navigation/native';
 import { PrivacyBottomSheet } from '../../components/PrivacyBottomSheet';
 import { HelpBottomSheet } from '../../components/HelpBottomSheet';
 import { useAuth } from '../../contexts/AuthContext';
-// Temporarily disabled to isolate runtime issues
-// import { 
-//   getNotificationPermissionStatus, 
-//   openAppSettings,
-//   clearNotificationData,
-//   updateNotificationPreferences,
-//   getNotificationPreferences,
-//   pauseNotificationsTemporarily,
-//   scheduleTestNotification
-// } from '../../services/notificationService';
+import { 
+  getNotificationPermissionStatus, 
+  requestNotificationPermissions,
+  openAppSettings,
+  clearNotificationData,
+  updateNotificationPreferences,
+  getNotificationPreferences,
+  pauseNotificationsTemporarily,
+  scheduleTestNotification
+} from '../../services/notificationService';
 
 const CORAL = '#FF725E';
 const TEXT_DARK = '#1F2937';
@@ -36,13 +37,18 @@ export default function SettingsScreen() {
     loadNotificationPreferences();
   }, []);
 
+  // Refresh notification status when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      checkNotificationStatus();
+    }, [])
+  );
+
   const checkNotificationStatus = async () => {
     try {
-      // const status = await getNotificationPermissionStatus();
-      // setPermissionStatus(status.status);
-      // setNotificationsEnabled(status.granted);
-      setPermissionStatus('granted'); // Temporarily set to granted for testing
-      setNotificationsEnabled(true); // Temporarily set to true for testing
+      const status = await getNotificationPermissionStatus();
+      setPermissionStatus(status.status);
+      setNotificationsEnabled(status.granted);
     } catch (error) {
       console.error('Error checking notification status:', error);
     }
@@ -50,61 +56,79 @@ export default function SettingsScreen() {
 
   const loadNotificationPreferences = async () => {
     try {
-      // const preferences = await getNotificationPreferences();
-      // setDailyReminders(preferences.dailyReminders);
-      // setWeeklyReports(preferences.weeklyReports);
-      setDailyReminders(true); // Temporarily set to true for testing
-      setWeeklyReports(true); // Temporarily set to true for testing
+      const preferences = await getNotificationPreferences();
+      setDailyReminders(preferences.dailyReminders);
+      setWeeklyReports(preferences.weeklyReports);
     } catch (error) {
       console.error('Error loading notification preferences:', error);
     }
   };
 
   const handleNotificationToggle = async (enabled: boolean) => {
-    if (enabled && permissionStatus !== 'granted') {
-      // Show alert to guide user to settings if permissions are blocked
-      if (permissionStatus === 'blocked') {
-        Alert.alert(
-          'Permissões Bloqueadas',
-          'Para ativar notificações, você precisa permitir o acesso nas configurações do dispositivo.',
-          [
-            { text: 'Cancelar', style: 'cancel' },
-            { text: 'Configurações', onPress: () => Linking.openSettings() }
-          ]
-        );
-        return;
-      }
-      
-      // Try to request permissions
+    if (enabled) {
+      // Always try to request permissions when turning ON
       try {
-        // const status = await getNotificationPermissionStatus();
-        // if (status.granted) {
-        setNotificationsEnabled(true);
-        setPermissionStatus('granted');
-        // Update preferences when notifications are enabled
-        // await updateNotificationPreferences(dailyReminders, weeklyReports);
+        const status = await requestNotificationPermissions();
+        if (status.granted) {
+          setNotificationsEnabled(true);
+          setPermissionStatus('granted');
+          // Update preferences when notifications are enabled
+          await updateNotificationPreferences(dailyReminders, weeklyReports);
+          Alert.alert(
+            'Notificações Ativadas!',
+            'Agora você receberá lembretes e atualizações importantes.',
+            [{ text: 'Ótimo!' }]
+          );
+        } else if (status.status === 'denied') {
+          Alert.alert(
+            'Permissões Negadas',
+            'Para receber notificações, você precisa permitir o acesso nas configurações do dispositivo.',
+            [
+              { text: 'Cancelar', style: 'cancel' },
+              { text: 'Configurações', onPress: () => Linking.openSettings() }
+            ]
+          );
+        } else if (status.status === 'blocked') {
+          Alert.alert(
+            'Permissões Bloqueadas',
+            'Para ativar notificações, você precisa permitir o acesso nas configurações do dispositivo.',
+            [
+              { text: 'Cancelar', style: 'cancel' },
+              { text: 'Configurações', onPress: () => Linking.openSettings() }
+            ]
+          );
+        }
+        // Update the permission status in the UI
+        setPermissionStatus(status.status);
       } catch (error) {
         console.error('Error requesting notification permissions:', error);
+        Alert.alert(
+          'Erro',
+          'Não foi possível solicitar permissões de notificação. Tente novamente.',
+          [{ text: 'OK' }]
+        );
       }
-    } else if (!enabled) {
+    } else {
       setNotificationsEnabled(false);
       // Clear notification data and cancel scheduled notifications when disabling
-      // await clearNotificationData();
-      // await updateNotificationPreferences(false, false);
+      await clearNotificationData();
+      await updateNotificationPreferences(false, false);
+      // Reset permission status to undetermined so user can request again
+      setPermissionStatus('undetermined');
     }
   };
 
   const handleDailyRemindersToggle = async (enabled: boolean) => {
     setDailyReminders(enabled);
     if (notificationsEnabled) {
-      // await updateNotificationPreferences(enabled, weeklyReports);
+      await updateNotificationPreferences(enabled, weeklyReports);
     }
   };
 
   const handleWeeklyReportsToggle = async (enabled: boolean) => {
     setWeeklyReports(enabled);
     if (notificationsEnabled) {
-      // await updateNotificationPreferences(dailyReminders, enabled);
+      await updateNotificationPreferences(dailyReminders, enabled);
     }
   };
 
@@ -117,50 +141,19 @@ export default function SettingsScreen() {
         { 
           text: '1 hora', 
           onPress: async () => {
-            // await pauseNotificationsTemporarily(1);
+            await pauseNotificationsTemporarily(1);
             Alert.alert('Sucesso', 'Notificações pausadas por 1 hora');
-          }
-        },
-        { 
-          text: '2 horas', 
-          onPress: async () => {
-            // await pauseNotificationsTemporarily(2);
-            Alert.alert('Sucesso', 'Notificações pausadas por 2 horas');
-          }
-        },
-        { 
-          text: '4 horas', 
-          onPress: async () => {
-            // await pauseNotificationsTemporarily(4);
-            Alert.alert('Sucesso', 'Notificações pausadas por 4 horas');
           }
         },
         { 
           text: '24 horas', 
           onPress: async () => {
-            // await pauseNotificationsTemporarily(24);
+            await pauseNotificationsTemporarily(24);
             Alert.alert('Sucesso', 'Notificações pausadas por 24 horas');
           }
         }
       ]
     );
-  };
-
-  const handleTestNotification = async () => {
-    try {
-      // await scheduleTestNotification();
-      Alert.alert(
-        'Notificação de Teste',
-        'Uma notificação de teste será exibida em 5 segundos.',
-        [{ text: 'OK', style: 'default' }]
-      );
-    } catch (error) {
-      Alert.alert(
-        'Erro',
-        'Não foi possível agendar a notificação de teste.',
-        [{ text: 'OK', style: 'default' }]
-      );
-    }
   };
 
   const handlePrivacyPress = () => {
@@ -173,24 +166,11 @@ export default function SettingsScreen() {
 
   const handleLogout = async () => {
     Alert.alert(
-      'Sair da conta',
-      'Tem certeza que deseja sair da sua conta?',
+      'Sair da Conta',
+      'Tem certeza que deseja sair?',
       [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-        {
-          text: 'Sair',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await signOut();
-            } catch (error: any) {
-              Alert.alert('Erro', 'Não foi possível sair da conta. Tente novamente.');
-            }
-          },
-        },
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Sair', style: 'destructive', onPress: signOut }
       ]
     );
   };
@@ -255,9 +235,9 @@ export default function SettingsScreen() {
               
               {permissionStatus === 'blocked' && (
                 <View style={[styles.settingRow, styles.lastRow]}>
-                                  <TouchableOpacity style={styles.settingsButton} onPress={() => Linking.openSettings()}>
-                  <Text style={styles.settingsButtonText}>Ir para Configurações</Text>
-                </TouchableOpacity>
+                  <TouchableOpacity style={styles.settingsButton} onPress={() => Linking.openSettings()}>
+                    <Text style={styles.settingsButtonText}>Ir para Configurações</Text>
+                  </TouchableOpacity>
                 </View>
               )}
 
@@ -298,58 +278,28 @@ export default function SettingsScreen() {
                 </View>
               )}
             </View>
-          </View>
-
-          {/* Notification Management Section */}
-          {notificationsEnabled && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Gerenciar Notificações</Text>
+            
+            {/* Notification Actions */}
+            {notificationsEnabled && (
               <View style={styles.card}>
-                <TouchableOpacity style={styles.actionRow}>
-                  <FontAwesome6 name="calendar-day" size={20} color={CORAL} style={styles.actionIcon} />
+                <TouchableOpacity style={styles.actionRow} onPress={handlePauseNotifications}>
+                  <FontAwesome6 name="pause" size={20} color={CORAL} style={styles.actionIcon} />
                   <View style={styles.actionText}>
-                    <Text style={styles.actionLabel}>Horários dos Lembretes</Text>
-                    <Text style={styles.actionSubtext}>Café: 8h, Almoço: 12h, Jantar: 19h, Lanche: 21h</Text>
-                  </View>
-                  <FontAwesome6 name="chevron-right" size={16} color={TEXT_LIGHT} />
-                </TouchableOpacity>
-                
-                <TouchableOpacity style={styles.actionRow}>
-                  <FontAwesome6 name="calendar-week" size={20} color={CORAL} style={styles.actionIcon} />
-                  <View style={styles.actionText}>
-                    <Text style={styles.actionLabel}>Relatório Semanal</Text>
-                    <Text style={styles.actionSubtext}>Todo domingo às 10h da manhã</Text>
-                  </View>
-                  <FontAwesome6 name="chevron-right" size={16} color={TEXT_LIGHT} />
-                </TouchableOpacity>
-                
-                <TouchableOpacity style={[styles.actionRow, styles.lastRow]} onPress={handlePauseNotifications}>
-                  <FontAwesome6 name="bell-slash" size={20} color={CORAL} style={styles.actionIcon} />
-                  <View style={styles.actionText}>
-                    <Text style={styles.actionLabel}>Pausar Temporariamente</Text>
-                    <Text style={styles.actionSubtext}>Desativar notificações por 1 hora</Text>
-                  </View>
-                  <FontAwesome6 name="chevron-right" size={16} color={TEXT_LIGHT} />
-                </TouchableOpacity>
-                
-                <TouchableOpacity style={[styles.actionRow, styles.lastRow]} onPress={handleTestNotification}>
-                  <FontAwesome6 name="bell" size={20} color={CORAL} style={styles.actionIcon} />
-                  <View style={styles.actionText}>
-                    <Text style={styles.actionLabel}>Testar Notificação</Text>
-                    <Text style={styles.actionSubtext}>Enviar notificação de teste em 5 segundos</Text>
+                    <Text style={styles.actionLabel}>Pausar Notificações</Text>
+                    <Text style={styles.actionSubtext}>Pausar temporariamente</Text>
                   </View>
                   <FontAwesome6 name="chevron-right" size={16} color={TEXT_LIGHT} />
                 </TouchableOpacity>
               </View>
-            </View>
-          )}
+            )}
+          </View>
           
           {/* General Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Geral</Text>
             <View style={styles.card}>
               <TouchableOpacity style={styles.actionRow}>
-                <FontAwesome6 name="globe" size={20} color={TEXT_LIGHT} style={styles.actionIcon} />
+                <FontAwesome6 name="globe" size={20} color={TEXT_DARK} style={styles.actionIcon} />
                 <View style={styles.actionText}>
                   <Text style={styles.actionLabel}>Idioma</Text>
                   <Text style={styles.actionValue}>Português (BR)</Text>
@@ -358,28 +308,28 @@ export default function SettingsScreen() {
               </TouchableOpacity>
               
               <TouchableOpacity style={styles.actionRow}>
-                <FontAwesome6 name="credit-card" size={20} color={TEXT_LIGHT} style={styles.actionIcon} />
+                <FontAwesome6 name="credit-card" size={20} color={TEXT_DARK} style={styles.actionIcon} />
                 <View style={styles.actionText}>
                   <Text style={styles.actionLabel}>Gerenciar Assinatura</Text>
-                  <Text style={styles.actionSubtext}>Planos e pagamentos</Text>
+                  <Text style={styles.actionSubtext}>Configurar pagamentos e planos</Text>
                 </View>
                 <FontAwesome6 name="chevron-right" size={16} color={TEXT_LIGHT} />
               </TouchableOpacity>
               
               <TouchableOpacity style={styles.actionRow} onPress={handlePrivacyPress}>
-                <FontAwesome6 name="shield-halved" size={20} color={TEXT_LIGHT} style={styles.actionIcon} />
+                <FontAwesome6 name="shield-halved" size={20} color={TEXT_DARK} style={styles.actionIcon} />
                 <View style={styles.actionText}>
                   <Text style={styles.actionLabel}>Privacidade</Text>
-                  <Text style={styles.actionSubtext}>Política de privacidade e termos</Text>
+                  <Text style={styles.actionSubtext}>Configurações de privacidade e dados</Text>
                 </View>
                 <FontAwesome6 name="chevron-right" size={16} color={TEXT_LIGHT} />
               </TouchableOpacity>
               
               <TouchableOpacity style={[styles.actionRow, styles.lastRow]} onPress={handleHelpPress}>
-                <FontAwesome6 name="circle-question" size={20} color={TEXT_LIGHT} style={styles.actionIcon} />
+                <FontAwesome6 name="circle-question" size={20} color={TEXT_DARK} style={styles.actionIcon} />
                 <View style={styles.actionText}>
                   <Text style={styles.actionLabel}>Ajuda</Text>
-                  <Text style={styles.actionSubtext}>FAQ e suporte</Text>
+                  <Text style={styles.actionSubtext}>Suporte e documentação</Text>
                 </View>
                 <FontAwesome6 name="chevron-right" size={16} color={TEXT_LIGHT} />
               </TouchableOpacity>
@@ -397,15 +347,15 @@ export default function SettingsScreen() {
           {/* Footer */}
           <View style={styles.footer}>
             <Text style={styles.footerTitle}>ForkFit</Text>
-            <Text style={styles.footerVersion}>Versão 1.0.0</Text>
+            <Text style={styles.footerVersion}>v0.1.0</Text>
             <Text style={styles.footerCopyright}>© 2025 ForkFit. Todos os direitos reservados.</Text>
           </View>
         </ScrollView>
-
-        {/* Bottom Sheets */}
-        <PrivacyBottomSheet ref={privacyBottomSheetRef} />
-        <HelpBottomSheet ref={helpBottomSheetRef} />
       </View>
+      
+      {/* Bottom Sheets */}
+      <PrivacyBottomSheet ref={privacyBottomSheetRef} />
+      <HelpBottomSheet ref={helpBottomSheetRef} />
     </BottomSheetModalProvider>
   );
 }
@@ -413,7 +363,7 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8fafc',
   },
   scrollView: {
     flex: 1,
@@ -425,9 +375,8 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: TEXT_DARK,
-    marginTop: 72,
-    marginBottom: 12,
-    marginLeft: 20,
+    marginBottom: 24,
+    marginLeft: 16,
   },
   section: {
     marginBottom: 24,
@@ -435,9 +384,9 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: CORAL,
-    marginLeft: 20,
+    color: TEXT_DARK,
     marginBottom: 12,
+    marginLeft: 16,
   },
   card: {
     backgroundColor: '#fff',
@@ -448,58 +397,54 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   
-  // Plan Section Styles - Fixed overflow
+  // Plan Section Styles
   planContent: {
     padding: 16,
   },
   planHeader: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   planTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: TEXT_DARK,
-    flex: 1,
-    marginRight: 12,
   },
   planBadge: {
     backgroundColor: CORAL,
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
+    borderRadius: 6,
   },
   planBadgeText: {
     color: '#fff',
-    fontSize: 11,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
+    fontSize: 12,
+    fontWeight: '600',
   },
   planDescription: {
-    fontSize: 15,
+    fontSize: 14,
     color: TEXT_LIGHT,
-    lineHeight: 22,
+    lineHeight: 20,
   },
   
-  // Settings Row Styles
+  // Setting Row Styles
   settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f8fafc',
+    borderBottomColor: '#f1f5f9',
   },
   settingInfo: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
   },
   settingIcon: {
     marginRight: 12,
+    width: 20,
   },
   settingText: {
     flex: 1,
@@ -513,6 +458,7 @@ const styles = StyleSheet.create({
   settingSubtext: {
     fontSize: 13,
     color: TEXT_LIGHT,
+    lineHeight: 18,
   },
   
   // Action Row Styles

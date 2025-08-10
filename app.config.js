@@ -1,10 +1,18 @@
 const getBundleId = () => {
-  // Use the same bundle ID for all builds to avoid Firebase config issues
+  // Use different bundle IDs for different build types to avoid conflicts
+  if (process.env.EAS_BUILD_PROFILE === 'development') {
+    return 'forkfit.app.forkfitdev';
+  }
+  // Both preview and production use the same bundle ID
   return 'forkfit.app.forkfitprod';
 };
 
 const getPackageName = () => {
-  // Use the same package name for all builds to avoid Firebase config issues
+  // Use different package names for different build types to avoid conflicts
+  if (process.env.EAS_BUILD_PROFILE === 'development') {
+    return 'forkfit.app.forkfitdev';
+  }
+  // Both preview and production use the same package name
   return 'forkfit.app.forkfitprod';
 };
 
