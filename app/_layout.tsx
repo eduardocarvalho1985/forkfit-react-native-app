@@ -10,18 +10,8 @@ import { ProgressProvider } from '../contexts/ProgressContext';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 
 function RootLayoutContent() {
-  // Temporarily disabled to isolate runtime error
-  // const { user, loading } = useAuth();
+  const { user, loading } = useAuth();
 
-  // Simplified version for debugging
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <ActivityIndicator size="large" color="#FF725E" />
-    </View>
-  );
-
-  // Original logic commented out
-  /*
   React.useEffect(() => {
     try {
       console.log('RootLayout: useEffect triggered, loading:', loading, 'user:', user ? user.uid : 'null');
@@ -61,7 +51,7 @@ function RootLayoutContent() {
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color="#FF725E" />
       </View>
     );
   }
@@ -74,7 +64,6 @@ function RootLayoutContent() {
       <Stack.Screen name="index" options={{ headerShown: false }} />
     </Stack>
   );
-  */
 }
 
 export default function RootLayout() {
@@ -90,16 +79,13 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        {/* Temporarily disabled to isolate runtime error */}
-        {/* <BottomSheetModalProvider> */}
-          {/* Temporarily disabled to isolate runtime error */}
-          {/* <AuthProvider> */}
-            {/* Temporarily disabled to isolate runtime error */}
-            {/* <ProgressProvider> */}
+        <BottomSheetModalProvider>
+          <AuthProvider>
+            <ProgressProvider>
               <RootLayoutContent />
-            {/* </ProgressProvider> */}
-          {/* </AuthProvider> */}
-        {/* </BottomSheetModalProvider> */}
+            </ProgressProvider>
+          </AuthProvider>
+        </BottomSheetModalProvider>
       </GestureHandlerRootView>
     </ErrorBoundary>
   );
