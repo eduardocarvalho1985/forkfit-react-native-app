@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "ForkFit",
-    "slug": "forkfit",
+    "name": "${APP_NAME}",
+    "slug": "forkfitauthfixed",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -15,36 +15,38 @@
     },
     "ios": {
       "supportsTablet": true,
+      "googleServicesFile": "./GoogleService-Info.plist",
       "bundleIdentifier": "forkfit.app.forkfitprod",
+      "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
+      "googleServicesFile": "./google-services.json",
+      "package": "forkfit.app.forkfitprod",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#ff725e"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
-
     "platforms": [
       "ios",
       "android"
     ],
-
-
-
-
-
-    
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
-    },
     "plugins": [
       "expo-router",
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      "expo-camera",
+      "expo-image-picker",
       [
         "expo-splash-screen",
         {
@@ -54,7 +56,15 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
@@ -62,8 +72,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "285bdd1b-b93b-4d89-9344-3c4c58c790db"
+        "projectId": "52b9dc85-b309-42c5-b465-37d2f968ef10"
       }
-    }
+    },
+    "owner": "duvoice"
   }
 }

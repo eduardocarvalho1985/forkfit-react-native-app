@@ -1,18 +1,32 @@
 {
-  "cli": {
-    "version": ">= 16.4.1",
-    "appVersionSource": "remote"
-  },
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "APP_NAME": "ForkFit Dev"
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "distribution": "internal",
+        "buildConfiguration": "Release"
+      },
+      "env": {
+        "APP_NAME": "ForkFit Preview"
+      }
     },
     "production": {
-      "autoIncrement": true
+      "env": {
+        "APP_NAME": "ForkFit"
+      }
     }
   },
   "submit": {

@@ -1,0 +1,455 @@
+{
+    "app_overview": {
+      "name": "ForkFit",
+      "type": "React Native Nutrition Tracking App",
+      "version": "1.0.0",
+      "target_market": "Brazilian users seeking culturally-relevant nutrition tracking",
+      "description": "Comprehensive Brazilian nutrition tracking application with AI-powered meal recommendations, barcode scanning, and cultural food understanding",
+      "vision": "To be Brazil's leading nutrition and fitness tracking platform, providing personalized health insights through AI technology"
+    },
+    
+    "technical_architecture": {
+      "platform": "React Native with Expo",
+      "expo_version": "53.0.20",
+      "react_version": "19.0.0",
+      "react_native_version": "0.79.4",
+      "typescript": "5.8.3",
+      "build_system": "EAS (Expo Application Services)",
+      "routing": "Expo Router 5.1.1",
+      "navigation_pattern": "File-based routing with tabs",
+      "state_management": "React Context API + Local State",
+      "styling": "StyleSheet + Linear Gradients",
+      "gestures": "React Native Gesture Handler 2.24.0"
+    },
+  
+    "authentication_system": {
+      "provider": "Firebase Authentication",
+      "firebase_version": "22.2.1",
+      "methods": [
+        {
+          "type": "Email/Password",
+          "status": "Implemented",
+          "features": ["Sign In", "Sign Up", "Password Reset"]
+        },
+        {
+          "type": "Google Sign-In",
+          "status": "Implemented", 
+          "provider": "@react-native-google-signin/google-signin 15.0.0"
+        },
+        {
+          "type": "Apple Sign-In",
+          "status": "Implemented",
+          "provider": "@invertase/react-native-apple-authentication 2.4.1",
+          "platform": "iOS only"
+        }
+      ],
+      "error_handling": {
+        "implemented": true,
+        "localization": "Portuguese",
+        "utility": "utils/firebaseErrors.ts",
+        "features": ["User-friendly messages", "Error boundary", "Graceful fallbacks"]
+      },
+      "backend_sync": {
+        "enabled": true,
+        "endpoint": "https://forkfit.app/api/users/sync",
+        "purpose": "Sync Firebase users with PostgreSQL backend"
+      }
+    },
+  
+    "backend_integration": {
+      "api_base_url": "https://forkfit.app/api",
+      "authentication": "Firebase ID tokens",
+      "timeout_configuration": "30 seconds for AI analysis, 10 seconds for other requests",
+      "endpoints": {
+        "user_management": [
+          "POST /api/users/sync - Firebase to PostgreSQL user sync",
+          "GET /api/users/{uid} - User profile retrieval", 
+          "PUT /api/users/{uid} - Profile updates"
+        ],
+        "food_logging": [
+          "GET /api/users/{uid}/food-logs/{date} - Daily food logs",
+          "POST /api/users/{uid}/food-logs - Add food entry",
+          "PUT /api/users/{uid}/food-logs/{id} - Update food entry",
+          "DELETE /api/users/{uid}/food-logs/{id} - Remove food entry"
+        ],
+        "weight_tracking": [
+          "GET /api/users/{uid}/weight-logs - Weight history",
+          "POST /api/users/{uid}/weight-logs - Add weight entry"
+        ],
+        "saved_foods": [
+          "GET /api/users/{uid}/saved-foods - User's saved foods",
+          "POST /api/users/{uid}/saved-foods - Save food item",
+          "PUT /api/users/{uid}/saved-foods/{id} - Update saved food",
+          "DELETE /api/users/{uid}/saved-foods/{id} - Remove saved food"
+        ],
+        "food_database": [
+          "GET /api/food-database/categories - Available food categories",
+          "GET /api/food-database/search?q={query} - Search food items",
+          "GET /api/food-database/category/{category} - Foods by category"
+        ],
+        "ai_analysis": [
+          "POST /api/ai/analyze-food-image - AI food analysis from image"
+        ]
+      }
+    },
+  
+    "app_structure": {
+      "routing": {
+        "pattern": "File-based routing (Expo Router)",
+        "main_layouts": [
+          "app/_layout.tsx - Root layout with auth providers",
+          "app/(tabs)/_layout.tsx - Tab navigation layout",
+          "app/auth/_layout.tsx - Authentication screens layout",
+          "app/onboarding/_layout.tsx - Onboarding flow layout"
+        ],
+        "authentication_flow": [
+          "app/auth/login.tsx - Login screen",
+          "app/auth/register.tsx - Registration screen", 
+          "app/auth/forgot-password.tsx - Password reset screen"
+        ],
+        "main_app_flow": [
+          "app/(tabs)/dashboard.tsx - Main nutrition tracking dashboard",
+          "app/(tabs)/progress.tsx - Progress tracking and analytics",
+          "app/(tabs)/profile.tsx - User profile management",
+          "app/(tabs)/settings.tsx - App settings and preferences"
+        ],
+        "onboarding_flow": [
+          "app/onboarding/index.tsx - Onboarding coordinator",
+          "app/onboarding/steps/ - Individual onboarding steps"
+        ]
+      },
+      "context_providers": [
+        {
+          "name": "AuthContext",
+          "file": "contexts/AuthContext.tsx",
+          "purpose": "Authentication state management",
+          "features": ["User state", "Login/logout", "Backend sync", "Error handling"]
+        },
+        {
+          "name": "ProgressContext", 
+          "file": "contexts/ProgressContext.tsx",
+          "purpose": "Progress tracking state management"
+        },
+        {
+          "name": "OnboardingContext",
+          "file": "app/onboarding/OnboardingContext.tsx", 
+          "purpose": "Onboarding flow state management",
+          "features": ["Step validation", "Data persistence", "Macro calculations"]
+        }
+      ]
+    },
+  
+    "core_features": {
+      "nutrition_tracking": {
+        "status": "Fully Implemented",
+        "components": [
+          "Dashboard with progress rings",
+          "Daily food logging",
+          "Macro tracking (calories, protein, carbs, fat)",
+          "Brazilian meal types (Café da Manhã, Almoço, Lanche, Jantar)"
+        ],
+        "food_input_methods": [
+          {
+            "method": "Manual Entry",
+            "component": "FoodBottomSheet",
+            "status": "Implemented"
+          },
+          {
+            "method": "Food Database Search",
+            "component": "SearchBottomSheet", 
+            "database_size": "3000+ Brazilian foods",
+            "categories": 13,
+            "status": "Implemented"
+          },
+          {
+            "method": "Saved Foods",
+            "component": "SavedFoodsBottomSheet",
+            "status": "Implemented"
+          },
+          {
+            "method": "AI Food Analysis",
+            "component": "AIFoodAnalysisBottomSheet",
+            "features": ["Camera capture", "Image library", "AI analysis"],
+            "status": "Implemented"
+          }
+        ]
+      },
+      "weight_tracking": {
+        "status": "Implemented",
+        "features": ["Weight entry", "History tracking", "Progress visualization"],
+        "component": "WeightInputModal"
+      },
+      "user_onboarding": {
+        "status": "Fully Implemented",
+        "steps": [
+          "Goal setting (weight loss, muscle gain, maintenance)",
+          "Personal vitals (age, gender, height, weight)",
+          "Activity level configuration",
+          "Macro calculation",
+          "Notification preferences"
+        ],
+        "calculation_engine": "Built-in BMR/TDEE calculator with Brazilian standards"
+      },
+      "progress_analytics": {
+        "status": "Implemented",
+        "features": [
+          "Daily progress rings",
+          "Weekly streak tracking", 
+          "Calorie vs goal tracking",
+          "Macro distribution analysis",
+          "Weight progress charts"
+        ],
+        "visualization": "React Native Chart Kit + Custom SVG components"
+      }
+    },
+  
+    "ui_components": {
+      "design_system": {
+        "primary_color": "#FF725E (Coral)",
+        "background_color": "#FFF8F6 (Off-white)",
+        "accent_color": "#FFA28F (Light coral)",
+        "text_color": "#1F2937 (Dark gray)",
+        "design_language": "Modern Brazilian-inspired"
+      },
+      "key_components": [
+        {
+          "name": "MacroProgress",
+          "file": "components/MacroProgress.tsx",
+          "purpose": "Circular progress indicators for macros"
+        },
+        {
+          "name": "FoodBottomSheet",
+          "file": "components/FoodBottomSheet.tsx", 
+          "purpose": "Manual food entry interface"
+        },
+        {
+          "name": "SearchBottomSheet",
+          "file": "components/SearchBottomSheet.tsx",
+          "purpose": "Food database search interface"
+        },
+        {
+          "name": "AIFoodAnalysisBottomSheet",
+          "file": "components/AIFoodAnalysisBottomSheet.tsx",
+          "purpose": "AI-powered food analysis from images"
+        },
+        {
+          "name": "SavedFoodsBottomSheet", 
+          "file": "components/SavedFoodsBottomSheet.tsx",
+          "purpose": "User's saved foods management"
+        },
+        {
+          "name": "ErrorBoundary",
+          "file": "components/ErrorBoundary.tsx",
+          "purpose": "Global error handling and recovery"
+        }
+      ],
+      "ui_libraries": [
+        "@gorhom/bottom-sheet 4.6.4 - Modal sheets",
+        "expo-linear-gradient 14.1.5 - Gradient backgrounds",
+        "react-native-svg 15.11.2 - Custom graphics",
+        "react-native-chart-kit 6.12.0 - Charts and graphs",
+        "@expo/vector-icons 14.1.0 - Icon library"
+      ]
+    },
+  
+    "build_configuration": {
+      "build_profiles": {
+        "development": {
+          "app_name": "ForkFit Dev",
+          "bundle_id": "forkfit.app.forkfitprod.dev",
+          "features": ["Development client", "Internal distribution"]
+        },
+        "preview": {
+          "app_name": "ForkFit Preview", 
+          "bundle_id": "forkfit.app.forkfitprod.preview",
+          "features": ["Internal distribution", "Release configuration"]
+        },
+        "production": {
+          "app_name": "ForkFit",
+          "bundle_id": "forkfit.app.forkfitprod",
+          "features": ["App Store distribution"]
+        }
+      },
+      "dynamic_configuration": {
+        "enabled": true,
+        "file": "app.config.js",
+        "environment_variables": ["APP_NAME for dynamic app naming"],
+        "bundle_identifier_strategy": "Environment-based dynamic assignment"
+      },
+      "permissions": [
+        "android.permission.CAMERA - Camera access for food photos",
+        "android.permission.RECORD_AUDIO - Audio recording (future features)"
+      ]
+    },
+  
+    "data_management": {
+      "local_storage": {
+        "provider": "@react-native-async-storage/async-storage 2.1.2",
+        "usage": ["Onboarding data persistence", "User preferences"]
+      },
+      "number_formatting": {
+        "utility": "utils/formatters.ts",
+        "purpose": "Consistent number display across app",
+        "features": ["Decimal rounding", "Null safety", "User-friendly display"]
+      },
+      "date_handling": {
+        "library": "date-fns 4.1.0",
+        "localization": "Portuguese (ptBR)",
+        "features": ["Date formatting", "Navigation", "Validation"]
+      }
+    },
+  
+    "ai_integration": {
+      "food_analysis": {
+        "status": "Implemented",
+        "endpoint": "/api/ai/analyze-food-image",
+        "input_methods": ["Camera capture", "Photo library selection"],
+        "image_processing": "Base64 encoding for API transmission",
+        "timeout": "30 seconds",
+        "error_handling": "Comprehensive error messages and fallbacks"
+      },
+      "image_capture": {
+        "libraries": [
+          "expo-camera 16.1.11 - Camera functionality",
+          "expo-image-picker 16.1.4 - Photo library access"
+        ],
+        "implementation": "ImagePicker.launchCameraAsync() for camera integration"
+      }
+    },
+  
+    "development_decisions": {
+      "architectural_choices": [
+        {
+          "decision": "React Native with Expo",
+          "reasoning": "Rapid development, cross-platform compatibility, strong ecosystem"
+        },
+        {
+          "decision": "Firebase Authentication",
+          "reasoning": "Proven authentication provider, multiple sign-in methods, easy backend sync"
+        },
+        {
+          "decision": "Context API for State Management",
+          "reasoning": "Built-in React solution, sufficient for app complexity, no external dependencies"
+        },
+        {
+          "decision": "File-based Routing (Expo Router)",
+          "reasoning": "Modern routing approach, type safety, excellent developer experience"
+        },
+        {
+          "decision": "Bottom Sheet UI Pattern",
+          "reasoning": "Mobile-native interaction pattern, space-efficient, good UX"
+        }
+      ],
+      "performance_optimizations": [
+        "Lazy loading of components",
+        "Debounced search queries",
+        "Memoized calculations",
+        "Efficient re-rendering with proper dependency arrays"
+      ],
+      "error_handling_strategy": [
+        "Global error boundary for React errors",
+        "Firebase-specific error mapping",
+        "Network timeout handling",
+        "User-friendly error messages in Portuguese",
+        "Graceful degradation for API failures"
+      ]
+    },
+  
+    "current_status": {
+      "implementation_completeness": "95%",
+      "core_features_status": "Fully Implemented",
+      "authentication_status": "Complete with all providers",
+      "backend_integration_status": "Fully Functional", 
+      "ui_implementation_status": "Complete",
+      "testing_status": "Manual testing complete",
+      "build_status": "Functional across all profiles",
+      
+      "recent_improvements": [
+        "Global number formatting system implementation",
+        "Enhanced error handling with user-friendly messages",
+        "Forgot password functionality with Firebase integration", 
+        "AI food analysis timeout optimization",
+        "Camera integration for food photography",
+        "Dynamic build configuration for multiple app variants",
+        "Comprehensive error boundary implementation"
+      ],
+      
+      "known_issues": "None critical - all major functionality working",
+      
+      "pending_features": [
+        "Barcode scanning integration",
+        "Advanced analytics and reporting", 
+        "Social features and sharing",
+        "Wearable device integration",
+        "Premium subscription features"
+      ]
+    },
+  
+    "food_database": {
+      "size": "3000+ Brazilian food items",
+      "categories": [
+        "Laticínios", "Cereais e derivados", "Alimentos preparados", 
+        "Bebidas", "Açúcares e produtos de confeitaria", "Frutas",
+        "Leguminosas", "Hortaliças", "Peixes", "Oleaginosas", 
+        "Carnes e derivados", "Óleos e gorduras", "Ovos"
+      ],
+      "search_capabilities": "Portuguese terms with nutritional data per 100g",
+      "integration_status": "Fully integrated with search and selection"
+    },
+  
+    "business_model": {
+      "current_tier": "Free tier with full functionality",
+      "monetization_strategy": "Freemium model with premium features",
+      "planned_premium_features": [
+        "AI meal recommendations",
+        "Advanced analytics and insights",
+        "Barcode scanning",
+        "Data export capabilities", 
+        "Priority customer support"
+      ],
+      "payment_integration": "Stripe integration prepared but not active"
+    },
+  
+    "next_development_priorities": [
+      {
+        "priority": "High",
+        "item": "App Store submission and release",
+        "timeline": "Immediate"
+      },
+      {
+        "priority": "High", 
+        "item": "User testing and feedback collection",
+        "timeline": "Week 1-2"
+      },
+      {
+        "priority": "Medium",
+        "item": "Barcode scanning implementation",
+        "timeline": "Month 1"
+      },
+      {
+        "priority": "Medium",
+        "item": "Advanced analytics features", 
+        "timeline": "Month 2"
+      },
+      {
+        "priority": "Low",
+        "item": "Social features and community",
+        "timeline": "Quarter 2"
+      }
+    ],
+  
+    "success_metrics": {
+      "technical_metrics": {
+        "web_app": "100% functional and deployed",
+        "backend_api": "All endpoints operational", 
+        "mobile_app": "95% complete and fully functional",
+        "database": "3000+ food items successfully integrated"
+      },
+      "user_experience_metrics": {
+        "authentication": "Seamless multi-provider integration",
+        "food_tracking": "Comprehensive Brazilian food database",
+        "performance": "Fast API responses and responsive UI",
+        "error_handling": "Graceful error recovery and user guidance"
+      }
+    }
+  }

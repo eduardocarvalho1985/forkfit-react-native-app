@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -15,10 +15,19 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { FontAwesome6 } from '@expo/vector-icons';
 import Modal from 'react-native-modal';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { MacroProgress } from '../../components/MacroProgress';
 import { SafeAreaView as SafeAreaViewContext } from 'react-native-safe-area-context';
-import { FoodEditModal } from '../../components/FoodEditModal';
+import { FoodBottomSheet } from '../../components/FoodBottomSheet';
+import { SavedFoodsBottomSheet } from '../../components/SavedFoodsBottomSheet';
+import { AIFoodAnalysisBottomSheet, AIAnalysisResult } from '../../components/AIFoodAnalysisBottomSheet';
+import SearchBottomSheet, { SearchBottomSheetRef } from '../../components/SearchBottomSheet';
+
 import Svg, { Circle } from 'react-native-svg';
+import { useAuth } from '../../contexts/AuthContext';
+import { api, FoodItem, FoodLog, SavedFood } from '../../services/api';
+import { getAuth } from '@react-native-firebase/auth';
+import { formatNumber } from '../../utils/formatters';
 
 const MEAL_TYPES = [
   'Café da Manhã',
@@ -32,50 +41,7 @@ const MEAL_TYPES = [
 
 const MEAL_OPTIONS = MEAL_TYPES.map(m => ({ value: m, label: m }));
 
-// Mock food database
-const MOCK_FOOD_DATABASE = [
-  { id: 1, name: 'Arroz Branco', calories: 130, protein: 2.7, carbs: 28, fat: 0.3, category: 'Grãos' },
-  { id: 2, name: 'Frango Grelhado', calories: 165, protein: 31, carbs: 0, fat: 3.6, category: 'Proteínas' },
-  { id: 3, name: 'Brócolis', calories: 34, protein: 2.8, carbs: 7, fat: 0.4, category: 'Vegetais' },
-  { id: 4, name: 'Ovo Cozido', calories: 155, protein: 13, carbs: 1.1, fat: 11, category: 'Proteínas' },
-  { id: 5, name: 'Aveia', calories: 389, protein: 17, carbs: 66, fat: 7, category: 'Grãos' },
-  { id: 6, name: 'Banana', calories: 89, protein: 1.1, carbs: 23, fat: 0.3, category: 'Frutas' },
-  { id: 7, name: 'Leite Desnatado', calories: 42, protein: 3.4, carbs: 5, fat: 0.1, category: 'Laticínios' },
-  { id: 8, name: 'Pão Integral', calories: 247, protein: 13, carbs: 41, fat: 4.2, category: 'Grãos' },
-  { id: 9, name: 'Salmão', calories: 208, protein: 25, carbs: 0, fat: 12, category: 'Proteínas' },
-  { id: 10, name: 'Batata Doce', calories: 86, protein: 1.6, carbs: 20, fat: 0.1, category: 'Vegetais' },
-];
-
-// Mock user data
-const mockUser = {
-  calories: 2000,
-  protein: 150,
-  carbs: 250,
-  fat: 65,
-};
-
-interface FoodLog {
-  id: string;
-  name: string;
-  quantity: number;
-  unit: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  mealType: string;
-  date: string;
-}
-
-interface FoodItem {
-  id: number;
-  name: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  category: string;
-}
+// Using FoodLog and FoodItem from services/api.ts
 
 function MealSection({ 
   title, 
@@ -94,10 +60,10 @@ function MealSection({
     <View style={styles.mealSection}>
       <View style={styles.mealHeader}>
         <Text style={styles.mealTitle}>{title}</Text>
-        <Text style={styles.mealCalories}>{calories} kcal</Text>
+        <Text style={styles.mealCalories}>{formatNumber(calories)} kcal</Text>
       </View>
       
-      {foods.length === 0 ? (
+      {!foods || foods.length === 0 ? (
         <Text style={styles.noFoodText}>Nenhum alimento registrado</Text>
       ) : (
         <View style={styles.foodList}>
@@ -114,19 +80,19 @@ function MealSection({
                 <View style={styles.foodMiniCardMacrosRow}>
                   <View style={styles.foodMacroItem}>
                     <FontAwesome6 name="fire-flame-curved" size={18} color="#FF725E" />
-                    <Text style={styles.foodMacroValue}>{food.calories}</Text>
+                    <Text style={styles.foodMacroValue}>{formatNumber(food.calories)}</Text>
                   </View>
                   <View style={styles.foodMacroItem}>
                     <FontAwesome6 name="drumstick-bite" size={18} color="#3b82f6" />
-                    <Text style={styles.foodMacroValue}>{food.protein}g</Text>
+                    <Text style={styles.foodMacroValue}>{formatNumber(food.protein, 1)}g</Text>
                   </View>
                   <View style={styles.foodMacroItem}>
                     <FontAwesome6 name="wheat-awn" size={18} color="#FFA28F" />
-                    <Text style={styles.foodMacroValue}>{food.carbs}g</Text>
+                    <Text style={styles.foodMacroValue}>{formatNumber(food.carbs, 1)}g</Text>
                   </View>
                   <View style={styles.foodMacroItem}>
                     <FontAwesome6 name="bottle-droplet" size={18} color="#ef4444" />
-                    <Text style={styles.foodMacroValue}>{food.fat}g</Text>
+                    <Text style={styles.foodMacroValue}>{formatNumber(food.fat, 1)}g</Text>
                   </View>
                 </View>
               </View>
@@ -145,87 +111,126 @@ function MealSection({
 }
 
 export default function DashboardScreen() {
+  // Create refs to control the bottom sheets
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const savedFoodsBottomSheetRef = useRef<BottomSheetModal>(null);
+  const aiFoodAnalysisBottomSheetRef = useRef<BottomSheetModal>(null);
+  const searchBottomSheetRef = useRef<SearchBottomSheetRef>(null);
+  
   const [currentDate, setCurrentDate] = useState(new Date());
   const [addFoodVisible, setAddFoodVisible] = useState(false);
-  const [foodLogs, setFoodLogs] = useState<FoodLog[]>([
-    // Sample data for testing
-    {
-      id: '1',
-      name: 'Aveia',
-      quantity: 50,
-      unit: 'g',
-      calories: 195,
-      protein: 8.5,
-      carbs: 33,
-      fat: 3.5,
-      mealType: 'Café da Manhã',
-      date: format(new Date(), 'yyyy-MM-dd'),
-    },
-    {
-      id: '2',
-      name: 'Banana',
-      quantity: 100,
-      unit: 'g',
-      calories: 89,
-      protein: 1.1,
-      carbs: 23,
-      fat: 0.3,
-      mealType: 'Café da Manhã',
-      date: format(new Date(), 'yyyy-MM-dd'),
-    },
-    {
-      id: '3',
-      name: 'Frango Grelhado',
-      quantity: 150,
-      unit: 'g',
-      calories: 248,
-      protein: 46.5,
-      carbs: 0,
-      fat: 5.4,
-      mealType: 'Almoço',
-      date: format(new Date(), 'yyyy-MM-dd'),
-    },
-  ]);
+  const [foodLogs, setFoodLogs] = useState<FoodLog[]>([]);
+  const [loadingLogs, setLoadingLogs] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState<string>('');
   const [searchModalVisible, setSearchModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredFoods, setFilteredFoods] = useState<FoodItem[]>([]);
-  const [quantityModalVisible, setQuantityModalVisible] = useState(false);
-  const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
-  const [foodQuantity, setFoodQuantity] = useState('100');
-  const [foodUnit, setFoodUnit] = useState('g');
-  const [foodEditModalVisible, setFoodEditModalVisible] = useState(false);
   const [foodEditInitialData, setFoodEditInitialData] = useState<any>(null);
+
+  // Food database loading state
+  const [loadingFoods, setLoadingFoods] = useState(false);
+
+  // User data from auth context
+  const { user } = useAuth();
 
   // Format date for display
   const formattedDate = format(currentDate, 'dd MMM');
   const isToday = format(currentDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
   const dateKey = format(currentDate, 'yyyy-MM-dd');
 
+  // Load food logs from backend when date changes or user changes
+  useEffect(() => {
+    if (user?.uid) {
+      // Add a small delay to ensure Firebase auth is fully initialized
+      const timer = setTimeout(() => {
+        loadFoodLogs();
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentDate, user?.uid]);
+
+  const loadFoodLogs = async () => {
+    if (!user?.uid) {
+      console.log('No user.uid available for loading food logs');
+      return;
+    }
+    
+    try {
+      setLoadingLogs(true);
+      const firebaseUser = getAuth().currentUser;
+      
+      if (!firebaseUser) {
+        console.log('No Firebase user found, skipping food logs load');
+        setFoodLogs([]);
+        return;
+      }
+      
+      const token = await firebaseUser.getIdToken();
+      
+      if (!token) {
+        console.log('No Firebase token available, skipping food logs load');
+        setFoodLogs([]);
+        return;
+      }
+      
+      console.log('Loading food logs with:', {
+        uid: user.uid,
+        date: dateKey,
+        hasToken: !!token,
+        tokenLength: token?.length
+      });
+      
+      const logs = await api.getFoodLogs(user.uid, dateKey, token);
+      console.log('Successfully loaded food logs:', logs?.length || 0, 'items');
+      setFoodLogs(logs || []);
+    } catch (error: any) {
+      console.error('Failed to load food logs:', error);
+      
+      // If it's a 500 error, it might be a temporary server issue
+      if (error.message?.includes('500') || error.message?.includes('Internal Server Error')) {
+        console.log('Server error detected, will retry in 3 seconds...');
+        setTimeout(() => {
+          if (user?.uid) {
+            loadFoodLogs();
+          }
+        }, 3000);
+      }
+      
+      // Keep existing logs if loading fails, but set to empty array if this is the first load
+      if (foodLogs.length === 0) {
+        setFoodLogs([]);
+      }
+    } finally {
+      setLoadingLogs(false);
+    }
+  };
+
   // Calculate totals for current date
-  const totals = foodLogs.reduce((acc, food) => ({
-    calories: acc.calories + food.calories,
-    protein: acc.protein + food.protein,
-    carbs: acc.carbs + food.carbs,
-    fat: acc.fat + food.fat,
+  const totals = (foodLogs || []).reduce((acc, food) => ({
+    calories: acc.calories + (food.calories || 0),
+    protein: acc.protein + (food.protein || 0),
+    carbs: acc.carbs + (food.carbs || 0),
+    fat: acc.fat + (food.fat || 0),
   }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
 
   const targets = {
-    calories: mockUser.calories,
-    protein: mockUser.protein,
-    carbs: mockUser.carbs,
-    fat: mockUser.fat,
+    calories: user?.calories || 2000,
+    protein: user?.protein || 150,
+    carbs: user?.carbs || 250,
+    fat: user?.fat || 65,
   };
   
   const remainingCalories = targets.calories - totals.calories;
 
   // Get foods for each meal type
   const getFoodsForMeal = (mealType: string) => {
-    return foodLogs.filter(food => food.mealType === mealType);
+    return foodLogs?.filter(food => food.mealType === mealType) || [];
   };
 
   const getCaloriesForMeal = (mealType: string) => {
-    return getFoodsForMeal(mealType).reduce((sum, food) => sum + food.calories, 0);
+    const foods = getFoodsForMeal(mealType);
+    return foods.reduce((sum, food) => sum + (food.calories || 0), 0);
   };
 
   // Navigation handlers
@@ -249,19 +254,20 @@ export default function DashboardScreen() {
     
     switch (option) {
       case 'manual':
-        Alert.alert('Entrada Manual', 'Funcionalidade em desenvolvimento');
+        setFoodEditInitialData({ mealType: selectedMealType || 'Almoço' });
+        bottomSheetRef.current?.present();
         break;
       case 'recentes':
         Alert.alert('Refeições Recentes', 'Funcionalidade em desenvolvimento');
         break;
       case 'salvos':
-        Alert.alert('Alimentos Salvos', 'Funcionalidade em desenvolvimento');
+        savedFoodsBottomSheetRef.current?.present();
         break;
       case 'banco':
-        setSearchModalVisible(true);
+        searchBottomSheetRef.current?.present();
         break;
       case 'ai':
-        Alert.alert('Análise por IA', 'Funcionalidade em desenvolvimento');
+        aiFoodAnalysisBottomSheetRef.current?.present();
         break;
     }
   };
@@ -271,122 +277,296 @@ export default function DashboardScreen() {
     setAddFoodVisible(true);
   };
 
-  const handleSearchFood = (query: string) => {
+  const handleSearchFood = async (query: string) => {
     setSearchQuery(query);
-    if (query.trim()) {
-      const filtered = MOCK_FOOD_DATABASE.filter(food =>
-        food.name.toLowerCase().includes(query.toLowerCase())
-      );
-      setFilteredFoods(filtered);
+    
+    // Only search if query has at least 2 characters
+    if (query.trim().length >= 2) {
+      try {
+        setLoadingFoods(true);
+        const foods = await api.searchFoods(query);
+        // Ensure foods is an array and has valid data
+        if (Array.isArray(foods)) {
+          setFilteredFoods(foods);
+        } else {
+          console.error('Search returned non-array result:', foods);
+          setFilteredFoods([]);
+        }
+      } catch (error) {
+        console.error('Failed to search foods:', error);
+        setFilteredFoods([]);
+      } finally {
+        setLoadingFoods(false);
+      }
     } else {
       setFilteredFoods([]);
     }
   };
 
   const handleSelectFood = (food: FoodItem) => {
-    setSelectedFood(food);
-    setSearchModalVisible(false);
-    setQuantityModalVisible(true);
-  };
-
-  const handleConfirmQuantity = () => {
-    if (!selectedFood || !selectedMealType) return;
-
-    const quantity = parseFloat(foodQuantity);
-    const unit = foodUnit;
+    console.log('handleSelectFood called with:', food);
+    console.log('Current selectedMealType:', selectedMealType);
     
-    // Calculate macros based on quantity (assuming 100g base)
-    const multiplier = quantity / 100;
-    
-    const newFoodLog: FoodLog = {
-      id: Date.now().toString(),
-      name: selectedFood.name,
-      quantity: quantity,
-      unit: unit,
-      calories: Math.round(selectedFood.calories * multiplier),
-      protein: Math.round(selectedFood.protein * multiplier * 10) / 10,
-      carbs: Math.round(selectedFood.carbs * multiplier * 10) / 10,
-      fat: Math.round(selectedFood.fat * multiplier * 10) / 10,
-      mealType: selectedMealType,
+    // Convert FoodItem to FoodLog format and pre-fill the FoodBottomSheet
+    const foodData = {
+      name: food.name,
+      quantity: 100, // Default 100g
+      unit: 'g',
+      calories: food.calories,
+      protein: food.protein,
+      carbs: food.carbs,
+      fat: food.fat,
+      mealType: selectedMealType || 'Almoço', // Default to Almoço if not set
       date: dateKey,
     };
-
-    setFoodLogs(prev => [...prev, newFoodLog]);
-    setQuantityModalVisible(false);
-    setSelectedFood(null);
-    setFoodQuantity('100');
-    setFoodUnit('g');
     
-    Alert.alert('Sucesso!', `${selectedFood.name} adicionado ao ${selectedMealType}`);
+    setFoodEditInitialData(foodData);
+    searchBottomSheetRef.current?.dismiss();
+    bottomSheetRef.current?.present();
   };
+
+
 
   const handleEditFood = (food: FoodLog) => {
-    Alert.alert(
-      'Editar Alimento',
-      `Deseja editar ou remover "${food.name}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Remover', 
-          style: 'destructive',
-          onPress: () => {
-            setFoodLogs(prev => prev.filter(f => f.id !== food.id));
-            Alert.alert('Removido', 'Alimento removido com sucesso');
-          }
-        },
-        { 
-          text: 'Editar', 
-          onPress: () => {
-            // For now, just show current values
-            Alert.alert(
-              'Editar Alimento',
-              `Nome: ${food.name}\nQuantidade: ${food.quantity} ${food.unit}\nCalorias: ${food.calories} kcal\nProteína: ${food.protein}g\nCarboidratos: ${food.carbs}g\nGordura: ${food.fat}g`
-            );
-          }
-        }
-      ]
-    );
+    setFoodEditInitialData(food);
+    bottomSheetRef.current?.present();
   };
 
-  // Open modal for add
+  // Open bottom sheet for add
   const openAddFoodModal = (mealType?: string) => {
-    setFoodEditInitialData(mealType ? { mealType } : null);
-    setFoodEditModalVisible(true);
+    setSelectedMealType(mealType || 'Almoço');
+    setAddFoodVisible(true);
   };
 
-  // Open modal for edit
+  // Open bottom sheet for edit
   const openEditFoodModal = (food: any) => {
     setFoodEditInitialData(food);
-    setFoodEditModalVisible(true);
+    bottomSheetRef.current?.present();
   };
 
   // Handle save (add or edit)
-  const handleSaveFood = (food: any) => {
-    if (foodEditInitialData && foodEditInitialData.id) {
-      // Edit mode
-      setFoodLogs((prev: any[]) => prev.map(f => f.id === foodEditInitialData.id ? { ...f, ...food } : f));
-    } else {
-      // Add mode
-      setFoodLogs((prev: any[]) => [
-        ...prev,
-        { ...food, id: Date.now().toString(), date: dateKey },
-      ]);
+  const handleSaveFood = async (food: any) => {
+    try {
+      const firebaseUser = getAuth().currentUser;
+      const token = firebaseUser ? await firebaseUser.getIdToken() : '';
+      
+      // Check if this is a saved food being edited
+      if (foodEditInitialData && foodEditInitialData.isSavedFood) {
+        // Update saved food
+        const updatedSavedFood = {
+          name: food.name,
+          quantity: food.quantity,
+          unit: food.unit,
+          calories: food.calories,
+          protein: food.protein,
+          carbs: food.carbs,
+          fat: food.fat,
+        };
+        
+        if (user?.uid && token) {
+          await api.updateSavedFood(user.uid, foodEditInitialData.id, updatedSavedFood, token);
+        }
+        
+        Alert.alert('Sucesso!', `${food.name} atualizado nos alimentos salvos`);
+      } else if (foodEditInitialData && foodEditInitialData.id) {
+        // Edit mode - preserve the original ID from backend
+        const updatedFoodLog = { 
+          ...foodEditInitialData, 
+          ...food,
+          id: foodEditInitialData.id // Keep the original backend ID
+        };
+        
+        if (user?.uid && token) {
+          await api.updateFoodLog(user.uid, updatedFoodLog, token);
+        }
+        
+        // Update local state
+        setFoodLogs((prev: any[]) => prev.map(f => f.id === foodEditInitialData.id ? updatedFoodLog : f));
+        Alert.alert('Sucesso!', `${food.name} atualizado com sucesso`);
+      } else {
+        // Add mode - ensure all macro values are numbers
+        const newFoodLog: FoodLog = {
+          id: Math.floor(Math.random() * 1000000) + 1, // Smaller ID range
+          name: food.name,
+          quantity: typeof food.quantity === 'string' ? parseFloat(food.quantity) : food.quantity,
+          unit: food.unit,
+          calories: typeof food.calories === 'string' ? parseFloat(food.calories) : food.calories,
+          protein: typeof food.protein === 'string' ? parseFloat(food.protein) : food.protein,
+          carbs: typeof food.carbs === 'string' ? parseFloat(food.carbs) : food.carbs,
+          fat: typeof food.fat === 'string' ? parseFloat(food.fat) : food.fat,
+          mealType: food.mealType,
+          date: dateKey,
+        };
+        
+        let createdFoodLog: FoodLog | null = null;
+        
+        if (user?.uid && token) {
+          createdFoodLog = await api.createFoodLog(user.uid, newFoodLog, token);
+          
+          // If user wants to save this food for future use
+          if (food.saveFood) {
+            try {
+              const savedFoodData = {
+                name: food.name,
+                quantity: food.quantity,
+                unit: food.unit,
+                calories: food.calories,
+                protein: food.protein,
+                carbs: food.carbs,
+                fat: food.fat,
+              };
+              
+              await api.saveFood(user.uid, savedFoodData, token);
+              console.log('Food saved for future use:', food.name);
+            } catch (saveError) {
+              console.error('Failed to save food for future use:', saveError);
+              // Don't show error to user as the main food log was saved successfully
+            }
+          }
+        }
+        
+        // Update local state
+        setFoodLogs((prev: any[]) => [...prev, createdFoodLog || newFoodLog]);
+        
+        // Show success message
+        if (food.saveFood) {
+          Alert.alert('Sucesso!', `${food.name} adicionado com sucesso e salvo para uso futuro!`);
+        } else {
+          Alert.alert('Sucesso!', `${food.name} adicionado com sucesso.`);
+        }
+      }
+      
+      bottomSheetRef.current?.dismiss();
+      setFoodEditInitialData(null);
+    } catch (error) {
+      console.error('Failed to save food log:', error);
+      Alert.alert('Erro', 'Falha ao salvar alimento. Tente novamente.');
     }
-    setFoodEditModalVisible(false);
-    setFoodEditInitialData(null);
   };
 
   // Handle delete
-  const handleDeleteFood = () => {
-    if (foodEditInitialData && foodEditInitialData.id) {
-      setFoodLogs((prev: any[]) => prev.filter(f => f.id !== foodEditInitialData.id));
+  const handleDeleteFood = async () => {
+    try {
+      if (foodEditInitialData && foodEditInitialData.id) {
+        const firebaseUser = getAuth().currentUser;
+        const token = firebaseUser ? await firebaseUser.getIdToken() : '';
+        
+        if (user?.uid && token) {
+          await api.deleteFoodLog(user.uid, foodEditInitialData.id, token);
+        }
+        
+        // Update local state
+        setFoodLogs((prev: any[]) => prev.filter(f => f.id !== foodEditInitialData.id));
+        Alert.alert('Sucesso!', `${foodEditInitialData.name} removido com sucesso`);
+      }
+      
+      bottomSheetRef.current?.dismiss();
+      setFoodEditInitialData(null);
+    } catch (error) {
+      console.error('Failed to delete food log:', error);
+      Alert.alert('Erro', 'Falha ao remover alimento. Tente novamente.');
     }
-    setFoodEditModalVisible(false);
-    setFoodEditInitialData(null);
   };
 
+  // Saved Foods handlers
+  const handleSelectSavedFood = (savedFood: SavedFood) => {
+    // Convert saved food to food log format and add to current meal
+    const newFoodLog: FoodLog = {
+      id: Math.floor(Math.random() * 1000000) + 1,
+      name: savedFood.name,
+      quantity: typeof savedFood.quantity === 'string' ? parseFloat(savedFood.quantity) : savedFood.quantity,
+      unit: savedFood.unit,
+      calories: typeof savedFood.calories === 'string' ? parseFloat(savedFood.calories) : savedFood.calories,
+      protein: typeof savedFood.protein === 'string' ? parseFloat(savedFood.protein) : savedFood.protein,
+      carbs: typeof savedFood.carbs === 'string' ? parseFloat(savedFood.carbs) : savedFood.carbs,
+      fat: typeof savedFood.fat === 'string' ? parseFloat(savedFood.fat) : savedFood.fat,
+      mealType: selectedMealType || 'Almoço',
+      date: dateKey,
+    };
+
+    // Save to backend first, then update local state
+    const saveToBackend = async () => {
+      try {
+        const firebaseUser = getAuth().currentUser;
+        const token = firebaseUser ? await firebaseUser.getIdToken() : '';
+        
+        if (user?.uid && token) {
+          const createdFoodLog = await api.createFoodLog(user.uid, newFoodLog, token);
+          // Update local state with the backend response (which has the correct ID)
+          setFoodLogs((prev: any[]) => [...prev, createdFoodLog]);
+        } else {
+          // Fallback to local state if no backend
+          setFoodLogs((prev: any[]) => [...prev, createdFoodLog]);
+        }
+      } catch (error) {
+        console.error('Failed to save food log from saved food:', error);
+        Alert.alert('Erro', 'Falha ao adicionar alimento. Tente novamente.');
+      }
+    };
+    
+    saveToBackend();
+    Alert.alert('Sucesso!', `${savedFood.name} adicionado com sucesso.`);
+  };
+
+  const handleEditSavedFood = (savedFood: SavedFood) => {
+    // Open the food bottom sheet in edit mode with saved food data
+    setFoodEditInitialData({
+      ...savedFood,
+      mealType: selectedMealType || 'Almoço',
+      isSavedFood: true, // Flag to indicate this is a saved food being edited
+    });
+    savedFoodsBottomSheetRef.current?.dismiss();
+    bottomSheetRef.current?.present();
+  };
+
+  const handleDeleteSavedFood = (foodId: number) => {
+    // This will be handled by the SavedFoodsBottomSheet component
+    console.log('Saved food deleted:', foodId);
+  };
+
+  // AI Food Analysis handler
+  const handleFoodAnalyzed = async (aiResult: AIAnalysisResult) => {
+    try {
+      const firebaseUser = getAuth().currentUser;
+      const token = firebaseUser ? await firebaseUser.getIdToken() : '';
+      
+      if (!user?.uid || !token) {
+        Alert.alert('Erro', 'Token de autenticação não disponível');
+        return;
+      }
+
+      // Convert AI result to food log format
+      const newFoodLog: FoodLog = {
+        id: Math.floor(Math.random() * 1000000) + 1,
+        name: aiResult.food,
+        quantity: aiResult.quantity,
+        unit: aiResult.unit,
+        calories: aiResult.calories,
+        protein: aiResult.protein,
+        carbs: aiResult.carbs,
+        fat: aiResult.fat,
+        mealType: aiResult.mealType,
+        date: aiResult.date,
+      };
+
+      // Save to backend
+      const createdFoodLog = await api.createFoodLog(user.uid, newFoodLog, token);
+      
+      // Update local state with the backend response (which has the correct ID)
+      setFoodLogs((prev: any[]) => [...prev, createdFoodLog]);
+      
+      Alert.alert('Sucesso!', `${aiResult.food} adicionado com sucesso.`);
+    } catch (error: any) {
+      console.error('Failed to save AI analyzed food:', error);
+      Alert.alert('Erro', 'Falha ao adicionar alimento analisado. Tente novamente.');
+    }
+  };
+
+
+
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFF8F6' }}>
+    <BottomSheetModalProvider>
+      <View style={{ flex: 1, backgroundColor: '#FFF8F6' }}>
       {/* Header with gradient */}
       <LinearGradient
         colors={["#FF725E", "#FF8A50"]}
@@ -429,6 +609,8 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
 
+
+
         {/* Progress Summary */}
         <View style={styles.progressCard}>
           <Text style={styles.cardTitle}>Resumo Diário</Text>
@@ -470,14 +652,14 @@ export default function DashboardScreen() {
               <View style={styles.caloriesCenter}>
                 <View style={styles.caloriesRow}>
                   <FontAwesome6 name="fire-flame-curved" size={30} color="#f97316" />
-                  <Text style={styles.caloriesNumber}>{totals.calories}</Text>
+                  <Text style={styles.caloriesNumber}>{formatNumber(totals.calories)}</Text>
                 </View>
-                <Text style={styles.caloriesTarget}>/ {targets.calories} kcal</Text>
+                <Text style={styles.caloriesTarget}>/ {formatNumber(targets.calories)} kcal</Text>
               </View>
             </View>
             <View style={styles.restanteBadge}>
               <Text style={styles.restanteText}>
-                Restante: <Text style={styles.restanteNumber}>{remainingCalories} kcal</Text>
+                Restante: <Text style={styles.restanteNumber}>{formatNumber(remainingCalories)} kcal</Text>
               </Text>
             </View>
           </View>
@@ -532,7 +714,7 @@ export default function DashboardScreen() {
             </TouchableOpacity>
           </View>
           <View style={styles.sheetOptionsGrid}>
-            <TouchableOpacity style={styles.sheetOption} onPress={() => openAddFoodModal()}>
+            <TouchableOpacity style={styles.sheetOption} onPress={() => handleOption('manual')}>
               <Icon name="create-outline" size={32} color="#FF725E" />
               <Text style={styles.sheetOptionText}>Entrada manual</Text>
             </TouchableOpacity>
@@ -577,99 +759,64 @@ export default function DashboardScreen() {
               placeholder="Digite o nome do alimento..."
               value={searchQuery}
               onChangeText={handleSearchFood}
-              autoFocus
             />
           </View>
 
-          <ScrollView style={styles.searchResults}>
-            {filteredFoods.map((food) => (
-              <TouchableOpacity
-                key={food.id}
-                style={styles.searchResultItem}
-                onPress={() => handleSelectFood(food)}
-              >
-                <View style={styles.searchResultInfo}>
-                  <Text style={styles.searchResultName}>{food.name}</Text>
-                  <Text style={styles.searchResultCategory}>{food.category}</Text>
-                </View>
-                <View style={styles.searchResultMacros}>
-                  <Text style={styles.searchResultCalories}>{food.calories} kcal</Text>
-                  <Text style={styles.searchResultMacroDetails}>
-                    P: {food.protein}g | C: {food.carbs}g | G: {food.fat}g
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      </Modal>
-
-      {/* Quantity Modal */}
-      <Modal
-        isVisible={quantityModalVisible}
-        onBackdropPress={() => setQuantityModalVisible(false)}
-        style={styles.modal}
-        backdropOpacity={0.4}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Quantidade</Text>
-            <TouchableOpacity onPress={() => setQuantityModalVisible(false)}>
-              <Icon name="close" size={24} color="#6b7280" />
+          <View style={styles.searchResults}>
+            <Text>Search modal loaded successfully!</Text>
+            <Text>Query: {searchQuery}</Text>
+            <Text>Loading: {loadingFoods ? 'Yes' : 'No'}</Text>
+            <Text>Results: {(filteredFoods || []).length}</Text>
+            <TouchableOpacity 
+              style={{ backgroundColor: '#FF725E', padding: 10, margin: 10, borderRadius: 8 }}
+              onPress={() => {
+                console.log('Test button pressed');
+                Alert.alert('Test', 'Modal is working!');
+              }}
+            >
+              <Text style={{ color: 'white', textAlign: 'center' }}>Test Button</Text>
             </TouchableOpacity>
           </View>
-          
-          {selectedFood && (
-            <View style={styles.quantityContent}>
-              <Text style={styles.quantityFoodName}>{selectedFood.name}</Text>
-              
-              <View style={styles.quantityInputContainer}>
-                <TextInput
-                  style={styles.quantityInput}
-                  value={foodQuantity}
-                  onChangeText={setFoodQuantity}
-                  keyboardType="numeric"
-                  placeholder="100"
-                />
-                <Text style={styles.quantityUnit}>{foodUnit}</Text>
-              </View>
-              
-              <View style={styles.quantityMacros}>
-                <Text style={styles.quantityMacroText}>
-                  Calorias: {Math.round(selectedFood.calories * parseFloat(foodQuantity || '0') / 100)} kcal
-                </Text>
-                <Text style={styles.quantityMacroText}>
-                  Proteína: {Math.round(selectedFood.protein * parseFloat(foodQuantity || '0') / 100 * 10) / 10}g
-                </Text>
-                <Text style={styles.quantityMacroText}>
-                  Carboidratos: {Math.round(selectedFood.carbs * parseFloat(foodQuantity || '0') / 100 * 10) / 10}g
-                </Text>
-                <Text style={styles.quantityMacroText}>
-                  Gordura: {Math.round(selectedFood.fat * parseFloat(foodQuantity || '0') / 100 * 10) / 10}g
-                </Text>
-              </View>
-              
-              <TouchableOpacity 
-                style={styles.confirmButton}
-                onPress={handleConfirmQuantity}
-              >
-                <Text style={styles.confirmButtonText}>Confirmar</Text>
-              </TouchableOpacity>
-            </View>
-          )}
         </View>
       </Modal>
 
-      {/* Food Edit Modal */}
-      <FoodEditModal
-        visible={foodEditModalVisible}
-        onClose={() => { setFoodEditModalVisible(false); setFoodEditInitialData(null); }}
-        onSave={handleSaveFood}
-        onDelete={foodEditInitialData && foodEditInitialData.id ? handleDeleteFood : undefined}
+
+
+
+
+      {/* FoodBottomSheet */}
+      <FoodBottomSheet
+        ref={bottomSheetRef}
         initialData={foodEditInitialData}
         mealOptions={MEAL_OPTIONS}
+        onSave={handleSaveFood}
+        onDelete={foodEditInitialData && foodEditInitialData.id ? handleDeleteFood : undefined}
       />
-    </View>
+
+      {/* SavedFoodsBottomSheet */}
+      <SavedFoodsBottomSheet
+        ref={savedFoodsBottomSheetRef}
+        onSelectFood={handleSelectSavedFood}
+        onEditFood={handleEditSavedFood}
+        onDeleteFood={handleDeleteSavedFood}
+      />
+
+      {/* AIFoodAnalysisBottomSheet */}
+      <AIFoodAnalysisBottomSheet
+        ref={aiFoodAnalysisBottomSheetRef}
+        onFoodAnalyzed={handleFoodAnalyzed}
+        selectedMealType={selectedMealType || 'Almoço'}
+        date={dateKey}
+      />
+
+      {/* SearchBottomSheet */}
+      <SearchBottomSheet
+        ref={searchBottomSheetRef}
+        onSelectFood={handleSelectFood}
+        selectedMealType={selectedMealType || 'Almoço'}
+      />
+      </View>
+    </BottomSheetModalProvider>
   );
 }
 

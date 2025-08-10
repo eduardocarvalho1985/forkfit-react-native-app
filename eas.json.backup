@@ -1,0 +1,50 @@
+{
+  "build": {
+    "development": {
+      "name": "ForkFit Dev Build",
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk",
+        "package": "forkfit.app.forkfitdev"
+      },
+      "ios": {
+        "bundleIdentifier": "forkfit.app.forkfitdev"
+      },
+      "env": {
+        "APP_NAME": "ForkFit Dev"
+      }
+    },
+    "preview": {
+      "name": "ForkFit Preview Build",
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk",
+        "package": "forkfit.app.forkfitpreview"
+      },
+      "ios": {
+        "distribution": "internal",
+        "buildConfiguration": "Release",
+        "bundleIdentifier": "forkfit.app.forkfitpreview"
+      },
+      "env": {
+        "APP_NAME": "ForkFit Preview"
+      }
+    },
+    "production": {
+      "name": "ForkFit Production Build",
+      "env": {
+        "APP_NAME": "ForkFit"
+      },
+      "ios": {
+        "bundleIdentifier": "forkfit.app.forkfitprod"
+      },
+      "android": {
+        "package": "forkfit.app.forkfitprod"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
