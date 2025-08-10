@@ -42,9 +42,11 @@ export default {
         backgroundColor: '#ff725e'
       },
       edgeToEdgeEnabled: true,
+      useNextNotificationsApi: true,
       permissions: [
         'android.permission.CAMERA',
-        'android.permission.RECORD_AUDIO'
+        'android.permission.RECORD_AUDIO',
+        'android.permission.POST_NOTIFICATIONS'
       ]
     },
     platforms: ['ios', 'android'],
@@ -77,6 +79,13 @@ export default {
           ios: {
             useFrameworks: 'static'
           }
+        }
+      ],
+      [
+        'expo-notifications',
+        {
+          icon: './assets/images/icon.png',
+          color: '#FF725E'
         }
       ]
     ],
