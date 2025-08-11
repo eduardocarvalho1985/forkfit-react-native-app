@@ -89,6 +89,7 @@ export interface BackendUser {
   carbs?: number;
   fat?: number;
   notificationsEnabled?: boolean;
+  pushToken?: string;
   createdAt?: Date;
 }
 
@@ -219,6 +220,14 @@ class ForkFitAPI {
     return this.request(`/users/${uid}/onboarding`, {
       method: "PUT",
       body: { onboardingCompleted },
+      token,
+    });
+  }
+
+  async savePushToken(uid: string, pushToken: string, token: string): Promise<BackendUser> {
+    return this.request(`/users/${uid}/push-token`, {
+      method: "PUT",
+      body: { pushToken },
       token,
     });
   }

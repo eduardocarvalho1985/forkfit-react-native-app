@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Platform } from 'react-native';
 import { useAuth } from '../../../contexts/AuthContext';
 import { api } from '../../../services/api';
 import { getAuth } from '@react-native-firebase/auth';
 import { useOnboarding } from '../OnboardingContext';
+// Temporarily disabled to isolate runtime issues
+// import { 
+//   registerForPushNotificationsAsync, 
+//   getNotificationPermissionStatus,
+//   openAppSettings 
+// } from '../../../services/notificationService';
 
 // Helper function to calculate age from birth date
 const calculateAge = (birthDate: string): number => {
@@ -34,26 +40,113 @@ interface NotificationsStepProps {
 }
 
 export default function NotificationsStep({ onSetLoading }: NotificationsStepProps) {
-  const { user, syncUser } = useAuth();
-  const { getCurrentStepData, clearOnboardingData, updateStepData } = useOnboarding();
+  const { user } = useAuth();
+  const { updateStepData } = useOnboarding();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [isRequesting, setIsRequesting] = useState(false);
+  const [permissionStatus, setPermissionStatus] = useState<'undetermined' | 'granted' | 'denied' | 'blocked'>('undetermined');
+
+  // Check current permission status on mount
+  useEffect(() => {
+    checkPermissionStatus();
+  }, []);
+
+  const checkPermissionStatus = async () => {
+    try {
+      // const status = await getNotificationPermissionStatus(); // Temporarily commented out
+      // setPermissionStatus(status.status);
+      // setNotificationsEnabled(status.granted);
+      
+      // Update context with current status
+      updateStepData('notifications', { notificationsEnabled: false }); // Default to false if service is down
+    } catch (error) {
+      console.error('Error checking permission status:', error);
+    }
+  };
 
   const requestNotifications = async () => {
+    if (isRequesting) return;
+    
+    setIsRequesting(true);
+    onSetLoading(true);
+    
     try {
-      // For now, we'll simulate notification permission request
-      // In a real implementation, you would use expo-notifications or react-native-push-notification
       console.log('Requesting notification permissions...');
       
-      // Simulate permission request
-      setNotificationsEnabled(true);
+      // const result = await registerForPushNotificationsAsync(); // Temporarily commented out
       
-      // In real implementation, you would check the actual permission status
-      // const { status } = await Notifications.requestPermissionsAsync();
-      // setNotificationsEnabled(status === 'granted');
-      
+      // if (result.token && result.permissionStatus.granted) {
+      //   setNotificationsEnabled(true);
+      //   setPermissionStatus('granted');
+        
+      //   // Save push token to backend
+      //   if (user) {
+      //     try {
+      //       const authToken = await getAuth().currentUser?.getIdToken();
+      //       if (authToken) {
+      //         await api.savePushToken(user.uid, result.token, authToken);
+      //         console.log('Push token saved to backend successfully');
+      //       }
+      //     } catch (error) {
+      //       console.error('Failed to save push token to backend:', error);
+      //       // Don't block the user, just log the error
+      //     }
+      //   }
+        
+      //   // Update context
+      //   updateStepData('notifications', { 
+      //     notificationsEnabled: true,
+      //     pushToken: result.token 
+      //   });
+        
+      //   Alert.alert(
+      //     'Notificações Ativadas!',
+      //     'Agora você receberá lembretes importantes para manter seus objetivos.',
+      //     [{ text: 'Ótimo!', style: 'default' }]
+      //   );
+      // } else {
+        setNotificationsEnabled(false);
+        setPermissionStatus('denied'); // Default to denied if service is down
+        
+        if (Platform.OS === 'ios') {
+          Alert.alert(
+            'Permissão Negada',
+            'Para receber lembretes importantes, você precisa permitir notificações. Você pode ativá-las nas configurações do app.',
+            [
+              { text: 'Cancelar', style: 'cancel' },
+              { text: 'Configurações', onPress: () => {
+                // This function is not available in the current environment,
+                // so we'll just show a message.
+                Alert.alert('Configurações', 'Não foi possível abrir as configurações do app.');
+              }}
+            ]
+          );
+        } else {
+          Alert.alert(
+            'Permissão Negada',
+            'Para receber lembretes importantes, você precisa permitir notificações. Você pode ativá-las nas configurações do app.',
+            [
+              { text: 'Cancelar', style: 'cancel' },
+              { text: 'Configurações', onPress: () => {
+                // This function is not available in the current environment,
+                // so we'll just show a message.
+                Alert.alert('Configurações', 'Não foi possível abrir as configurações do app.');
+              }}
+            ]
+          );
+        }
+      // }
     } catch (error) {
       console.error('Error requesting notifications:', error);
       setNotificationsEnabled(false);
+      Alert.alert(
+        'Erro',
+        'Não foi possível ativar as notificações. Tente novamente mais tarde.',
+        [{ text: 'OK', style: 'default' }]
+      );
+    } finally {
+      setIsRequesting(false);
+      onSetLoading(false);
     }
   };
 
@@ -91,14 +184,38 @@ export default function NotificationsStep({ onSetLoading }: NotificationsStepPro
         </View>
 
         <TouchableOpacity
-          style={[styles.notificationButton, notificationsEnabled && styles.notificationButtonEnabled]}
+          style={[
+            styles.notificationButton, 
+            notificationsEnabled && styles.notificationButtonEnabled,
+            isRequesting && styles.notificationButtonDisabled
+          ]}
           onPress={requestNotifications}
-          disabled={notificationsEnabled}
+          disabled={notificationsEnabled || isRequesting}
         >
-          <Text style={styles.notificationButtonText}>
-            {notificationsEnabled ? 'Notificações Ativadas' : 'Ativar Notificações'}
-          </Text>
+          {isRequesting ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color={notificationsEnabled ? '#fff' : CORAL} />
+              <Text style={[styles.notificationButtonText, { marginLeft: 8 }]}>
+                Ativando...
+              </Text>
+            </View>
+          ) : (
+            <Text style={styles.notificationButtonText}>
+              {notificationsEnabled ? 'Notificações Ativadas' : 'Ativar Notificações'}
+            </Text>
+          )}
         </TouchableOpacity>
+
+        {permissionStatus === 'blocked' && (
+          <TouchableOpacity
+            style={styles.settingsButton}
+            onPress={() => {
+              Alert.alert('Configurações', 'Não foi possível abrir as configurações do app.');
+            }}
+          >
+            <Text style={styles.settingsButtonText}>Ir para Configurações</Text>
+          </TouchableOpacity>
+        )}
 
         <Text style={styles.note}>
           Você pode alterar as configurações de notificação a qualquer momento nos Ajustes.
@@ -190,6 +307,33 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: CORAL,
+  },
+
+  notificationButtonDisabled: {
+    opacity: 0.6,
+  },
+
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  settingsButton: {
+    backgroundColor: 'transparent',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#64748b',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+
+  settingsButtonText: {
+    fontSize: 16,
+    color: '#64748b',
+    fontWeight: '600',
   },
 
   note: {

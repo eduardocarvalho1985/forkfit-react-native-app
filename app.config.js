@@ -1,10 +1,18 @@
 const getBundleId = () => {
-  // Use the same bundle ID for all builds to avoid Firebase config issues
+  // Use different bundle IDs for different build types to avoid conflicts
+  if (process.env.EAS_BUILD_PROFILE === 'development') {
+    return 'forkfit.app.forkfitdev';
+  }
+  // Both preview and production use the same bundle ID
   return 'forkfit.app.forkfitprod';
 };
 
 const getPackageName = () => {
-  // Use the same package name for all builds to avoid Firebase config issues
+  // Use different package names for different build types to avoid conflicts
+  if (process.env.EAS_BUILD_PROFILE === 'development') {
+    return 'forkfit.app.forkfitdev';
+  }
+  // Both preview and production use the same package name
   return 'forkfit.app.forkfitprod';
 };
 
@@ -42,9 +50,11 @@ export default {
         backgroundColor: '#ff725e'
       },
       edgeToEdgeEnabled: true,
+      useNextNotificationsApi: true,
       permissions: [
         'android.permission.CAMERA',
-        'android.permission.RECORD_AUDIO'
+        'android.permission.RECORD_AUDIO',
+        'android.permission.POST_NOTIFICATIONS'
       ]
     },
     platforms: ['ios', 'android'],
@@ -77,6 +87,13 @@ export default {
           ios: {
             useFrameworks: 'static'
           }
+        }
+      ],
+      [
+        'expo-notifications',
+        {
+          icon: './assets/images/icon.png',
+          color: '#FF725E'
         }
       ]
     ],
