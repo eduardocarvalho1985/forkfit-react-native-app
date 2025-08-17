@@ -1,17 +1,17 @@
 const getBundleId = () => {
   // Use different bundle IDs for different build types to avoid conflicts
-  if (process.env.EAS_BUILD_PROFILE === 'development') {
-    return 'forkfit.app.forkfitdev';
-  }
+  // if (process.env.EAS_BUILD_PROFILE === 'development') {
+  //   return 'forkfit.app.forkfitdev';
+  // }
   // Both preview and production use the same bundle ID
   return 'forkfit.app.forkfitprod';
 };
 
 const getPackageName = () => {
   // Use different package names for different build types to avoid conflicts
-  if (process.env.EAS_BUILD_PROFILE === 'development') {
-    return 'forkfit.app.forkfitdev';
-  }
+  // if (process.env.EAS_BUILD_PROFILE === 'development') {
+  //   return 'forkfit.app.forkfitdev';
+  // }
   // Both preview and production use the same package name
   return 'forkfit.app.forkfitprod';
 };
@@ -19,7 +19,7 @@ const getPackageName = () => {
 export default {
   expo: {
     name: process.env.APP_NAME || 'ForkFit',
-    slug: 'forkfitauthfixed',
+    slug: 'forkfit',
     version: '1.0.0',
     orientation: 'portrait',
     icon: './assets/images/icon.png',
@@ -103,9 +103,9 @@ export default {
     extra: {
       router: {},
       eas: {
-        projectId: '52b9dc85-b309-42c5-b465-37d2f968ef10'
+        projectId: 'b02a1a41-6a08-4170-aaf0-e48a411490b9'
       }
     },
-    owner: 'duvoice'
+    owner: 'forkfit-app'
   }
 };

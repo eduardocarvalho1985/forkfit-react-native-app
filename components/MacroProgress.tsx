@@ -15,8 +15,8 @@ interface MacroProgressProps {
 
 const COLOR_MAP: Record<string, { ring: string; text: string; bg: string }> = {
   'proteína': { ring: '#3b82f6', text: '#2563eb', bg: '#e0e7ff' },
-  'carbs':    { ring: '#f97316', text: '#ea580c', bg: '#fef3c7' },
-  'gordura':  { ring: '#ef4444', text: '#b91c1c', bg: '#fee2e2' },
+  'carbs': { ring: '#f97316', text: '#ea580c', bg: '#fef3c7' },
+  'gordura': { ring: '#ef4444', text: '#b91c1c', bg: '#fee2e2' },
 };
 
 export const MacroProgress = ({ label, current, target, unit, color, iconName }: MacroProgressProps) => {
@@ -33,7 +33,7 @@ export const MacroProgress = ({ label, current, target, unit, color, iconName }:
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
-    <View style={[styles.container, { backgroundColor: colorSet.bg }]}>  
+    <View style={[styles.container, { backgroundColor: colorSet.bg }]}>
       {/* Circular Progress */}
       <View style={styles.svgWrapper}>
         <Svg width={radius * 2 + stroke} height={radius * 2 + stroke}>
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    width: 110,
+    width: '32.5%',
     marginHorizontal: 2,
   },
   svgWrapper: {
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   label: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
     letterSpacing: 0.5,
     marginBottom: 2,

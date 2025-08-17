@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Platform, ScrollView } from 'react-native';
 import { useAuth } from '../../../contexts/AuthContext';
 import { api } from '../../../services/api';
 import { getAuth } from '@react-native-firebase/auth';
@@ -14,19 +14,19 @@ import { useOnboarding } from '../OnboardingContext';
 // Helper function to calculate age from birth date
 const calculateAge = (birthDate: string): number => {
   const today = new Date();
-  
+
   // Parse YYYY-MM-DD format directly to avoid timezone issues
   const [year, month, day] = birthDate.split('-').map(Number);
   if (!year || !month || !day) return 0;
-  
+
   const birth = new Date(year, month - 1, day); // month is 0-indexed
   let age = today.getFullYear() - birth.getFullYear();
   const monthDiff = today.getMonth() - birth.getMonth();
-  
+
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
     age--;
   }
-  
+
   return age;
 };
 
@@ -56,7 +56,7 @@ export default function NotificationsStep({ onSetLoading }: NotificationsStepPro
       // const status = await getNotificationPermissionStatus(); // Temporarily commented out
       // setPermissionStatus(status.status);
       // setNotificationsEnabled(status.granted);
-      
+
       // Update context with current status
       updateStepData('notifications', { notificationsEnabled: false }); // Default to false if service is down
     } catch (error) {
@@ -66,19 +66,19 @@ export default function NotificationsStep({ onSetLoading }: NotificationsStepPro
 
   const requestNotifications = async () => {
     if (isRequesting) return;
-    
+
     setIsRequesting(true);
     onSetLoading(true);
-    
+
     try {
       console.log('Requesting notification permissions...');
-      
+
       // const result = await registerForPushNotificationsAsync(); // Temporarily commented out
-      
+
       // if (result.token && result.permissionStatus.granted) {
       //   setNotificationsEnabled(true);
       //   setPermissionStatus('granted');
-        
+
       //   // Save push token to backend
       //   if (user) {
       //     try {
@@ -92,49 +92,53 @@ export default function NotificationsStep({ onSetLoading }: NotificationsStepPro
       //       // Don't block the user, just log the error
       //     }
       //   }
-        
+
       //   // Update context
       //   updateStepData('notifications', { 
       //     notificationsEnabled: true,
       //     pushToken: result.token 
       //   });
-        
+
       //   Alert.alert(
       //     'Notificações Ativadas!',
       //     'Agora você receberá lembretes importantes para manter seus objetivos.',
       //     [{ text: 'Ótimo!', style: 'default' }]
       //   );
       // } else {
-        setNotificationsEnabled(false);
-        setPermissionStatus('denied'); // Default to denied if service is down
-        
-        if (Platform.OS === 'ios') {
-          Alert.alert(
-            'Permissão Negada',
-            'Para receber lembretes importantes, você precisa permitir notificações. Você pode ativá-las nas configurações do app.',
-            [
-              { text: 'Cancelar', style: 'cancel' },
-              { text: 'Configurações', onPress: () => {
+      setNotificationsEnabled(false);
+      setPermissionStatus('denied'); // Default to denied if service is down
+
+      if (Platform.OS === 'ios') {
+        Alert.alert(
+          'Permissão Negada',
+          'Para receber lembretes importantes, você precisa permitir notificações. Você pode ativá-las nas configurações do app.',
+          [
+            { text: 'Cancelar', style: 'cancel' },
+            {
+              text: 'Configurações', onPress: () => {
                 // This function is not available in the current environment,
                 // so we'll just show a message.
                 Alert.alert('Configurações', 'Não foi possível abrir as configurações do app.');
-              }}
-            ]
-          );
-        } else {
-          Alert.alert(
-            'Permissão Negada',
-            'Para receber lembretes importantes, você precisa permitir notificações. Você pode ativá-las nas configurações do app.',
-            [
-              { text: 'Cancelar', style: 'cancel' },
-              { text: 'Configurações', onPress: () => {
+              }
+            }
+          ]
+        );
+      } else {
+        Alert.alert(
+          'Permissão Negada',
+          'Para receber lembretes importantes, você precisa permitir notificações. Você pode ativá-las nas configurações do app.',
+          [
+            { text: 'Cancelar', style: 'cancel' },
+            {
+              text: 'Configurações', onPress: () => {
                 // This function is not available in the current environment,
                 // so we'll just show a message.
                 Alert.alert('Configurações', 'Não foi possível abrir as configurações do app.');
-              }}
-            ]
-          );
-        }
+              }
+            }
+          ]
+        );
+      }
       // }
     } catch (error) {
       console.error('Error requesting notifications:', error);
@@ -157,12 +161,12 @@ export default function NotificationsStep({ onSetLoading }: NotificationsStepPro
   }, [notificationsEnabled]);
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
         <View style={styles.iconContainer}>
           <Text style={styles.icon}>🔔</Text>
         </View>
-        
+
         <Text style={styles.title}>Receba lembretes e alcance seus objetivos</Text>
         <Text style={styles.subtitle}>
           Para te ajudar a manter o foco, podemos enviar lembretes para registrar suas refeições.
@@ -185,7 +189,7 @@ export default function NotificationsStep({ onSetLoading }: NotificationsStepPro
 
         <TouchableOpacity
           style={[
-            styles.notificationButton, 
+            styles.notificationButton,
             notificationsEnabled && styles.notificationButtonEnabled,
             isRequesting && styles.notificationButtonDisabled
           ]}
@@ -221,7 +225,7 @@ export default function NotificationsStep({ onSetLoading }: NotificationsStepPro
           Você pode alterar as configurações de notificação a qualquer momento nos Ajustes.
         </Text>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 

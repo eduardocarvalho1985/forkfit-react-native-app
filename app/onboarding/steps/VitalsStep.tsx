@@ -7,19 +7,19 @@ import DatePicker from '../../../components/DatePicker';
 // Helper function to calculate age from birth date
 const calculateAge = (birthDate: string): number => {
   const today = new Date();
-  
+
   // Parse YYYY-MM-DD format directly to avoid timezone issues
   const [year, month, day] = birthDate.split('-').map(Number);
   if (!year || !month || !day) return 0;
-  
+
   const birth = new Date(year, month - 1, day); // month is 0-indexed
   let age = today.getFullYear() - birth.getFullYear();
   const monthDiff = today.getMonth() - birth.getMonth();
-  
+
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
     age--;
   }
-  
+
   return age;
 };
 
@@ -51,7 +51,7 @@ export default function VitalsStep({ onSetLoading }: VitalsStepProps) {
     const existingBirthDate = getStepData('birthDate');
     const existingHeight = getStepData('height');
     const existingWeight = getStepData('weight');
-    
+
     if (existingGender) setGender(existingGender);
     if (existingBirthDate) setBirthDate(existingBirthDate);
     if (existingHeight) setHeight(existingHeight.toString());
@@ -72,7 +72,7 @@ export default function VitalsStep({ onSetLoading }: VitalsStepProps) {
     const selectedDate = new Date(date);
     const today = new Date();
     const minDate = new Date('1900-01-01');
-    
+
     return selectedDate >= minDate && selectedDate <= today;
   };
 
@@ -81,19 +81,19 @@ export default function VitalsStep({ onSetLoading }: VitalsStepProps) {
     if (gender && birthDate && height && weight) {
       const heightNumber = parseInt(height);
       const weightNumber = parseWeight(weight);
-      
+
       // Only update if all validations pass
-      if (validateBirthDate(birthDate) && 
-          !isNaN(heightNumber) && heightNumber >= 100 && heightNumber <= 250 &&
-          !isNaN(weightNumber) && weightNumber >= 30 && weightNumber <= 300) {
-        
+      if (validateBirthDate(birthDate) &&
+        !isNaN(heightNumber) && heightNumber >= 100 && heightNumber <= 250 &&
+        !isNaN(weightNumber) && weightNumber >= 30 && weightNumber <= 300) {
+
         const calculatedAge = calculateAge(birthDate);
-        updateStepData('vitals', { 
-          gender, 
-          birthDate, 
+        updateStepData('vitals', {
+          gender,
+          birthDate,
           age: calculatedAge,
-          height: heightNumber, 
-          weight: weightNumber 
+          height: heightNumber,
+          weight: weightNumber
         });
         console.log('Vitals data updated in context');
       }

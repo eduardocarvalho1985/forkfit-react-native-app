@@ -6,15 +6,16 @@ import { useFocusEffect } from '@react-navigation/native';
 import { PrivacyBottomSheet } from '../../components/PrivacyBottomSheet';
 import { HelpBottomSheet } from '../../components/HelpBottomSheet';
 import { useAuth } from '../../contexts/AuthContext';
-import { 
-  getNotificationPermissionStatus, 
+import {
+  getNotificationPermissionStatus,
   requestNotificationPermissions,
-  openAppSettings,
   clearNotificationData,
   updateNotificationPreferences,
   getNotificationPreferences,
   pauseNotificationsTemporarily
 } from '../../services/notificationService';
+import { EmailAuthProvider, getAuth } from '@react-native-firebase/auth';
+import prompt from 'react-native-prompt-android';
 
 const CORAL = '#FF725E';
 const TEXT_DARK = '#1F2937';
@@ -137,15 +138,15 @@ export default function SettingsScreen() {
       'Por quanto tempo você gostaria de pausar as notificações?',
       [
         { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: '1 hora', 
+        {
+          text: '1 hora',
           onPress: async () => {
             await pauseNotificationsTemporarily(1);
             Alert.alert('Sucesso', 'Notificações pausadas por 1 hora');
           }
         },
-        { 
-          text: '24 horas', 
+        {
+          text: '24 horas',
           onPress: async () => {
             await pauseNotificationsTemporarily(24);
             Alert.alert('Sucesso', 'Notificações pausadas por 24 horas');
@@ -174,17 +175,132 @@ export default function SettingsScreen() {
     );
   };
 
+  const handleDeleteAccount = async () => {
+    Alert.alert(
+      'Excluir Conta',
+      'Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita e todos os seus dados serão perdidos.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Primeiro, reautenticar o usuário
+              const user = getAuth().currentUser;
+              if (user) {
+                // Verificar o provedor de autenticação do usuário
+                const provider = user.providerData[0]?.providerId;
+
+                if (provider === 'password') {
+                  // Para autenticação por email/senha, solicitar senha novamente
+                  prompt(
+                    'Confirmar senha',
+                    'Por favor, digite sua senha para confirmar a exclusão da conta',
+                    [
+                      { text: 'Cancel', onPress: () => console.log('Cancel Pressed'), style: 'cancel' },
+                      {
+                        text: 'OK', onPress: async (password) => {
+                          if (password) {
+                            try {
+                              // Criar credencial de email/senha
+                              const credential = EmailAuthProvider.credential(
+                                user.email || '',
+                                password
+                              );
+                              // Reautenticar
+                              await user.reauthenticateWithCredential(credential);
+                              // Agora excluir a conta
+                              await user.delete();
+                              Alert.alert('Sucesso', 'Sua conta foi excluída com sucesso.');
+                            } catch (error) {
+                              console.error('Erro na reautenticação:', error);
+                              Alert.alert('Erro', 'Senha incorreta ou erro na autenticação. Tente novamente.');
+                            }
+                          }
+                        },
+                      },
+                    ],
+
+
+                    {
+                      type: 'secure-text',
+                      cancelable: true,
+                      placeholder: 'password'
+                    }
+                  );
+                } else if (provider === 'google.com') {
+                  // Para autenticação Google, redirecionar para login Google
+                  Alert.alert(
+                    'Reautenticação necessária',
+                    'Para excluir sua conta, você precisa fazer login novamente com Google.',
+                    [
+                      { text: 'Cancelar', style: 'cancel' },
+                      {
+                        text: 'Continuar',
+                        onPress: async () => {
+                          try {
+                            // Fazer logout e redirecionar para tela de login
+                            await signOut();
+                            // Aqui você pode navegar para a tela de login
+                            // navigation.navigate('Login');
+                            Alert.alert('Faça login novamente', 'Por favor, faça login novamente e tente excluir sua conta.');
+                          } catch (error) {
+                            console.error('Erro ao redirecionar para login:', error);
+                          }
+                        }
+                      }
+                    ]
+                  );
+                } else {
+                  // Para outros provedores
+                  Alert.alert(
+                    'Reautenticação necessária',
+                    'Para excluir sua conta, você precisa fazer login novamente.',
+                    [
+                      { text: 'Cancelar', style: 'cancel' },
+                      {
+                        text: 'Continuar',
+                        onPress: async () => {
+                          try {
+                            await signOut();
+                            // Aqui você pode navegar para a tela de login
+                            // navigation.navigate('Login');
+                            Alert.alert('Faça login novamente', 'Por favor, faça login novamente e tente excluir sua conta.');
+                          } catch (error) {
+                            console.error('Erro ao redirecionar para login:', error);
+                          }
+                        }
+                      }
+                    ]
+                  );
+                }
+              }
+            } catch (error) {
+              console.error('Erro ao excluir conta:', error);
+              Alert.alert(
+                'Erro',
+                'Não foi possível excluir sua conta. Por favor, faça login novamente e tente outra vez.',
+                [{ text: 'OK' }]
+              );
+            }
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <BottomSheetModalProvider>
       <View style={styles.container}>
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent} 
-          style={[styles.scrollView, { paddingTop: 40 }]}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          style={[styles.scrollView, { paddingTop: Platform.OS === 'android' ? 0 : 40 }]}
           showsVerticalScrollIndicator={false}
         >
           {/* Main Title - Left aligned and lower */}
           <Text style={styles.mainTitle}>Ajustes</Text>
-          
+
           {/* Plan Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Plano Atual</Text>
@@ -202,7 +318,7 @@ export default function SettingsScreen() {
               </View>
             </View>
           </View>
-          
+
           {/* Notifications Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Notificações</Text>
@@ -214,11 +330,11 @@ export default function SettingsScreen() {
                   <View style={styles.settingText}>
                     <Text style={styles.settingLabel}>Notificações Push</Text>
                     <Text style={styles.settingSubtext}>
-                      {permissionStatus === 'granted' 
+                      {permissionStatus === 'granted'
                         ? 'Receber lembretes e atualizações importantes'
                         : permissionStatus === 'blocked'
-                        ? 'Permissões bloqueadas - ative nas configurações'
-                        : 'Permitir notificações para receber lembretes'
+                          ? 'Permissões bloqueadas - ative nas configurações'
+                          : 'Permitir notificações para receber lembretes'
                       }
                     </Text>
                   </View>
@@ -232,7 +348,7 @@ export default function SettingsScreen() {
                   disabled={permissionStatus === 'blocked'}
                 />
               </View>
-              
+
               {/* Settings Button for Blocked Permissions */}
               {permissionStatus === 'blocked' && (
                 <View style={styles.settingRow}>
@@ -260,7 +376,7 @@ export default function SettingsScreen() {
                   disabled={!notificationsEnabled}
                 />
               </View>
-              
+
               {/* Weekly Reports Toggle */}
               {notificationsEnabled && (
                 <View style={styles.settingRow}>
@@ -280,7 +396,7 @@ export default function SettingsScreen() {
                   />
                 </View>
               )}
-              
+
               {/* Pause Notifications Action */}
               {notificationsEnabled && (
                 <TouchableOpacity style={[styles.settingRow, styles.lastRow]} onPress={handlePauseNotifications}>
@@ -294,7 +410,7 @@ export default function SettingsScreen() {
               )}
             </View>
           </View>
-          
+
           {/* General Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Geral</Text>
@@ -307,7 +423,7 @@ export default function SettingsScreen() {
                 </View>
                 <FontAwesome6 name="chevron-right" size={16} color={TEXT_LIGHT} />
               </TouchableOpacity>
-              
+
               <TouchableOpacity style={styles.actionRow}>
                 <FontAwesome6 name="credit-card" size={20} color={TEXT_DARK} style={styles.actionIcon} />
                 <View style={styles.actionText}>
@@ -316,7 +432,7 @@ export default function SettingsScreen() {
                 </View>
                 <FontAwesome6 name="chevron-right" size={16} color={TEXT_LIGHT} />
               </TouchableOpacity>
-              
+
               <TouchableOpacity style={styles.actionRow} onPress={handlePrivacyPress}>
                 <FontAwesome6 name="shield-halved" size={20} color={TEXT_DARK} style={styles.actionIcon} />
                 <View style={styles.actionText}>
@@ -325,7 +441,7 @@ export default function SettingsScreen() {
                 </View>
                 <FontAwesome6 name="chevron-right" size={16} color={TEXT_LIGHT} />
               </TouchableOpacity>
-              
+
               <TouchableOpacity style={[styles.actionRow, styles.lastRow]} onPress={handleHelpPress}>
                 <FontAwesome6 name="circle-question" size={20} color={TEXT_DARK} style={styles.actionIcon} />
                 <View style={styles.actionText}>
@@ -336,15 +452,22 @@ export default function SettingsScreen() {
               </TouchableOpacity>
             </View>
           </View>
-          
+
           {/* Logout Section */}
           <View style={styles.section}>
-            <TouchableOpacity style={styles.logoutCard} onPress={handleLogout}>
-              <FontAwesome6 name="arrow-right-from-bracket" size={20} color={CORAL} style={styles.logoutIcon} />
-              <Text style={styles.logoutText}>Sair da conta</Text>
-            </TouchableOpacity>
+            <View style={styles.logoutButtonsContainer}>
+              <TouchableOpacity style={[styles.logoutCard, styles.deleteAccountCard]} onPress={handleDeleteAccount}>
+                <FontAwesome6 name="user-xmark" size={20} color="#FF3B30" style={styles.logoutIcon} />
+                <Text style={[styles.logoutText, styles.deleteAccountText]}>Excluir conta</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.logoutCard} onPress={handleLogout}>
+                <FontAwesome6 name="arrow-right-from-bracket" size={20} color={CORAL} style={styles.logoutIcon} />
+                <Text style={styles.logoutText}>Sair da conta</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          
+
           {/* Footer */}
           <View style={styles.footer}>
             <Text style={styles.footerTitle}>ForkFit</Text>
@@ -353,7 +476,7 @@ export default function SettingsScreen() {
           </View>
         </ScrollView>
       </View>
-      
+
       {/* Bottom Sheets */}
       <PrivacyBottomSheet ref={privacyBottomSheetRef} />
       <HelpBottomSheet ref={helpBottomSheetRef} />
@@ -398,7 +521,7 @@ const styles = StyleSheet.create({
     borderColor: BORDER_LIGHT,
     overflow: 'hidden',
   },
-  
+
   // Plan Section Styles
   planContent: {
     padding: 16,
@@ -430,7 +553,7 @@ const styles = StyleSheet.create({
     color: TEXT_LIGHT,
     lineHeight: 20,
   },
-  
+
   // Setting Row Styles
   settingRow: {
     flexDirection: 'row',
@@ -462,7 +585,7 @@ const styles = StyleSheet.create({
     color: TEXT_LIGHT,
     lineHeight: 18,
   },
-  
+
   // Action Row Styles
   actionRow: {
     flexDirection: 'row',
@@ -493,12 +616,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: TEXT_LIGHT,
   },
-  
+
   // Last row in sections
   lastRow: {
     borderBottomWidth: 0,
   },
-  
+
   // Settings Button Styles
   settingsButton: {
     backgroundColor: 'transparent',
@@ -516,7 +639,7 @@ const styles = StyleSheet.create({
     color: '#64748b',
     fontWeight: '600',
   },
-  
+
   // Logout Section
   logoutCard: {
     flexDirection: 'row',
@@ -536,7 +659,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: CORAL,
   },
-  
+
+  // Adicione estes estilos ao objeto styles
+  logoutButtonsContainer: {
+    flexDirection: 'column',
+    gap: 12,
+  },
+  deleteAccountCard: {
+    borderColor: '#FFE0E0',
+  },
+  deleteAccountText: {
+    color: '#FF3B30',
+  },
+
   // Footer
   footer: {
     alignItems: 'center',

@@ -76,8 +76,8 @@ export default function Login() {
         <Text style={styles.buttonText}>{loading === "email" ? "Entrando..." : "Entrar"}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity 
-        style={styles.forgotPasswordButton} 
+      <TouchableOpacity
+        style={styles.forgotPasswordButton}
         onPress={() => router.push('/auth/forgot-password')}
       >
         <Text style={styles.forgotPasswordText}>Esqueceu sua senha?</Text>

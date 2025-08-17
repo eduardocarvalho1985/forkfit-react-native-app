@@ -11,6 +11,7 @@ import PlanStep from './steps/PlanStep';
 import NotificationsStep from './steps/NotificationsStep';
 import { api } from '../../services/api';
 import { getAuth } from '@react-native-firebase/auth';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const OFF_WHITE = '#FDF6F3';
 const CORAL = '#FF725E';
@@ -23,23 +24,24 @@ const STEP_ORDER: OnboardingStep[] = ['goal', 'vitals', 'activity', 'plan', 'not
 // Helper function to calculate age from birth date
 const calculateAge = (birthDate: string): number => {
   const today = new Date();
-  
+
   // Parse YYYY-MM-DD format directly to avoid timezone issues
   const [year, month, day] = birthDate.split('-').map(Number);
   if (!year || !month || !day) return 0;
-  
+
   const birth = new Date(year, month - 1, day); // month is 0-indexed
   let age = today.getFullYear() - birth.getFullYear();
   const monthDiff = today.getMonth() - birth.getMonth();
-  
+
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
     age--;
   }
-  
+
   return age;
 };
 
 function OnboardingContent() {
+  const insets = useSafeAreaInsets()
   const { user, syncUser } = useAuth();
   const { isStepValid, getCurrentStepData, clearOnboardingData } = useOnboarding();
   const router = useRouter();
@@ -98,10 +100,10 @@ function OnboardingContent() {
         notificationsEnabled,
         onboardingCompleted: true
       };
-      
+
       console.log('Saving complete user profile:', userProfileData);
       console.log('User UID:', user.uid);
-      
+
       await api.updateUserProfile(user.uid, userProfileData, token);
       console.log('User profile updated successfully with all onboarding data');
 
@@ -111,16 +113,16 @@ function OnboardingContent() {
 
       // Clear onboarding context data
       clearOnboardingData();
-      
+
       // Navigate to dashboard
       router.replace('/(tabs)/dashboard');
-      
+
     } catch (error: any) {
       console.error('Error completing onboarding:', error);
-      
+
       // Simple, clear error message for MVP
       Alert.alert(
-        'Erro de Conexão', 
+        'Erro de Conexão',
         'Parece que você está sem conexão. Verifique sua internet e tente novamente.'
       );
     } finally {
@@ -168,7 +170,7 @@ function OnboardingContent() {
 
   const getStepProps = () => {
     const stepValid = isStepValid(currentStep);
-    
+
     if (currentStep === 'notifications') {
       return {
         onPress: () => handleComplete(false), // For now, handle notifications separately
@@ -187,16 +189,16 @@ function OnboardingContent() {
 
   return (
     <View style={styles.container}>
-      <OnboardingProgress 
-        currentStep={getCurrentStepIndex()} 
-        totalSteps={STEP_ORDER.length} 
+      <OnboardingProgress
+        currentStep={getCurrentStepIndex()}
+        totalSteps={STEP_ORDER.length}
       />
       <View style={styles.content}>
         {renderCurrentStep()}
       </View>
-      
+
       {/* Fixed Footer */}
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
         {canGoBack() && (
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
             <Text style={styles.backButtonText}>← Voltar</Text>
@@ -236,7 +238,6 @@ const styles = StyleSheet.create({
     backgroundColor: OFF_WHITE,
     paddingHorizontal: 24,
     paddingTop: 16,
-    paddingBottom: 40,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 114, 94, 0.1)',
     flexDirection: 'row',

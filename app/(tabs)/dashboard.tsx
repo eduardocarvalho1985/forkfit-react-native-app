@@ -43,16 +43,16 @@ const MEAL_OPTIONS = MEAL_TYPES.map(m => ({ value: m, label: m }));
 
 // Using FoodLog and FoodItem from services/api.ts
 
-function MealSection({ 
-  title, 
-  calories, 
-  foods, 
-  onAddFood, 
-  onEditFood 
-}: { 
-  title: string; 
-  calories: number; 
-  foods: FoodLog[]; 
+function MealSection({
+  title,
+  calories,
+  foods,
+  onAddFood,
+  onEditFood
+}: {
+  title: string;
+  calories: number;
+  foods: FoodLog[];
   onAddFood: () => void;
   onEditFood: (food: FoodLog) => void;
 }) {
@@ -62,14 +62,14 @@ function MealSection({
         <Text style={styles.mealTitle}>{title}</Text>
         <Text style={styles.mealCalories}>{formatNumber(calories)} kcal</Text>
       </View>
-      
+
       {!foods || foods.length === 0 ? (
         <Text style={styles.noFoodText}>Nenhum alimento registrado</Text>
       ) : (
         <View style={styles.foodList}>
           {foods.map((food) => (
-            <TouchableOpacity 
-              key={food.id} 
+            <TouchableOpacity
+              key={food.id}
               style={styles.foodMiniCard}
               onPress={() => onEditFood(food)}
               activeOpacity={0.85}
@@ -101,7 +101,7 @@ function MealSection({
           ))}
         </View>
       )}
-      
+
       <TouchableOpacity style={styles.addFoodButton} onPress={onAddFood}>
         <Icon name="add" size={16} color="#64748b" />
         <Text style={styles.addFoodText}>Adicionar alimento</Text>
@@ -116,7 +116,7 @@ export default function DashboardScreen() {
   const savedFoodsBottomSheetRef = useRef<BottomSheetModal>(null);
   const aiFoodAnalysisBottomSheetRef = useRef<BottomSheetModal>(null);
   const searchBottomSheetRef = useRef<SearchBottomSheetRef>(null);
-  
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [addFoodVisible, setAddFoodVisible] = useState(false);
   const [foodLogs, setFoodLogs] = useState<FoodLog[]>([]);
@@ -126,6 +126,7 @@ export default function DashboardScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredFoods, setFilteredFoods] = useState<FoodItem[]>([]);
   const [foodEditInitialData, setFoodEditInitialData] = useState<any>(null);
+  const [foodBottomloading, setFoodBottomLoading] = useState(false);
 
   // Food database loading state
   const [loadingFoods, setLoadingFoods] = useState(false);
@@ -145,7 +146,7 @@ export default function DashboardScreen() {
       const timer = setTimeout(() => {
         loadFoodLogs();
       }, 500);
-      
+
       return () => clearTimeout(timer);
     }
   }, [currentDate, user?.uid]);
@@ -155,38 +156,38 @@ export default function DashboardScreen() {
       console.log('No user.uid available for loading food logs');
       return;
     }
-    
+
     try {
       setLoadingLogs(true);
       const firebaseUser = getAuth().currentUser;
-      
+
       if (!firebaseUser) {
         console.log('No Firebase user found, skipping food logs load');
         setFoodLogs([]);
         return;
       }
-      
+
       const token = await firebaseUser.getIdToken();
-      
+
       if (!token) {
         console.log('No Firebase token available, skipping food logs load');
         setFoodLogs([]);
         return;
       }
-      
+
       console.log('Loading food logs with:', {
         uid: user.uid,
         date: dateKey,
         hasToken: !!token,
         tokenLength: token?.length
       });
-      
+
       const logs = await api.getFoodLogs(user.uid, dateKey, token);
       console.log('Successfully loaded food logs:', logs?.length || 0, 'items');
       setFoodLogs(logs || []);
     } catch (error: any) {
       console.error('Failed to load food logs:', error);
-      
+
       // If it's a 500 error, it might be a temporary server issue
       if (error.message?.includes('500') || error.message?.includes('Internal Server Error')) {
         console.log('Server error detected, will retry in 3 seconds...');
@@ -196,7 +197,7 @@ export default function DashboardScreen() {
           }
         }, 3000);
       }
-      
+
       // Keep existing logs if loading fails, but set to empty array if this is the first load
       if (foodLogs.length === 0) {
         setFoodLogs([]);
@@ -220,7 +221,7 @@ export default function DashboardScreen() {
     carbs: user?.carbs || 250,
     fat: user?.fat || 65,
   };
-  
+
   const remainingCalories = targets.calories - totals.calories;
 
   // Get foods for each meal type
@@ -251,7 +252,7 @@ export default function DashboardScreen() {
   // Food management handlers
   const handleOption = (option: string) => {
     setAddFoodVisible(false);
-    
+
     switch (option) {
       case 'manual':
         setFoodEditInitialData({ mealType: selectedMealType || 'Almoço' });
@@ -279,7 +280,7 @@ export default function DashboardScreen() {
 
   const handleSearchFood = async (query: string) => {
     setSearchQuery(query);
-    
+
     // Only search if query has at least 2 characters
     if (query.trim().length >= 2) {
       try {
@@ -306,7 +307,7 @@ export default function DashboardScreen() {
   const handleSelectFood = (food: FoodItem) => {
     console.log('handleSelectFood called with:', food);
     console.log('Current selectedMealType:', selectedMealType);
-    
+
     // Convert FoodItem to FoodLog format and pre-fill the FoodBottomSheet
     const foodData = {
       name: food.name,
@@ -319,7 +320,7 @@ export default function DashboardScreen() {
       mealType: selectedMealType || 'Almoço', // Default to Almoço if not set
       date: dateKey,
     };
-    
+
     setFoodEditInitialData(foodData);
     searchBottomSheetRef.current?.dismiss();
     bottomSheetRef.current?.present();
@@ -346,10 +347,11 @@ export default function DashboardScreen() {
 
   // Handle save (add or edit)
   const handleSaveFood = async (food: any) => {
+    setFoodBottomLoading(true)
     try {
       const firebaseUser = getAuth().currentUser;
       const token = firebaseUser ? await firebaseUser.getIdToken() : '';
-      
+
       // Check if this is a saved food being edited
       if (foodEditInitialData && foodEditInitialData.isSavedFood) {
         // Update saved food
@@ -362,24 +364,24 @@ export default function DashboardScreen() {
           carbs: food.carbs,
           fat: food.fat,
         };
-        
+
         if (user?.uid && token) {
           await api.updateSavedFood(user.uid, foodEditInitialData.id, updatedSavedFood, token);
         }
-        
+
         Alert.alert('Sucesso!', `${food.name} atualizado nos alimentos salvos`);
       } else if (foodEditInitialData && foodEditInitialData.id) {
         // Edit mode - preserve the original ID from backend
-        const updatedFoodLog = { 
-          ...foodEditInitialData, 
+        const updatedFoodLog = {
+          ...foodEditInitialData,
           ...food,
           id: foodEditInitialData.id // Keep the original backend ID
         };
-        
+
         if (user?.uid && token) {
           await api.updateFoodLog(user.uid, updatedFoodLog, token);
         }
-        
+
         // Update local state
         setFoodLogs((prev: any[]) => prev.map(f => f.id === foodEditInitialData.id ? updatedFoodLog : f));
         Alert.alert('Sucesso!', `${food.name} atualizado com sucesso`);
@@ -397,12 +399,12 @@ export default function DashboardScreen() {
           mealType: food.mealType,
           date: dateKey,
         };
-        
+
         let createdFoodLog: FoodLog | null = null;
-        
+
         if (user?.uid && token) {
           createdFoodLog = await api.createFoodLog(user.uid, newFoodLog, token);
-          
+
           // If user wants to save this food for future use
           if (food.saveFood) {
             try {
@@ -415,7 +417,7 @@ export default function DashboardScreen() {
                 carbs: food.carbs,
                 fat: food.fat,
               };
-              
+
               await api.saveFood(user.uid, savedFoodData, token);
               console.log('Food saved for future use:', food.name);
             } catch (saveError) {
@@ -424,10 +426,10 @@ export default function DashboardScreen() {
             }
           }
         }
-        
+
         // Update local state
         setFoodLogs((prev: any[]) => [...prev, createdFoodLog || newFoodLog]);
-        
+
         // Show success message
         if (food.saveFood) {
           Alert.alert('Sucesso!', `${food.name} adicionado com sucesso e salvo para uso futuro!`);
@@ -435,37 +437,38 @@ export default function DashboardScreen() {
           Alert.alert('Sucesso!', `${food.name} adicionado com sucesso.`);
         }
       }
-      
+
       bottomSheetRef.current?.dismiss();
       setFoodEditInitialData(null);
     } catch (error) {
       console.error('Failed to save food log:', error);
       Alert.alert('Erro', 'Falha ao salvar alimento. Tente novamente.');
-    }
+    } finally { setFoodBottomLoading(false) }
   };
 
   // Handle delete
   const handleDeleteFood = async () => {
+    setFoodBottomLoading(true)
     try {
       if (foodEditInitialData && foodEditInitialData.id) {
         const firebaseUser = getAuth().currentUser;
         const token = firebaseUser ? await firebaseUser.getIdToken() : '';
-        
+
         if (user?.uid && token) {
           await api.deleteFoodLog(user.uid, foodEditInitialData.id, token);
         }
-        
+
         // Update local state
         setFoodLogs((prev: any[]) => prev.filter(f => f.id !== foodEditInitialData.id));
         Alert.alert('Sucesso!', `${foodEditInitialData.name} removido com sucesso`);
       }
-      
+
       bottomSheetRef.current?.dismiss();
       setFoodEditInitialData(null);
     } catch (error) {
       console.error('Failed to delete food log:', error);
       Alert.alert('Erro', 'Falha ao remover alimento. Tente novamente.');
-    }
+    } finally { setFoodBottomLoading(false) }
   };
 
   // Saved Foods handlers
@@ -489,7 +492,7 @@ export default function DashboardScreen() {
       try {
         const firebaseUser = getAuth().currentUser;
         const token = firebaseUser ? await firebaseUser.getIdToken() : '';
-        
+
         if (user?.uid && token) {
           const createdFoodLog = await api.createFoodLog(user.uid, newFoodLog, token);
           // Update local state with the backend response (which has the correct ID)
@@ -503,7 +506,7 @@ export default function DashboardScreen() {
         Alert.alert('Erro', 'Falha ao adicionar alimento. Tente novamente.');
       }
     };
-    
+
     saveToBackend();
     Alert.alert('Sucesso!', `${savedFood.name} adicionado com sucesso.`);
   };
@@ -529,7 +532,7 @@ export default function DashboardScreen() {
     try {
       const firebaseUser = getAuth().currentUser;
       const token = firebaseUser ? await firebaseUser.getIdToken() : '';
-      
+
       if (!user?.uid || !token) {
         Alert.alert('Erro', 'Token de autenticação não disponível');
         return;
@@ -551,10 +554,10 @@ export default function DashboardScreen() {
 
       // Save to backend
       const createdFoodLog = await api.createFoodLog(user.uid, newFoodLog, token);
-      
+
       // Update local state with the backend response (which has the correct ID)
       setFoodLogs((prev: any[]) => [...prev, createdFoodLog]);
-      
+
       Alert.alert('Sucesso!', `${aiResult.food} adicionado com sucesso.`);
     } catch (error: any) {
       console.error('Failed to save AI analyzed food:', error);
@@ -567,254 +570,254 @@ export default function DashboardScreen() {
   return (
     <BottomSheetModalProvider>
       <View style={{ flex: 1, backgroundColor: '#FFF8F6' }}>
-      {/* Header with gradient */}
-      <LinearGradient
-        colors={["#FF725E", "#FF8A50"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{
-          paddingHorizontal: 16,
-          paddingTop: 0,
-          paddingBottom: 28,
-          borderBottomLeftRadius: 24,
-          borderBottomRightRadius: 24,
-          minHeight: 120,
-        }}
-      >
-        <SafeAreaViewContext edges={['top']} style={{ backgroundColor: 'transparent' }}>
-          <View style={styles.headerContent}>
-            <View style={styles.titleSection}>
-              <Text style={styles.appTitle}>ForkFit</Text>
-              <Icon name="restaurant" size={22} color="#fff" style={styles.titleIcon} />
+        {/* Header with gradient */}
+        <LinearGradient
+          colors={["#FF725E", "#FF8A50"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{
+            paddingHorizontal: 16,
+            paddingTop: 20,
+            paddingBottom: 28,
+            borderBottomLeftRadius: 24,
+            borderBottomRightRadius: 24,
+          }}
+        >
+          <SafeAreaViewContext edges={['top']} style={{ backgroundColor: 'transparent' }}>
+            <View style={styles.headerContent}>
+              <View style={styles.titleSection}>
+                <Text style={styles.appTitle}>ForkFit</Text>
+                <Icon name="restaurant" size={22} color="#fff" style={styles.titleIcon} />
+              </View>
+              <TouchableOpacity style={styles.notificationButton}>
+                <Icon name="notifications-outline" size={26} color="#fff" />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.notificationButton}>
-              <Icon name="notifications-outline" size={26} color="#fff" />
+          </SafeAreaViewContext>
+        </LinearGradient>
+
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Date Selector */}
+          <View style={[styles.dateCard, { marginTop: 16 }]}>
+            <TouchableOpacity onPress={handlePreviousDay} style={styles.dateButton}>
+              <Icon name="chevron-back" size={22} color="#FF725E" />
+            </TouchableOpacity>
+            <View style={styles.dateInfo}>
+              <Text style={styles.dayText}>{isToday ? 'Hoje' : format(currentDate, 'EEEE')}</Text>
+              <Text style={styles.dateText}>{formattedDate}</Text>
+            </View>
+            <TouchableOpacity onPress={handleNextDay} style={[styles.dateButton, isToday && styles.disabledButton]} disabled={isToday}>
+              <Icon name="chevron-forward" size={22} color={isToday ? '#ccc' : '#FF725E'} />
             </TouchableOpacity>
           </View>
-        </SafeAreaViewContext>
-      </LinearGradient>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Date Selector */}
-        <View style={[styles.dateCard, { marginTop: 16 }]}>
-          <TouchableOpacity onPress={handlePreviousDay} style={styles.dateButton}>
-            <Icon name="chevron-back" size={22} color="#FF725E" />
-          </TouchableOpacity>
-          <View style={styles.dateInfo}>
-            <Text style={styles.dayText}>{isToday ? 'Hoje' : format(currentDate, 'EEEE')}</Text>
-            <Text style={styles.dateText}>{formattedDate}</Text>
-          </View>
-          <TouchableOpacity onPress={handleNextDay} style={[styles.dateButton, isToday && styles.disabledButton]} disabled={isToday}>
-            <Icon name="chevron-forward" size={22} color={isToday ? '#ccc' : '#FF725E'} />
-          </TouchableOpacity>
-        </View>
 
 
 
-        {/* Progress Summary */}
-        <View style={styles.progressCard}>
-          <Text style={styles.cardTitle}>Resumo Diário</Text>
-          <View style={styles.caloriesSection}>
-            <View style={styles.progressRing}>
-              {/* SVG ring for calories fill */}
-              {(() => {
-                const radius = 75;
-                const stroke = 10;
-                const circumference = 2 * Math.PI * radius;
-                const percentage = Math.min((totals.calories / (targets.calories || 1)) * 100, 100);
-                const strokeDashoffset = circumference - (percentage / 100) * circumference;
-                return (
-                  <Svg width={radius * 2} height={radius * 2}>
-                    {/* Background Circle */}
-                    <Circle
-                      cx={radius}
-                      cy={radius}
-                      r={radius - stroke / 2}
-                      stroke="#f1f5f9"
-                      strokeWidth={stroke}
-                      fill="none"
-                    />
-                    {/* Progress Circle */}
-                    <Circle
-                      cx={radius}
-                      cy={radius}
-                      r={radius - stroke / 2}
-                      stroke="#f97316"
-                      strokeWidth={stroke}
-                      fill="none"
-                      strokeDasharray={circumference}
-                      strokeDashoffset={strokeDashoffset}
-                      strokeLinecap="round"
-                    />
-                  </Svg>
-                );
-              })()}
-              <View style={styles.caloriesCenter}>
-                <View style={styles.caloriesRow}>
-                  <FontAwesome6 name="fire-flame-curved" size={30} color="#f97316" />
-                  <Text style={styles.caloriesNumber}>{formatNumber(totals.calories)}</Text>
+          {/* Progress Summary */}
+          <View style={styles.progressCard}>
+            <Text style={styles.cardTitle}>Resumo Diário</Text>
+            <View style={styles.caloriesSection}>
+              <View style={styles.progressRing}>
+                {/* SVG ring for calories fill */}
+                {(() => {
+                  const radius = 75;
+                  const stroke = 10;
+                  const circumference = 2 * Math.PI * radius;
+                  const percentage = Math.min((totals.calories / (targets.calories || 1)) * 100, 100);
+                  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+                  return (
+                    <Svg width={radius * 2} height={radius * 2}>
+                      {/* Background Circle */}
+                      <Circle
+                        cx={radius}
+                        cy={radius}
+                        r={radius - stroke / 2}
+                        stroke="#f1f5f9"
+                        strokeWidth={stroke}
+                        fill="none"
+                      />
+                      {/* Progress Circle */}
+                      <Circle
+                        cx={radius}
+                        cy={radius}
+                        r={radius - stroke / 2}
+                        stroke="#f97316"
+                        strokeWidth={stroke}
+                        fill="none"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={strokeDashoffset}
+                        strokeLinecap="round"
+                      />
+                    </Svg>
+                  );
+                })()}
+                <View style={styles.caloriesCenter}>
+                  <View style={styles.caloriesRow}>
+                    <FontAwesome6 name="fire-flame-curved" size={30} color="#f97316" />
+                    <Text style={styles.caloriesNumber}>{formatNumber(totals.calories)}</Text>
+                  </View>
+                  <Text style={styles.caloriesTarget}>/ {formatNumber(targets.calories)} kcal</Text>
                 </View>
-                <Text style={styles.caloriesTarget}>/ {formatNumber(targets.calories)} kcal</Text>
+              </View>
+              <View style={styles.restanteBadge}>
+                <Text style={styles.restanteText}>
+                  Restante: <Text style={styles.restanteNumber}>{formatNumber(remainingCalories)} kcal</Text>
+                </Text>
               </View>
             </View>
-            <View style={styles.restanteBadge}>
-              <Text style={styles.restanteText}>
-                Restante: <Text style={styles.restanteNumber}>{formatNumber(remainingCalories)} kcal</Text>
-              </Text>
+            <View style={styles.macrosGrid}>
+              <MacroProgress label="Proteína" current={totals.protein} target={targets.protein} unit="g" color="#3b82f6" iconName="drumstick-bite" />
+              <MacroProgress label="Carbs" current={totals.carbs} target={targets.carbs} unit="g" color="#f97316" iconName="wheat-awn" />
+              <MacroProgress label="Gordura" current={totals.fat} target={targets.fat} unit="g" color="#ef4444" iconName="bottle-droplet" />
             </View>
           </View>
-          <View style={styles.macrosGrid}>
-            <MacroProgress label="Proteína" current={totals.protein} target={targets.protein} unit="g" color="#3b82f6" iconName="drumstick-bite" />
-            <MacroProgress label="Carbs" current={totals.carbs} target={targets.carbs} unit="g" color="#f97316" iconName="wheat-awn" />
-            <MacroProgress label="Gordura" current={totals.fat} target={targets.fat} unit="g" color="#ef4444" iconName="bottle-droplet" />
-          </View>
-        </View>
 
-        {/* Meals Section */}
-        <View style={styles.mealsContainer}>
-          <Text style={styles.mealsTitle}>Refeições de {isToday ? 'Hoje' : format(currentDate, "dd 'de' MMMM")}</Text>
-          {MEAL_TYPES.map((mealType, idx) => (
-            <React.Fragment key={mealType}>
-              <MealSection
-                title={mealType}
-                calories={getCaloriesForMeal(mealType)}
-                foods={getFoodsForMeal(mealType)}
-                onAddFood={() => openAddFoodModal(mealType)}
-                onEditFood={openEditFoodModal}
+          {/* Meals Section */}
+          <View style={styles.mealsContainer}>
+            <Text style={styles.mealsTitle}>Refeições de {isToday ? 'Hoje' : format(currentDate, "dd 'de' MMMM")}</Text>
+            {MEAL_TYPES.map((mealType, idx) => (
+              <React.Fragment key={mealType}>
+                <MealSection
+                  title={mealType}
+                  calories={getCaloriesForMeal(mealType)}
+                  foods={getFoodsForMeal(mealType)}
+                  onAddFood={() => openAddFoodModal(mealType)}
+                  onEditFood={openEditFoodModal}
+                />
+                {idx < MEAL_TYPES.length - 1 && (
+                  <View style={styles.mealDivider} />
+                )}
+              </React.Fragment>
+            ))}
+          </View>
+        </ScrollView>
+
+        {/* Floating Add Button */}
+        <TouchableOpacity style={styles.fab} onPress={() => setAddFoodVisible(true)}>
+          <Icon name="add" size={24} color="#fff" />
+        </TouchableOpacity>
+
+        {/* Add Food Bottom Sheet Modal */}
+        <Modal
+          isVisible={addFoodVisible}
+          onBackdropPress={() => setAddFoodVisible(false)}
+          onSwipeComplete={() => setAddFoodVisible(false)}
+          swipeDirection={["down"]}
+          style={styles.bottomModal}
+          backdropOpacity={0.4}
+        >
+          <View style={styles.sheetContainer}>
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>
+                {selectedMealType ? `Adicionar ao ${selectedMealType}` : 'Adicionar Alimento'}
+              </Text>
+              <TouchableOpacity onPress={() => setAddFoodVisible(false)}>
+                <Icon name="close" size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.sheetOptionsGrid}>
+              <TouchableOpacity style={styles.sheetOption} onPress={() => handleOption('manual')}>
+                <Icon name="create-outline" size={32} color="#FF725E" />
+                <Text style={styles.sheetOptionText}>Entrada manual</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.sheetOption} onPress={() => handleOption('recentes')}>
+                <Icon name="time-outline" size={32} color="#FF725E" />
+                <Text style={styles.sheetOptionText}>Refeições recentes</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.sheetOption} onPress={() => handleOption('salvos')}>
+                <Icon name="star-outline" size={32} color="#FF725E" />
+                <Text style={styles.sheetOptionText}>Alimentos salvos</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.sheetOption} onPress={() => handleOption('banco')}>
+                <Icon name="search-outline" size={32} color="#FF725E" />
+                <Text style={styles.sheetOptionText}>Banco de alimentos</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity style={styles.sheetAIButton} onPress={() => handleOption('ai')}>
+              <Text style={styles.sheetAIButtonText}>🤖 Análise por IA</Text>
+            </TouchableOpacity>
+          </View>
+        </Modal>
+
+        {/* Food Search Modal */}
+        <Modal
+          isVisible={searchModalVisible}
+          onBackdropPress={() => setSearchModalVisible(false)}
+          style={styles.modal}
+          backdropOpacity={0.4}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Buscar Alimento</Text>
+              <TouchableOpacity onPress={() => setSearchModalVisible(false)}>
+                <Icon name="close" size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.searchContainer}>
+              <Icon name="search" size={20} color="#64748b" style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Digite o nome do alimento..."
+                value={searchQuery}
+                onChangeText={handleSearchFood}
               />
-              {idx < MEAL_TYPES.length - 1 && (
-                <View style={styles.mealDivider} />
-              )}
-            </React.Fragment>
-          ))}
-        </View>
-      </ScrollView>
+            </View>
 
-      {/* Floating Add Button */}
-      <TouchableOpacity style={styles.fab} onPress={() => setAddFoodVisible(true)}>
-        <Icon name="add" size={24} color="#fff" />
-      </TouchableOpacity>
-
-      {/* Add Food Bottom Sheet Modal */}
-      <Modal
-        isVisible={addFoodVisible}
-        onBackdropPress={() => setAddFoodVisible(false)}
-        onSwipeComplete={() => setAddFoodVisible(false)}
-        swipeDirection={["down"]}
-        style={styles.bottomModal}
-        backdropOpacity={0.4}
-      >
-        <View style={styles.sheetContainer}>
-          <View style={styles.sheetHeader}>
-            <Text style={styles.sheetTitle}>
-              {selectedMealType ? `Adicionar ao ${selectedMealType}` : 'Adicionar Alimento'}
-            </Text>
-            <TouchableOpacity onPress={() => setAddFoodVisible(false)}>
-              <Icon name="close" size={24} color="#6b7280" />
-            </TouchableOpacity>
+            <View style={styles.searchResults}>
+              <Text>Search modal loaded successfully!</Text>
+              <Text>Query: {searchQuery}</Text>
+              <Text>Loading: {loadingFoods ? 'Yes' : 'No'}</Text>
+              <Text>Results: {(filteredFoods || []).length}</Text>
+              <TouchableOpacity
+                style={{ backgroundColor: '#FF725E', padding: 10, margin: 10, borderRadius: 8 }}
+                onPress={() => {
+                  console.log('Test button pressed');
+                  Alert.alert('Test', 'Modal is working!');
+                }}
+              >
+                <Text style={{ color: 'white', textAlign: 'center' }}>Test Button</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          <View style={styles.sheetOptionsGrid}>
-            <TouchableOpacity style={styles.sheetOption} onPress={() => handleOption('manual')}>
-              <Icon name="create-outline" size={32} color="#FF725E" />
-              <Text style={styles.sheetOptionText}>Entrada manual</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.sheetOption} onPress={() => handleOption('recentes')}>
-              <Icon name="time-outline" size={32} color="#FF725E" />
-              <Text style={styles.sheetOptionText}>Refeições recentes</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.sheetOption} onPress={() => handleOption('salvos')}>
-              <Icon name="star-outline" size={32} color="#FF725E" />
-              <Text style={styles.sheetOptionText}>Alimentos salvos</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.sheetOption} onPress={() => handleOption('banco')}>
-              <Icon name="search-outline" size={32} color="#FF725E" />
-              <Text style={styles.sheetOptionText}>Banco de alimentos</Text>
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity style={styles.sheetAIButton} onPress={() => handleOption('ai')}>
-            <Text style={styles.sheetAIButtonText}>🤖 Análise por IA</Text>
-          </TouchableOpacity>
-        </View>
-      </Modal>
-
-      {/* Food Search Modal */}
-      <Modal
-        isVisible={searchModalVisible}
-        onBackdropPress={() => setSearchModalVisible(false)}
-        style={styles.modal}
-        backdropOpacity={0.4}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Buscar Alimento</Text>
-            <TouchableOpacity onPress={() => setSearchModalVisible(false)}>
-              <Icon name="close" size={24} color="#6b7280" />
-            </TouchableOpacity>
-          </View>
-          
-          <View style={styles.searchContainer}>
-            <Icon name="search" size={20} color="#64748b" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Digite o nome do alimento..."
-              value={searchQuery}
-              onChangeText={handleSearchFood}
-            />
-          </View>
-
-          <View style={styles.searchResults}>
-            <Text>Search modal loaded successfully!</Text>
-            <Text>Query: {searchQuery}</Text>
-            <Text>Loading: {loadingFoods ? 'Yes' : 'No'}</Text>
-            <Text>Results: {(filteredFoods || []).length}</Text>
-            <TouchableOpacity 
-              style={{ backgroundColor: '#FF725E', padding: 10, margin: 10, borderRadius: 8 }}
-              onPress={() => {
-                console.log('Test button pressed');
-                Alert.alert('Test', 'Modal is working!');
-              }}
-            >
-              <Text style={{ color: 'white', textAlign: 'center' }}>Test Button</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        </Modal>
 
 
 
 
 
-      {/* FoodBottomSheet */}
-      <FoodBottomSheet
-        ref={bottomSheetRef}
-        initialData={foodEditInitialData}
-        mealOptions={MEAL_OPTIONS}
-        onSave={handleSaveFood}
-        onDelete={foodEditInitialData && foodEditInitialData.id ? handleDeleteFood : undefined}
-      />
+        {/* FoodBottomSheet */}
+        <FoodBottomSheet
+          ref={bottomSheetRef}
+          initialData={foodEditInitialData}
+          mealOptions={MEAL_OPTIONS}
+          onSave={handleSaveFood}
+          onDelete={foodEditInitialData && foodEditInitialData.id ? handleDeleteFood : undefined}
+          loading={foodBottomloading}
+        />
 
-      {/* SavedFoodsBottomSheet */}
-      <SavedFoodsBottomSheet
-        ref={savedFoodsBottomSheetRef}
-        onSelectFood={handleSelectSavedFood}
-        onEditFood={handleEditSavedFood}
-        onDeleteFood={handleDeleteSavedFood}
-      />
+        {/* SavedFoodsBottomSheet */}
+        <SavedFoodsBottomSheet
+          ref={savedFoodsBottomSheetRef}
+          onSelectFood={handleSelectSavedFood}
+          onEditFood={handleEditSavedFood}
+          onDeleteFood={handleDeleteSavedFood}
+        />
 
-      {/* AIFoodAnalysisBottomSheet */}
-      <AIFoodAnalysisBottomSheet
-        ref={aiFoodAnalysisBottomSheetRef}
-        onFoodAnalyzed={handleFoodAnalyzed}
-        selectedMealType={selectedMealType || 'Almoço'}
-        date={dateKey}
-      />
+        {/* AIFoodAnalysisBottomSheet */}
+        <AIFoodAnalysisBottomSheet
+          ref={aiFoodAnalysisBottomSheetRef}
+          onFoodAnalyzed={handleFoodAnalyzed}
+          selectedMealType={selectedMealType || 'Almoço'}
+          date={dateKey}
+        />
 
-      {/* SearchBottomSheet */}
-      <SearchBottomSheet
-        ref={searchBottomSheetRef}
-        onSelectFood={handleSelectFood}
-        selectedMealType={selectedMealType || 'Almoço'}
-      />
+        {/* SearchBottomSheet */}
+        <SearchBottomSheet
+          ref={searchBottomSheetRef}
+          onSelectFood={handleSelectFood}
+          selectedMealType={selectedMealType || 'Almoço'}
+        />
       </View>
     </BottomSheetModalProvider>
   );
@@ -1046,7 +1049,7 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    bottom: 80,
+    bottom: 20,
     right: 20,
     width: 56,
     height: 56,

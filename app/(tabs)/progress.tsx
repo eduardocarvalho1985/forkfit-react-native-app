@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ScrollView, Alert, Platform } from 'react-native';
 import { BarChart, LineChart } from 'react-native-chart-kit';
 import { useRouter } from 'expo-router';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
@@ -25,18 +25,18 @@ const PERIODS = [
 
 export default function ProgressScreen() {
   const { user } = useAuth();
-  const { 
-    weightHistory, 
-    calorieProgress, 
+  const {
+    weightHistory,
+    calorieProgress,
     progressSummary,
     dayStreak,
     weeklyStreakData,
-    loading, 
+    loading,
     error,
-    addWeightEntry, 
+    addWeightEntry,
     refreshWeightHistory,
-    refreshCalorieProgress, 
-    refreshProgressSummary 
+    refreshCalorieProgress,
+    refreshProgressSummary
   } = useProgress();
 
   // Add error boundary state
@@ -44,16 +44,16 @@ export default function ProgressScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const weightModalRef = useRef<BottomSheetModal>(null);
   const weightHistoryRef = useRef<BottomSheetModal>(null);
-  
+
   const [period, setPeriod] = useState<PeriodKey>('7d');
   const router = useRouter();
 
   // Get date range for current period
   const dateRange = calculateDateRange(period);
-  
+
   // Get current weight - prioritize user profile weight, fallback to latest history entry
   const currentWeight = user?.weight || (weightHistory && weightHistory.length > 0 ? weightHistory[weightHistory.length - 1]?.weight : null);
-  
+
   // Debug logging for weight display
   console.log('ProgressScreen: Current weight display:', {
     userWeight: user?.weight,
@@ -61,7 +61,7 @@ export default function ProgressScreen() {
     finalCurrentWeight: currentWeight,
     weightHistoryLength: weightHistory?.length
   });
-  
+
   // Get weight data for current period
   const weights = weightHistory ? weightHistory
     .filter(entry => {
@@ -89,10 +89,10 @@ export default function ProgressScreen() {
 
     try {
       await addWeightEntry(weightValue, getCurrentDate());
-      
+
       // Show success message
       Alert.alert('Sucesso', 'Peso atualizado com sucesso!');
-      
+
       // Scroll back to top to show updated weight
       setTimeout(() => {
         scrollViewRef.current?.scrollTo({ y: 0, animated: true });
@@ -111,7 +111,7 @@ export default function ProgressScreen() {
   const handlePeriod = async (val: PeriodKey) => {
     setPeriod(val);
     const newDateRange = calculateDateRange(val);
-    
+
     try {
       await Promise.all([
         refreshCalorieProgress(val, newDateRange.startDate, newDateRange.endDate),
@@ -168,8 +168,8 @@ export default function ProgressScreen() {
         <Text style={{ fontSize: 18, color: TEXT_DARK, marginBottom: 20, textAlign: 'center' }}>
           Erro ao carregar dados de progresso
         </Text>
-        <TouchableOpacity 
-          style={styles.retryButton} 
+        <TouchableOpacity
+          style={styles.retryButton}
           onPress={() => {
             setHasError(false);
             const dateRange = calculateDateRange(period);
@@ -186,21 +186,21 @@ export default function ProgressScreen() {
   }
 
   return (
-    <ScrollView 
+    <ScrollView
       ref={scrollViewRef}
-      style={{ flex: 1, backgroundColor: '#fff', paddingTop: 36 }} 
+      style={{ flex: 1, backgroundColor: '#fff', paddingTop: Platform.OS === 'android' ? 0 : 36 }}
       contentContainerStyle={{ paddingBottom: 32 }}
     >
       <Text style={styles.title}>Progresso</Text>
-      
+
       {/* Error Messages */}
       {(error.calories || error.summary || error.weight) && (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>
             {error.calories || error.summary || error.weight}
           </Text>
-          <TouchableOpacity 
-            style={styles.retryButton} 
+          <TouchableOpacity
+            style={styles.retryButton}
             onPress={() => {
               const dateRange = calculateDateRange(period);
               Promise.all([
@@ -225,13 +225,13 @@ export default function ProgressScreen() {
           {user?.targetWeight && currentWeight && (
             <View style={styles.progressBarContainer}>
               <View style={styles.progressBar}>
-                <View 
+                <View
                   style={[
-                    styles.progressBarFill, 
-                                      { 
-                    width: `${Math.min(100, Math.max(0, ((user.weight || 0) - currentWeight) / ((user.weight || 0) - user.targetWeight) * 100))}%` 
-                  }
-                  ]} 
+                    styles.progressBarFill,
+                    {
+                      width: `${Math.min(100, Math.max(0, ((user.weight || 0) - currentWeight) / ((user.weight || 0) - user.targetWeight) * 100))}%`
+                    }
+                  ]}
                 />
               </View>
               <Text style={styles.progressBarText}>Meta {user.targetWeight} kg</Text>
@@ -250,16 +250,16 @@ export default function ProgressScreen() {
             <Text style={styles.streakNumber}>{formatNumber(dayStreak)}</Text>
           </View>
           <Text style={styles.streakLabel}>Day Streak</Text>
-          
+
           {/* Motivational message based on streak */}
           <Text style={styles.streakMotivation}>
-            {dayStreak === 0 ? 'Comece hoje!' : 
-             dayStreak === 1 ? 'Ótimo começo!' :
-             dayStreak < 7 ? `${dayStreak} dias seguidos!` :
-             dayStreak < 30 ? `${dayStreak} dias - Continue!` :
-             `${dayStreak} dias - Incrível!`}
+            {dayStreak === 0 ? 'Comece hoje!' :
+              dayStreak === 1 ? 'Ótimo começo!' :
+                dayStreak < 7 ? `${dayStreak} dias seguidos!` :
+                  dayStreak < 30 ? `${dayStreak} dias - Continue!` :
+                    `${dayStreak} dias - Incrível!`}
           </Text>
-          
+
           {/* Week dots with proper Monday-Sunday mapping */}
           <View style={styles.weekDotsContainer}>
             {(() => {
@@ -267,26 +267,26 @@ export default function ProgressScreen() {
               // weeklyStreakData from backend: [today, yesterday, day-2, day-3, day-4, day-5, day-6]
               const today = new Date();
               const mondayToSundayData = Array(7).fill(false);
-              
+
               // For each of the last 7 days, determine which day of week it was
               for (let i = 0; i < Math.min(7, weeklyStreakData.length); i++) {
                 const date = new Date(today);
                 date.setDate(today.getDate() - i);
-                
+
                 let dayOfWeek = date.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
                 // Convert to our array index where 0=Monday, 6=Sunday
                 const arrayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-                
+
                 mondayToSundayData[arrayIndex] = weeklyStreakData[i];
               }
-              
+
               return mondayToSundayData.map((logged, index) => (
-                <View 
-                  key={index} 
+                <View
+                  key={index}
                   style={[
-                    styles.weekDot, 
+                    styles.weekDot,
                     logged && styles.weekDotFilled
-                  ]} 
+                  ]}
                 />
               ));
             })()}
@@ -318,7 +318,7 @@ export default function ProgressScreen() {
       {/* Goal Progress Chart */}
       <View style={[styles.card, { paddingHorizontal: 8, overflow: 'hidden' }]}>
         <Text style={styles.cardTitle}>Calorias - Meta Diária e Consumo</Text>
-        
+
         {/* Calorie Chart */}
         <View style={{ marginTop: 12 }}>
           {loading.calories ? (
@@ -348,33 +348,33 @@ export default function ProgressScreen() {
                     const numDays = period === '7d' ? 7 : period === '30d' ? 30 : 90;
                     const today = new Date();
                     const lastDays = [];
-                    
+
                     for (let i = numDays - 1; i >= 0; i--) {
                       const date = new Date(today);
                       date.setDate(today.getDate() - i);
                       lastDays.push(date);
                     }
-                    
+
                     const periodData = lastDays.map(date => {
                       const dateStr = date.toISOString().split('T')[0];
                       return calorieProgress.find(entry => entry.date === dateStr);
                     }).filter(Boolean);
-                    
+
                     const maxGoal = Math.max(
                       user?.calories || 2000,
                       ...periodData.map(entry => entry?.goal || 0)
                     );
-                    
+
                     const maxConsumed = Math.max(
                       0,
                       ...periodData.map(entry => entry?.consumed || 0)
                     );
-                    
+
                     const absoluteMax = Math.max(maxGoal, maxConsumed);
                     const bufferedMax = absoluteMax * 1.15; // 15% buffer
                     const roundedMax = Math.ceil(bufferedMax / 250) * 250;
                     const dynamicMax = Math.max(2500, Math.min(8000, roundedMax));
-                    
+
                     console.log(`${period} Dynamic Scale Calculation:`, {
                       numDays,
                       maxGoal,
@@ -383,12 +383,12 @@ export default function ProgressScreen() {
                       bufferedMax,
                       dynamicMax
                     });
-                    
+
                     return dynamicMax;
                   };
-                  
+
                   const dynamicMaxCalories = calculateDynamicMaxCalories();
-                  
+
                   // Generate Y-axis labels based on dynamic max for all periods
                   const yAxisLabels = [
                     dynamicMaxCalories,           // 100%
@@ -397,13 +397,13 @@ export default function ProgressScreen() {
                     Math.round(dynamicMaxCalories * 0.25),  // 25%
                     0                             // 0%
                   ];
-                  
+
                   console.log(`${period} Dynamic Scale (Y-axis):`, {
                     period,
                     dynamicMaxCalories,
                     yAxisLabels
                   });
-                  
+
                   return (
                     <>
                       {/* Y-axis labels */}
@@ -412,103 +412,103 @@ export default function ProgressScreen() {
                           <Text key={index} style={styles.yAxisLabel}>{label}</Text>
                         ))}
                       </View>
-                
-                {/* Chart area */}
-                <View style={styles.chartArea}>
-                  {/* Grid lines */}
-                  <View style={styles.gridLines}>
-                    {[0, 1, 2, 3, 4].map(i => (
-                      <View key={i} style={styles.gridLine} />
-                    ))}
-                  </View>
-                  
-                  {/* Bars */}
-                  <View style={
-                    period === '7d' ? styles.barsContainer : 
-                    period === '30d' ? styles.barsContainer30 : 
-                    styles.barsContainer90
-                  }>
-                    {(() => {
-                      // Determine number of days based on period
-                      const numDays = period === '7d' ? 7 : period === '30d' ? 30 : 90;
-                      const today = new Date();
-                      const lastDays = [];
-                      
-                      for (let i = numDays - 1; i >= 0; i--) {
-                        const date = new Date(today);
-                        date.setDate(today.getDate() - i);
-                        lastDays.push(date);
-                      }
-                      
-                      return lastDays.map((date, index) => {
-                        // Find matching calorie data for this date
-                        const dateStr = date.toISOString().split('T')[0];
-                        const entry = calorieProgress.find(entry => entry.date === dateStr);
-                        
-                        const maxCalories = dynamicMaxCalories; // Use the shared calculation
-                        // Use user's calorie goal or entry goal or default to 2000
-                        const userGoal = user?.calories || entry?.goal || 2000;
-                        const goalHeight = (userGoal / maxCalories) * 140;
-                        const consumedHeight = entry ? (entry.consumed / maxCalories) * 140 : 0;
-                        
-                        return (
-                          <View key={index} style={
-                            period === '7d' ? styles.barGroup : 
-                            period === '30d' ? styles.barGroup30 : 
-                            styles.barGroup90
-                          }>
-                            {/* Goal bar (gray) - always show for every day */}
-                            <View 
-                              style={[
-                                period === '7d' ? styles.bar : 
-                                period === '30d' ? styles.bar30 : 
-                                styles.bar90,
-                                styles.goalBar,
-                                { height: Math.max(goalHeight, period === '3m' ? 1 : 2) } // Even smaller minimum for 3-month
-                              ]} 
-                            />
-                            {/* Consumed bar (coral) - only show if there's data */}
-                            {entry && consumedHeight > 0 && (
-                              <View 
-                                style={[
-                                  period === '7d' ? styles.bar : 
-                                  period === '30d' ? styles.bar30 : 
-                                  styles.bar90,
-                                  styles.consumedBar,
-                                  { height: consumedHeight }
-                                ]} 
-                              />
-                            )}
-                          </View>
-                        );
-                      });
-                    })()}
-                  </View>
-                </View>
-                
-                {/* X-axis labels - only show for 7-day period */}
-                {period === '7d' && (
-                  <View style={styles.xAxisLabels}>
-                    {(() => {
-                      // Create array of last 7 days ending with today
-                      const today = new Date();
-                      const last7Days = [];
-                      for (let i = 6; i >= 0; i--) {
-                        const date = new Date(today);
-                        date.setDate(today.getDate() - i);
-                        last7Days.push(date);
-                      }
-                      
-                      const dayAbbreviations = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-                      
-                      return last7Days.map((date, index) => (
-                        <Text key={index} style={styles.xAxisLabel}>
-                          {dayAbbreviations[date.getDay()]}
-                        </Text>
-                      ));
-                    })()}
-                  </View>
-                )}
+
+                      {/* Chart area */}
+                      <View style={styles.chartArea}>
+                        {/* Grid lines */}
+                        <View style={styles.gridLines}>
+                          {[0, 1, 2, 3, 4].map(i => (
+                            <View key={i} style={styles.gridLine} />
+                          ))}
+                        </View>
+
+                        {/* Bars */}
+                        <View style={
+                          period === '7d' ? styles.barsContainer :
+                            period === '30d' ? styles.barsContainer30 :
+                              styles.barsContainer90
+                        }>
+                          {(() => {
+                            // Determine number of days based on period
+                            const numDays = period === '7d' ? 7 : period === '30d' ? 30 : 90;
+                            const today = new Date();
+                            const lastDays = [];
+
+                            for (let i = numDays - 1; i >= 0; i--) {
+                              const date = new Date(today);
+                              date.setDate(today.getDate() - i);
+                              lastDays.push(date);
+                            }
+
+                            return lastDays.map((date, index) => {
+                              // Find matching calorie data for this date
+                              const dateStr = date.toISOString().split('T')[0];
+                              const entry = calorieProgress.find(entry => entry.date === dateStr);
+
+                              const maxCalories = dynamicMaxCalories; // Use the shared calculation
+                              // Use user's calorie goal or entry goal or default to 2000
+                              const userGoal = user?.calories || entry?.goal || 2000;
+                              const goalHeight = (userGoal / maxCalories) * 140;
+                              const consumedHeight = entry ? (entry.consumed / maxCalories) * 140 : 0;
+
+                              return (
+                                <View key={index} style={
+                                  period === '7d' ? styles.barGroup :
+                                    period === '30d' ? styles.barGroup30 :
+                                      styles.barGroup90
+                                }>
+                                  {/* Goal bar (gray) - always show for every day */}
+                                  <View
+                                    style={[
+                                      period === '7d' ? styles.bar :
+                                        period === '30d' ? styles.bar30 :
+                                          styles.bar90,
+                                      styles.goalBar,
+                                      { height: Math.max(goalHeight, period === '3m' ? 1 : 2) } // Even smaller minimum for 3-month
+                                    ]}
+                                  />
+                                  {/* Consumed bar (coral) - only show if there's data */}
+                                  {entry && consumedHeight > 0 && (
+                                    <View
+                                      style={[
+                                        period === '7d' ? styles.bar :
+                                          period === '30d' ? styles.bar30 :
+                                            styles.bar90,
+                                        styles.consumedBar,
+                                        { height: consumedHeight }
+                                      ]}
+                                    />
+                                  )}
+                                </View>
+                              );
+                            });
+                          })()}
+                        </View>
+                      </View>
+
+                      {/* X-axis labels - only show for 7-day period */}
+                      {period === '7d' && (
+                        <View style={styles.xAxisLabels}>
+                          {(() => {
+                            // Create array of last 7 days ending with today
+                            const today = new Date();
+                            const last7Days = [];
+                            for (let i = 6; i >= 0; i--) {
+                              const date = new Date(today);
+                              date.setDate(today.getDate() - i);
+                              last7Days.push(date);
+                            }
+
+                            const dayAbbreviations = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+                            return last7Days.map((date, index) => (
+                              <Text key={index} style={styles.xAxisLabel}>
+                                {dayAbbreviations[date.getDay()]}
+                              </Text>
+                            ));
+                          })()}
+                        </View>
+                      )}
                     </>
                   );
                 })()}
@@ -523,7 +523,7 @@ export default function ProgressScreen() {
       </View>
 
       {/* Weight Journey Chart */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={[styles.card, { paddingHorizontal: 8, overflow: 'hidden' }]}
         onPress={() => weightHistoryRef.current?.present()}
         activeOpacity={0.7}
@@ -546,7 +546,7 @@ export default function ProgressScreen() {
             </View>
           )}
         </View>
-        
+
         <View style={{ marginTop: 12 }}>
           {loading.weight ? (
             <View style={{ height: 200, justifyContent: 'center', alignItems: 'center' }}>
@@ -566,12 +566,12 @@ export default function ProgressScreen() {
                       }
                       return acc;
                     }, {} as Record<string, any>);
-                    
+
                     // Sort by date (oldest first) and take last 10
                     const sortedEntries = Object.values(groupedByDate)
                       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                       .slice(-10);
-                    
+
                     return sortedEntries.map(entry => {
                       const date = new Date(entry.date);
                       return `${date.getMonth() + 1}/${date.getDate()}`;
@@ -588,12 +588,12 @@ export default function ProgressScreen() {
                           }
                           return acc;
                         }, {} as Record<string, any>);
-                        
+
                         // Sort by date (oldest first) and take last 10
                         const sortedEntries = Object.values(groupedByDate)
                           .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                           .slice(-10);
-                        
+
                         return sortedEntries.map(entry => entry.weight);
                       })(),
                       color: (opacity = 1) => `rgba(255, 114, 94, ${opacity})`,
@@ -609,11 +609,11 @@ export default function ProgressScreen() {
                           }
                           return acc;
                         }, {} as Record<string, any>);
-                        
+
                         const sortedEntries = Object.values(groupedByDate)
                           .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                           .slice(-10);
-                        
+
                         return Array(sortedEntries.length).fill(user.targetWeight);
                       })(),
                       color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`, // Blue color for goal
@@ -661,7 +661,7 @@ export default function ProgressScreen() {
                 yAxisInterval={1}
                 segments={5}
               />
-              
+
               {/* Chart Legend */}
               {user?.targetWeight && (
                 <View style={styles.chartLegend}>
@@ -675,7 +675,7 @@ export default function ProgressScreen() {
                   </View>
                 </View>
               )}
-              
+
               {/* Weight insight */}
               <View style={styles.weightInsightContainer}>
                 {user?.targetWeight && currentWeight ? (
@@ -693,7 +693,7 @@ export default function ProgressScreen() {
                   </Text>
                 ) : (
                   <Text style={styles.weightInsight}>
-                    {weightHistory.length > 1 ? 
+                    {weightHistory.length > 1 ?
                       `Sua jornada: ${weightHistory.length} registros de peso` :
                       'Continue registrando seu peso para ver o progresso!'
                     }
@@ -709,7 +709,7 @@ export default function ProgressScreen() {
             </View>
           )}
         </View>
-        
+
         {/* Calorie Insight - COMMENTED OUT FOR MVP
         TODO: Re-enable when calorie analysis is fully implemented
         This provides insights about average calories and days on target */}

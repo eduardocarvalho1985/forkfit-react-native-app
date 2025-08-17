@@ -1,12 +1,12 @@
 import React, { forwardRef, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetModal, BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import { FontAwesome6 } from '@expo/vector-icons';
 
 const CORAL = '#FF725E';
 const TEXT = '#1F2937';
 
-interface PrivacyBottomSheetProps {}
+interface PrivacyBottomSheetProps { }
 
 export const PrivacyBottomSheet = forwardRef<BottomSheetModal, PrivacyBottomSheetProps>(
   (props, ref) => {
@@ -31,60 +31,57 @@ export const PrivacyBottomSheet = forwardRef<BottomSheetModal, PrivacyBottomShee
         backgroundStyle={styles.bottomSheetBackground}
         handleIndicatorStyle={styles.handleIndicator}
       >
-        <BottomSheetView style={styles.contentContainer}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.title}>Privacidade e Termos</Text>
-            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-              <FontAwesome6 name="xmark" size={18} color="#666" />
-            </TouchableOpacity>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>Privacidade e Termos</Text>
+          <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+            <FontAwesome6 name="xmark" size={18} color="#666" />
+          </TouchableOpacity>
+        </View>
+        <BottomSheetScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Privacy Policy Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.emoji}>📄</Text>
+              <Text style={styles.sectionTitle}>Política de Privacidade</Text>
+            </View>
+            <Text style={styles.sectionSubtitle}>Como protegemos seus dados</Text>
+            <Text style={styles.sectionContent}>
+              Levamos sua privacidade a sério. Coletamos apenas o essencial para oferecer uma boa experiência no ForkFit — como nome, e-mail e suas escolhas alimentares. Tudo é armazenado com segurança e nunca será compartilhado sem seu consentimento.
+            </Text>
           </View>
 
-          <ScrollView 
-            style={styles.scrollView} 
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-          >
-            {/* Privacy Policy Section */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.emoji}>📄</Text>
-                <Text style={styles.sectionTitle}>Política de Privacidade</Text>
-              </View>
-              <Text style={styles.sectionSubtitle}>Como protegemos seus dados</Text>
-              <Text style={styles.sectionContent}>
-                Levamos sua privacidade a sério. Coletamos apenas o essencial para oferecer uma boa experiência no ForkFit — como nome, e-mail e suas escolhas alimentares. Tudo é armazenado com segurança e nunca será compartilhado sem seu consentimento.
-              </Text>
+          {/* Terms of Use Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.emoji}>⚖️</Text>
+              <Text style={styles.sectionTitle}>Termos de Uso</Text>
             </View>
+            <Text style={styles.sectionSubtitle}>Uso responsável do ForkFit</Text>
+            <Text style={styles.sectionContent}>
+              Ao usar o ForkFit, você concorda em registrar informações reais e usar o app apenas para fins pessoais. Não nos responsabilizamos por decisões médicas — sempre consulte um profissional de saúde.
+            </Text>
+          </View>
 
-            {/* Terms of Use Section */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.emoji}>⚖️</Text>
-                <Text style={styles.sectionTitle}>Termos de Uso</Text>
-              </View>
-              <Text style={styles.sectionSubtitle}>Uso responsável do ForkFit</Text>
-              <Text style={styles.sectionContent}>
-                Ao usar o ForkFit, você concorda em registrar informações reais e usar o app apenas para fins pessoais. Não nos responsabilizamos por decisões médicas — sempre consulte um profissional de saúde.
-              </Text>
-            </View>
+          {/* Contact Section */}
+          <View style={styles.contactSection}>
+            <Text style={styles.contactTitle}>Dúvidas sobre privacidade?</Text>
+            <Text style={styles.contactText}>
+              Entre em contato conosco em{' '}
+              <Text style={styles.contactEmail}>info@forkfit.app</Text>
+            </Text>
+          </View>
 
-            {/* Contact Section */}
-            <View style={styles.contactSection}>
-              <Text style={styles.contactTitle}>Dúvidas sobre privacidade?</Text>
-              <Text style={styles.contactText}>
-                Entre em contato conosco em{' '}
-                <Text style={styles.contactEmail}>info@forkfit.app</Text>
-              </Text>
-            </View>
-
-            {/* Footer */}
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>ForkFit © 2025</Text>
-              <Text style={styles.footerSubtext}>Todos os direitos reservados</Text>
-            </View>
-          </ScrollView>
-        </BottomSheetView>
+          {/* Footer */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>ForkFit © 2025</Text>
+            <Text style={styles.footerSubtext}>Todos os direitos reservados</Text>
+          </View>
+        </BottomSheetScrollView>
       </BottomSheetModal>
     );
   }
@@ -134,6 +131,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
+    flexGrow: 1, // 🔑 makes content scrollable
     paddingHorizontal: 24,
     paddingTop: 16,
     paddingBottom: 32,
