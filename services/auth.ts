@@ -1,4 +1,3 @@
-import { appleAuth } from "@invertase/react-native-apple-authentication";
 import {
   AppleAuthProvider,
   GoogleAuthProvider,
@@ -89,31 +88,8 @@ export const authService = {
     try {
       console.log("Starting Apple Sign-In process...");
 
-      // Start the sign-in request
-      const appleAuthRequestResponse = await appleAuth.performRequest({
-        requestedOperation: appleAuth.Operation.LOGIN,
-        requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
-      });
-
-      console.log("Apple Auth Request Response received");
-
-      // Ensure Apple returned a user identityToken
-      if (!appleAuthRequestResponse.identityToken) {
-        throw new Error("Apple Sign-In failed - no identity token returned");
-      }
-
-      // Create a Firebase credential from the response
-      const { identityToken, nonce } = appleAuthRequestResponse;
-      const appleCredential = AppleAuthProvider.credential(
-        identityToken,
-        nonce
-      );
-
-      // Sign the user in with the credential
-      const userCredential = await signInWithCredential(
-        getAuth(),
-        appleCredential
-      );
+      // Use Firebase's native Apple Sign-In
+      const userCredential = await getAuth().signInWithProvider(AppleAuthProvider);
       console.log("User signed in with Apple:", userCredential.user.uid);
 
       return userCredential;

@@ -73,7 +73,7 @@ export interface ProgressSummary {
 export interface BackendUser {
   id?: number;
   uid: string;
-  email: string;
+  email?: string;
   name?: string;
   onboardingCompleted?: boolean;
   age?: number;
@@ -95,7 +95,7 @@ export interface BackendUser {
 
 export interface SyncUserRequest {
   uid: string;
-  email: string;
+  email?: string;
   name?: string;
   displayName?: string | null;
   photoURL?: string | null;

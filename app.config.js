@@ -1,19 +1,44 @@
 const getBundleId = () => {
-  // Use different bundle IDs for different build types to avoid conflicts
-  // if (process.env.EAS_BUILD_PROFILE === 'development') {
-  //   return 'forkfit.app.forkfitdev';
-  // }
-  // Both preview and production use the same bundle ID
+  // This function reads the build profile from eas.json and returns the correct bundle ID.
+  
+  // For 'development' builds (e.g., for Expo Go or internal testing builds)
+  if (process.env.EAS_BUILD_PROFILE === 'development') {
+    return 'forkfit.app.forkfitdev';
+  }
+
+  // For 'preview' builds (e.g., for TestFlight)
+  if (process.env.EAS_BUILD_PROFILE === 'preview') {
+    return 'forkfit.app.forkfitpreview';
+  }
+
+  // For 'production' builds (the final App Store version)
+  // This also acts as the default.
   return 'forkfit.app.forkfitprod';
 };
 
 const getPackageName = () => {
   // Use different package names for different build types to avoid conflicts
-  // if (process.env.EAS_BUILD_PROFILE === 'development') {
-  //   return 'forkfit.app.forkfitdev';
-  // }
+  if (process.env.EAS_BUILD_PROFILE === 'development') {
+    return 'forkfit.app.forkfitdev';
+  }
   // Both preview and production use the same package name
   return 'forkfit.app.forkfitprod';
+};
+
+// ✅ ADD: Validation function for iOS
+const validateBundleId = () => {
+  const bundleId = getBundleId();
+  console.log(`🔧 Building for profile: ${process.env.EAS_BUILD_PROFILE || 'default'}`);
+  console.log(`📱 Using bundle ID: ${bundleId}`);
+  return bundleId;
+};
+
+// ✅ ADD: Validation function for Android
+const validatePackageName = () => {
+  const packageName = getPackageName();
+  console.log(`🔧 Building for profile: ${process.env.EAS_BUILD_PROFILE || 'default'}`);
+  console.log(`🤖 Using package name: ${packageName}`);
+  return packageName;
 };
 
 export default {
@@ -34,7 +59,7 @@ export default {
     ios: {
       supportsTablet: true,
       googleServicesFile: './GoogleService-Info.plist',
-      bundleIdentifier: getBundleId(),
+      bundleIdentifier: validateBundleId(),  // ✅ Updated to use validation
       buildNumber: '1',
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false
@@ -43,7 +68,7 @@ export default {
     },
     android: {
       googleServicesFile: './google-services.json',
-      package: getPackageName(),
+      package: validatePackageName(),  // ✅ Updated to use validation
       versionCode: 1,
       adaptiveIcon: {
         foregroundImage: './assets/images/adaptive-icon.png',

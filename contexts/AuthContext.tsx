@@ -10,7 +10,6 @@ import auth, {
   sendPasswordResetEmail,
 } from '@react-native-firebase/auth';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { appleAuth } from '@invertase/react-native-apple-authentication';
 import { AppleAuthProvider, GoogleAuthProvider } from '@react-native-firebase/auth';
 import { api, BackendUser } from '../services/api';
 import { getFirebaseErrorMessage } from '../utils/firebaseErrors';
@@ -23,7 +22,7 @@ GoogleSignin.configure({
 // Enhanced user interface combining Firebase user with backend data
 interface AppUser {
   uid: string;
-  email: string | null;
+  email?: string | null;
   displayName: string | null;
   photoURL: string | null;
   // Backend user data
@@ -119,7 +118,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log('Syncing user with backend:', firebaseUser.uid);
       const backendUser = await api.syncUser({
         uid: firebaseUser.uid,
-        email: firebaseUser.email || '',
+        email: firebaseUser.email || undefined,
         name: firebaseUser.displayName || undefined,
         displayName: firebaseUser.displayName,
         photoURL: firebaseUser.photoURL
@@ -130,7 +129,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const combinedUser: AppUser = {
         ...backendUser,
         uid: firebaseUser.uid,
-        email: firebaseUser.email,
+        email: firebaseUser.email || undefined,
         displayName: firebaseUser.displayName,
         photoURL: firebaseUser.photoURL,
         activityLevel: backendUser.activityLevel as 'sedentary' | 'light' | 'moderate' | 'very_active' | undefined,
@@ -146,7 +145,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Still set the Firebase user even if backend fails
       const basicUser: AppUser = {
         uid: firebaseUser.uid,
-        email: firebaseUser.email,
+        email: firebaseUser.email || undefined,
         displayName: firebaseUser.displayName,
         photoURL: firebaseUser.photoURL,
         name: firebaseUser.displayName || undefined,
@@ -223,29 +222,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signInWithApple = async () => {
     try {
       console.log('Starting Apple Sign-In process...');
-
-      // Start the sign-in request
-      const appleAuthRequestResponse = await appleAuth.performRequest({
-        requestedOperation: appleAuth.Operation.LOGIN,
-        requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
-      });
-
-      console.log('Apple Auth Request Response received');
-
-      // Ensure Apple returned a user identityToken
-      if (!appleAuthRequestResponse.identityToken) {
-        console.error('Apple Sign-In failed - no identity token returned');
-        throw new Error('Apple Sign-In failed - no identity token returned');
-      }
-
-      // Create a Firebase credential from the response
-      const { identityToken, nonce } = appleAuthRequestResponse;
-      const appleCredential = AppleAuthProvider.credential(identityToken, nonce);
-
-      console.log('Apple Credential created');
-
-      // Sign the user in with the credential
-      const userCredential = await signInWithCredential(getAuth(), appleCredential);
+      
+      // Use Firebase's native Apple Sign-In
+      const userCredential = await getAuth().signInWithProvider(AppleAuthProvider);
       console.log('User signed in with Apple:', userCredential.user.uid);
 
       // User will be set through onAuthStateChanged listener
