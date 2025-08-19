@@ -17,11 +17,20 @@ const getBundleId = () => {
 };
 
 const getPackageName = () => {
-  // Use different package names for different build types to avoid conflicts
+  // This function reads the build profile from eas.json and returns the correct package name.
+  
+  // For 'development' builds (internal testing)
   if (process.env.EAS_BUILD_PROFILE === 'development') {
     return 'forkfit.app.forkfitdev';
   }
-  // Both preview and production use the same package name
+
+  // For 'preview' builds (internal testing builds)
+  if (process.env.EAS_BUILD_PROFILE === 'preview') {
+    return 'forkfit.app.forkfitpreview';
+  }
+
+  // For 'production' builds (Google Play Store version)
+  // This also acts as the default.
   return 'forkfit.app.forkfitprod';
 };
 

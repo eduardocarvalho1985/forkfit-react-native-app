@@ -82,6 +82,10 @@ def enableProguardInReleaseBuilds = (findProperty('android.enableProguardInRelea
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
 apply from: new File(["node", "--print", "require.resolve('@sentry/react-native/package.json')"].execute().text.trim(), "../sentry.gradle")
+
+// ✅ NEW: Environment detection for EAS builds
+def isProductionBuild = System.getenv("EAS_BUILD_PROFILE") == "production"
+
 android {
     ndkVersion rootProject.ext.ndkVersion
 
@@ -96,6 +100,7 @@ android {
         versionCode 1
         versionName "1.0.0"
     }
+    
     signingConfigs {
         debug {
             storeFile file('debug.keystore')
@@ -103,18 +108,42 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        
+        // ✅ NEW: Production config using EAS-managed credentials
+        release {
+            if (isProductionBuild && System.getenv("FORKFIT_UPLOAD_STORE_FILE")) {
+                // Production build - use EAS-managed production keystore
+                storeFile file(System.getenv("FORKFIT_UPLOAD_STORE_FILE"))
+                storePassword System.getenv("FORKFIT_UPLOAD_STORE_PASSWORD")
+                keyAlias System.getenv("FORKFIT_UPLOAD_KEY_ALIAS")
+                keyPassword System.getenv("FORKFIT_UPLOAD_KEY_PASSWORD")
+            } else {
+                // Development/Preview build - use debug keystore
+                storeFile file('debug.keystore')
+                storePassword 'android'
+                keyAlias 'androiddebugkey'
+                keyPassword 'android'
+            }
+        }
     }
+    
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
+            debuggable true
+            minifyEnabled false
         }
+        
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            // ✅ FIXED: Now uses proper signing config based on environment
+            signingConfig signingConfigs.release
+            
+            // ✅ SMART: Different settings for different environments
+            debuggable !isProductionBuild
+            minifyEnabled isProductionBuild
+            
             shrinkResources (findProperty('android.enableShrinkResourcesInReleaseBuilds')?.toBoolean() ?: false)
-            minifyEnabled enableProguardInReleaseBuilds
-            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
             crunchPngs (findProperty('android.enablePngCrunchInReleaseBuilds')?.toBoolean() ?: true)
         }
     }
