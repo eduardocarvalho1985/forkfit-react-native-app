@@ -19,6 +19,11 @@ ios/
 *.key
 *.mobileprovision
 
+# ✅ ADD: Production keystore protection
+android/app/production.keystore
+android/app/keystore-prod.properties
+android/app/release.keystore
+
 # Metro
 .metro-health-check*
 
