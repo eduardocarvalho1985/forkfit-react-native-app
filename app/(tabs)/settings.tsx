@@ -14,8 +14,11 @@ import {
   getNotificationPreferences,
   pauseNotificationsTemporarily
 } from '../../services/notificationService';
-import { EmailAuthProvider, getAuth } from '@react-native-firebase/auth';
+import { EmailAuthProvider, getAuth, GoogleAuthProvider, OAuthProvider, reauthenticateWithCredential } from '@react-native-firebase/auth';
 import prompt from 'react-native-prompt-android';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import appleAuth from '@invertase/react-native-apple-authentication';
+import { api } from '@/services/api';
 
 const CORAL = '#FF725E';
 const TEXT_DARK = '#1F2937';
@@ -211,6 +214,8 @@ export default function SettingsScreen() {
                               // Reautenticar
                               await user.reauthenticateWithCredential(credential);
                               // Agora excluir a conta
+                              const response = await api.deleteUserAccount(user.uid);
+                              console.log("res==========>>>>>", response);
                               await user.delete();
                               Alert.alert('Sucesso', 'Sua conta foi excluída com sucesso.');
                             } catch (error) {
@@ -240,13 +245,17 @@ export default function SettingsScreen() {
                         text: 'Continuar',
                         onPress: async () => {
                           try {
-                            // Fazer logout e redirecionar para tela de login
-                            await signOut();
-                            // Aqui você pode navegar para a tela de login
-                            // navigation.navigate('Login');
-                            Alert.alert('Faça login novamente', 'Por favor, faça login novamente e tente excluir sua conta.');
-                          } catch (error) {
-                            console.error('Erro ao redirecionar para login:', error);
+                            await GoogleSignin.signOut();
+                            const { data } = await GoogleSignin.signIn();
+                            const credential = GoogleAuthProvider.credential(data?.idToken);
+                            await reauthenticateWithCredential(user, credential);
+                            const response = await api.deleteUserAccount(user.uid);
+                            console.log("res==========>>>>>", response);
+                            await user.delete();
+                            Alert.alert('Sucesso', 'Conta Google excluída do Firebase.');
+                          } catch (err) {
+                            console.error(err);
+                            Alert.alert('Erro', 'Não foi possível reautenticar com Google. Faça login novamente e tente.');
                           }
                         }
                       }
@@ -256,19 +265,52 @@ export default function SettingsScreen() {
                   // Para outros provedores
                   Alert.alert(
                     'Reautenticação necessária',
-                    'Para excluir sua conta, você precisa fazer login novamente.',
+                    'Para excluir sua conta, você precisa fazer login novamente com Apple.',
                     [
                       { text: 'Cancelar', style: 'cancel' },
                       {
                         text: 'Continuar',
                         onPress: async () => {
                           try {
-                            await signOut();
-                            // Aqui você pode navegar para a tela de login
-                            // navigation.navigate('Login');
-                            Alert.alert('Faça login novamente', 'Por favor, faça login novamente e tente excluir sua conta.');
-                          } catch (error) {
-                            console.error('Erro ao redirecionar para login:', error);
+                            // Start Apple sign-in request
+                            const appleAuthRequestResponse = await appleAuth.performRequest({
+                              requestedOperation: appleAuth.Operation.LOGIN,
+                              requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
+                            });
+
+                            if (!appleAuthRequestResponse.identityToken) {
+                              Alert.alert('Erro', 'Não foi possível obter token de login do Apple.');
+                              return;
+                            }
+
+                            // Get token + nonce
+                            const { identityToken, nonce } = appleAuthRequestResponse;
+
+                            // Create Firebase credential
+                            const provider = new OAuthProvider("apple.com");
+                            const credential = provider.credential({
+                              idToken: identityToken,
+                              rawNonce: nonce, // optional but recommended
+                            });
+
+                            const user = getAuth().currentUser;
+                            if (!user) return;
+
+                            // Reauthenticate with Apple
+                            await reauthenticateWithCredential(user, credential);
+
+                            const response = await api.deleteUserAccount(user.uid);
+                            console.log("res==========>>>>>", response);
+                            // Delete account
+                            await user.delete();
+
+                            Alert.alert('Sucesso', 'Conta Apple excluída do Firebase.');
+                          } catch (err) {
+                            console.error("Erro Apple delete:", err);
+                            Alert.alert(
+                              'Erro',
+                              'Não foi possível reautenticar com Apple. Faça login novamente e tente.'
+                            );
                           }
                         }
                       }

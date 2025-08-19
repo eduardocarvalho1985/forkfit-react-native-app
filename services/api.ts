@@ -430,6 +430,20 @@ class ForkFitAPI {
   async getAllFoods(): Promise<FoodItem[]> {
     return this.request("/food-database/foods");
   }
+
+  // User Account Deletion
+  async deleteUserAccount(uid: string): Promise<DeletionResponse> {
+    return this.request(`/users/${uid}`, {
+      method: "DELETE",
+    });
+  }
+}
+
+// Add the DeletionResponse interface at the top with other interfaces
+export interface DeletionResponse {
+  message: string;
+  uid: string;
+  deletedAt: string;
 }
 
 export const api = new ForkFitAPI();

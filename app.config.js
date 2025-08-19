@@ -1,15 +1,15 @@
 const getBundleId = () => {
   // This function reads the build profile from eas.json and returns the correct bundle ID.
-  
-  // For 'development' builds (e.g., for Expo Go or internal testing builds)
-  if (process.env.EAS_BUILD_PROFILE === 'development') {
-    return 'forkfit.app.forkfitdev';
-  }
 
-  // For 'preview' builds (e.g., for TestFlight)
-  if (process.env.EAS_BUILD_PROFILE === 'preview') {
-    return 'forkfit.app.forkfitpreview';
-  }
+  // For 'development' builds (e.g., for Expo Go or internal testing builds)
+  // if (process.env.EAS_BUILD_PROFILE === 'development') {
+  //   return 'forkfit.app.forkfitdev';
+  // }
+
+  // // For 'preview' builds (e.g., for TestFlight)
+  // if (process.env.EAS_BUILD_PROFILE === 'preview') {
+  //   return 'forkfit.app.forkfitpreview';
+  // }
 
   // For 'production' builds (the final App Store version)
   // This also acts as the default.
@@ -18,16 +18,16 @@ const getBundleId = () => {
 
 const getPackageName = () => {
   // This function reads the build profile from eas.json and returns the correct package name.
-  
-  // For 'development' builds (internal testing)
-  if (process.env.EAS_BUILD_PROFILE === 'development') {
-    return 'forkfit.app.forkfitdev';
-  }
 
-  // For 'preview' builds (internal testing builds)
-  if (process.env.EAS_BUILD_PROFILE === 'preview') {
-    return 'forkfit.app.forkfitpreview';
-  }
+  // For 'development' builds (internal testing)
+  // if (process.env.EAS_BUILD_PROFILE === 'development') {
+  //   return 'forkfit.app.forkfitdev';
+  // }
+
+  // // For 'preview' builds (internal testing builds)
+  // if (process.env.EAS_BUILD_PROFILE === 'preview') {
+  //   return 'forkfit.app.forkfitpreview';
+  // }
 
   // For 'production' builds (Google Play Store version)
   // This also acts as the default.

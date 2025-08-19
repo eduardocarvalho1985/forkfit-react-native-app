@@ -13,6 +13,7 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { AppleAuthProvider, GoogleAuthProvider } from '@react-native-firebase/auth';
 import { api, BackendUser } from '../services/api';
 import { getFirebaseErrorMessage } from '../utils/firebaseErrors';
+import { appleAuth } from '@invertase/react-native-apple-authentication';
 
 // Configure Google Sign-In
 GoogleSignin.configure({
@@ -191,7 +192,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Check if your device supports Google Play
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       console.log('Google Play Services are available.');
-
+      try {
+        await GoogleSignin.signOut();
+      } catch (error) { }
       // Get the user's ID token
       const signInResult = await GoogleSignin.signIn();
       console.log('Google Sign-In result:', signInResult);
@@ -221,13 +224,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const signInWithApple = async () => {
     try {
-      console.log('Starting Apple Sign-In process...');
-      
-      // Use Firebase's native Apple Sign-In
-      const userCredential = await getAuth().signInWithProvider(AppleAuthProvider);
+
+      // Start the sign-in request
+      const appleAuthRequestResponse = await appleAuth.performRequest({
+        requestedOperation: appleAuth.Operation.LOGIN,
+        requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
+      });
+
+      console.log('Apple Auth Request Response received');
+
+      // Ensure Apple returned a user identityToken
+      if (!appleAuthRequestResponse.identityToken) {
+        console.error('Apple Sign-In failed - no identity token returned');
+        throw new Error('Apple Sign-In failed - no identity token returned');
+      }
+
+      // Create a Firebase credential from the response
+      const { identityToken, nonce } = appleAuthRequestResponse;
+      const appleCredential = AppleAuthProvider.credential(identityToken, nonce);
+
+      console.log('Apple Credential created');
+
+      // Sign the user in with the credential
+      const userCredential = await signInWithCredential(getAuth(), appleCredential);
       console.log('User signed in with Apple:', userCredential.user.uid);
 
-      // User will be set through onAuthStateChanged listener
     } catch (error: any) {
       console.error('Error during Apple Sign-In:', error);
       throw new Error(getFirebaseErrorMessage(error.code));
@@ -256,11 +277,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log('AuthContext: Starting password reset process...');
       console.log('AuthContext: Email:', email);
       console.log('AuthContext: Firebase Auth instance:', getAuth());
-      
+
       // Check if Firebase is properly initialized
       const currentUser = getAuth().currentUser;
       console.log('AuthContext: Current user:', currentUser ? currentUser.uid : 'null');
-      
+
       console.log('AuthContext: Sending password reset email to:', email);
       await sendPasswordResetEmail(getAuth(), email);
       console.log('AuthContext: Password reset email sent successfully');
