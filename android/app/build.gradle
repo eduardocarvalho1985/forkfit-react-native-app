@@ -86,15 +86,32 @@ apply from: new File(["node", "--print", "require.resolve('@sentry/react-native/
 // ✅ NEW: Environment detection for EAS builds
 def isProductionBuild = System.getenv("EAS_BUILD_PROFILE") == "production"
 
+// ✅ NEW: Dynamic package name configuration for different EAS build profiles
+def getPackageName() {
+    def easBuildProfile = System.getenv("EAS_BUILD_PROFILE") ?: "development"
+    def finalPackageName = "forkfit.app.forkfitprod" // Default to production
+    
+    if (easBuildProfile == "development") {
+        finalPackageName = "forkfit.app.forkfitdev"
+    } else if (easBuildProfile == "preview") {
+        finalPackageName = "forkfit.app.forkfitpreview"
+    }
+    
+    println "🔧 EAS Build Profile: ${easBuildProfile}"
+    println "📱 Using Package Name: ${finalPackageName}"
+    
+    return finalPackageName
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
 
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'forkfit.app.forkfitprod'
+    namespace getPackageName()
     defaultConfig {
-        applicationId 'forkfit.app.forkfitprod'
+        applicationId getPackageName()
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
