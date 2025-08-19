@@ -20,14 +20,14 @@ const getPackageName = () => {
   // This function reads the build profile from eas.json and returns the correct package name.
 
   // For 'development' builds (internal testing)
-  // if (process.env.EAS_BUILD_PROFILE === 'development') {
-  //   return 'forkfit.app.forkfitdev';
-  // }
+  if (process.env.EAS_BUILD_PROFILE === 'development') {
+    return 'forkfit.app.forkfitdev';
+  }
 
-  // // For 'preview' builds (internal testing builds)
-  // if (process.env.EAS_BUILD_PROFILE === 'preview') {
-  //   return 'forkfit.app.forkfitpreview';
-  // }
+  // For 'preview' builds (internal testing builds)
+  if (process.env.EAS_BUILD_PROFILE === 'preview') {
+    return 'forkfit.app.forkfitpreview';
+  }
 
   // For 'production' builds (Google Play Store version)
   // This also acts as the default.
