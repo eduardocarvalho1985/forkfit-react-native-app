@@ -4,9 +4,6 @@ apply plugin: "com.facebook.react"
 
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
-/**
- * This is the configuration block to customize your React Native Android app.
- */
 react {
     entryFile = file(["node", "-e", "require('expo/scripts/resolveAppEntry')", projectRoot, "android", "absolute"].execute(null, rootDir).text.trim())
     reactNativeDir = new File(["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim()).getParentFile().getAbsoluteFile()
@@ -18,23 +15,31 @@ react {
     autolinkLibrariesWithApp()
 }
 
-/**
- * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
- */
 def enableProguardInReleaseBuilds = (findProperty('android.enableProguardInReleaseBuilds') ?: false).toBoolean()
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 apply from: new File(["node", "--print", "require.resolve('@sentry/react-native/package.json')"].execute().text.trim(), "../sentry.gradle")
 
 // =================================================================================
-// START OF CORRECTED CONFIGURATION
-// =================================================================================
+// START OF ANDROID CONFIGURATION
+// ===============================================================================
 
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    // Add this entire block
+    // A static namespace is required for modern Gradle.
+    namespace "forkfit.app.forkfitprod"
+
+    // A clean default config. The real ID comes from flavors.
+    defaultConfig {
+        minSdkVersion = 23
+        targetSdkVersion = 34
+        versionCode = 1
+        versionName = "1.0.0"
+    }
+
+    // The standard definition for your app's three identities.
     flavorDimensions "environment"
     productFlavors {
         development {
@@ -49,30 +54,9 @@ android {
             dimension "environment"
             applicationId "forkfit.app.forkfitprod"
         }
-        
-    // Add this entire block at the end of the android { ... } block
-applicationVariants.all { variant ->
-    def easBuildProfile = System.getenv("EAS_BUILD_PROFILE") ?: "development"
-    if (variant.buildType.name == "release" && variant.flavorName != easBuild-profile) {
-        variant.setIgnore(true)
     }
-    if (variant.buildType.name == "debug" && variant.flavorName != "development") {
-        variant.setIgnore(true)
-    }
-}
-
-
-    }
-
-
-
-    defaultConfig {
-    minSdkVersion = 23
-    targetSdkVersion = 34
-    versionCode = 1
-    versionName = "1.0.0"
-}
     
+    // signingConfigs MUST be inside the android block
     signingConfigs {
         debug {
             storeFile file('debug.keystore')
@@ -81,8 +65,6 @@ applicationVariants.all { variant ->
             keyPassword 'android'
         }
         release {
-            // EAS provides these environment variables during a production build.
-            // This will only be used for --profile production.
             if (System.getenv("UPLOAD_STORE_FILE")) {
                 storeFile file(System.getenv("UPLOAD_STORE_FILE"))
                 storePassword System.getenv("UPLOAD_STORE_PASSWORD")
@@ -91,25 +73,23 @@ applicationVariants.all { variant ->
             }
         }
     }
-    
+
+    // buildTypes MUST be inside the android block
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // For --profile production, this will use the 'release' signingConfig above.
-            // For all other profiles (dev, preview), EAS will override this to use the 'debug' config.
             signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
     }
-}
+} // <-- THE ANDROID BLOCK CORRECTLY ENDS HERE
 
 // =================================================================================
-// END OF CORRECTED CONFIGURATION
+// END OF ANDROID CONFIGURATION
 // =================================================================================
-
 
 dependencies {
     implementation("com.facebook.react:react-android")
