@@ -17,7 +17,7 @@ import {
 import { EmailAuthProvider, getAuth, GoogleAuthProvider, OAuthProvider, reauthenticateWithCredential } from '@react-native-firebase/auth';
 import prompt from 'react-native-prompt-android';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import appleAuth from '@invertase/react-native-apple-authentication';
+import { appleAuth } from '../../services/appleAuth';
 import { api } from '@/services/api';
 
 const CORAL = '#FF725E';
@@ -261,8 +261,8 @@ export default function SettingsScreen() {
                       }
                     ]
                   );
-                } else {
-                  // Para outros provedores
+                } else if (Platform.OS === 'ios') {
+                  // Para outros provedores (Apple) - apenas no iOS
                   Alert.alert(
                     'Reautenticação necessária',
                     'Para excluir sua conta, você precisa fazer login novamente com Apple.',
@@ -272,6 +272,11 @@ export default function SettingsScreen() {
                         text: 'Continuar',
                         onPress: async () => {
                           try {
+                            if (!appleAuth) {
+                              Alert.alert('Erro', 'Apple Sign-In não está disponível nesta plataforma.');
+                              return;
+                            }
+                            
                             // Start Apple sign-in request
                             const appleAuthRequestResponse = await appleAuth.performRequest({
                               requestedOperation: appleAuth.Operation.LOGIN,
@@ -312,6 +317,21 @@ export default function SettingsScreen() {
                               'Não foi possível reautenticar com Apple. Faça login novamente e tente.'
                             );
                           }
+                        }
+                      }
+                    ]
+                  );
+                } else {
+                  // Para outras plataformas que não suportam Apple Sign-In
+                  Alert.alert(
+                    'Reautenticação necessária',
+                    'Para excluir sua conta, você precisa fazer login novamente.',
+                    [
+                      { text: 'Cancelar', style: 'cancel' },
+                      {
+                        text: 'Continuar',
+                        onPress: async () => {
+                          Alert.alert('Erro', 'Esta funcionalidade não está disponível nesta plataforma.');
                         }
                       }
                     ]

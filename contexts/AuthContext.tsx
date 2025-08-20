@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { Platform } from 'react-native';
 import auth, {
   FirebaseAuthTypes,
   getAuth,
@@ -13,7 +14,7 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { AppleAuthProvider, GoogleAuthProvider } from '@react-native-firebase/auth';
 import { api, BackendUser } from '../services/api';
 import { getFirebaseErrorMessage } from '../utils/firebaseErrors';
-import { appleAuth } from '@invertase/react-native-apple-authentication';
+import { appleAuth } from '../services/appleAuth';
 
 // Configure Google Sign-In
 GoogleSignin.configure({
@@ -224,6 +225,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const signInWithApple = async () => {
     try {
+      // Check if Apple authentication is available (iOS only)
+      if (Platform.OS !== 'ios' || !appleAuth) {
+        throw new Error('Apple Sign-In is only available on iOS devices');
+      }
 
       // Start the sign-in request
       const appleAuthRequestResponse = await appleAuth.performRequest({
