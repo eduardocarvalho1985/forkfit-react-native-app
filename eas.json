@@ -1,40 +1,63 @@
 {
   "build": {
+    // Profile for creating a development client (custom Expo Go)
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      // Instructions for the iOS build
       "ios": {
         "distribution": "internal",
         "buildConfiguration": "Debug"
       },
+      // Instructions for the Android build
       "android": {
-        "buildType": "apk"
+        "buildType": "apk" // Creates a shareable APK for development
       },
+      // The explicit command for Gradle to run for this profile.
+      // Builds the 'development' flavor with the 'debug' build type.
+      "gradleCommand": ":app:assembleDevelopmentDebug",
+      // Environment variables available in the app at build time
       "env": {
         "APP_NAME": "ForkFit Dev",
         "EAS_BUILD_PROFILE": "development"
       }
     },
+    // Profile for creating builds for testers (TestFlight, internal sharing)
     "preview": {
       "distribution": "internal",
+      // iOS settings for TestFlight
       "ios": {
         "distribution": "internal",
         "buildConfiguration": "Release"
       },
+      // Android settings for internal sharing
       "android": {
-        "buildType": "apk"
+        "buildType": "apk" // Creates a shareable APK for testers
       },
+      // Explicit command for Gradle.
+      // Builds the 'preview' flavor with the 'release' build type.
+      "gradleCommand": ":app:assemblePreviewRelease",
       "env": {
         "APP_NAME": "ForkFit Preview",
         "EAS_BUILD_PROFILE": "preview"
       }
     },
+    // Profile for creating the final app for the public App Stores
     "production": {
       "distribution": "store",
+      // iOS settings for the App Store
       "ios": {
         "distribution": "store",
         "buildConfiguration": "Release"
       },
+      // Android settings for the Google Play Store
+      "android": {
+        // This is intentionally left empty. By default, a 'store' distribution
+        // will build an .aab (Android App Bundle), which is required by Google.
+      },
+      // Explicit command for Gradle.
+      // Builds the 'production' flavor with the 'release' build type.
+      "gradleCommand": ":app:assembleProductionRelease",
       "env": {
         "APP_NAME": "ForkFit",
         "EAS_BUILD_PROFILE": "production"

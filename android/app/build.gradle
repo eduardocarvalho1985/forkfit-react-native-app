@@ -6,60 +6,15 @@ def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
 /**
  * This is the configuration block to customize your React Native Android app.
- * By default you don't need to apply any configuration, just uncomment the lines you need.
  */
 react {
     entryFile = file(["node", "-e", "require('expo/scripts/resolveAppEntry')", projectRoot, "android", "absolute"].execute(null, rootDir).text.trim())
     reactNativeDir = new File(["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim()).getParentFile().getAbsoluteFile()
     hermesCommand = new File(["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim()).getParentFile().getAbsolutePath() + "/sdks/hermesc/%OS-BIN%/hermesc"
     codegenDir = new File(["node", "--print", "require.resolve('@react-native/codegen/package.json', { paths: [require.resolve('react-native/package.json')] })"].execute(null, rootDir).text.trim()).getParentFile().getAbsoluteFile()
-
     enableBundleCompression = (findProperty('android.enableBundleCompression') ?: false).toBoolean()
-    // Use Expo CLI to bundle the app, this ensures the Metro config
-    // works correctly with Expo projects.
     cliFile = new File(["node", "--print", "require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })"].execute(null, rootDir).text.trim())
     bundleCommand = "export:embed"
-
-    /* Folders */
-     //   The root of your project, i.e. where "package.json" lives. Default is '../..'
-    // root = file("../../")
-    //   The folder where the react-native NPM package is. Default is ../../node_modules/react-native
-    // reactNativeDir = file("../../node_modules/react-native")
-    //   The folder where the react-native Codegen package is. Default is ../../node_modules/@react-native/codegen
-    // codegenDir = file("../../node_modules/@react-native/codegen")
-
-    /* Variants */
-    //   The list of variants to that are debuggable. For those we're going to
-    //   skip the bundling of the JS bundle and the assets. By default is just 'debug'.
-    //   If you add flavors like lite, prod, etc. you'll have to list your debuggableVariants.
-    // debuggableVariants = ["liteDebug", "prodDebug"]
-
-    /* Bundling */
-    //   A list containing the node command and its flags. Default is just 'node'.
-    // nodeExecutableAndArgs = ["node"]
-
-    //
-    //   The path to the CLI configuration file. Default is empty.
-    // bundleConfig = file(../rn-cli.config.js)
-    //
-    //   The name of the generated asset file containing your JS bundle
-    // bundleAssetName = "MyApplication.android.bundle"
-    //
-    //   The entry file for bundle generation. Default is 'index.android.js' or 'index.js'
-    // entryFile = file("../js/MyApplication.android.js")
-    //
-    //   A list of extra flags to pass to the 'bundle' commands.
-    //   See https://github.com/react-native-community/cli/blob/main/docs/commands.md#bundle
-    // extraPackagerArgs = []
-
-    /* Hermes Commands */
-    //   The hermes compiler command to run. By default it is 'hermesc'
-    // hermesCommand = "$rootDir/my-custom-hermesc/bin/hermesc"
-    //
-    //   The list of flags to pass to the Hermes compiler. By default is "-O", "-output-source-map"
-    // hermesFlags = ["-O", "-output-source-map"]
-
-    /* Autolinking */
     autolinkLibrariesWithApp()
 }
 
@@ -67,65 +22,56 @@ react {
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
  */
 def enableProguardInReleaseBuilds = (findProperty('android.enableProguardInReleaseBuilds') ?: false).toBoolean()
-
-/**
- * The preferred build flavor of JavaScriptCore (JSC)
- *
- * For example, to use the international variant, you can use:
- * `def jscFlavor = 'org.webkit:android-jsc-intl:+'`
- *
- * The international variant includes ICU i18n library and necessary data
- * allowing to use e.g. `Date.toLocaleString` and `String.localeCompare` that
- * give correct results when using with locales other than en-US. Note that
- * this variant is about 6MiB larger per architecture than default.
- */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
-
 apply from: new File(["node", "--print", "require.resolve('@sentry/react-native/package.json')"].execute().text.trim(), "../sentry.gradle")
 
-// ✅ NEW: Environment detection for EAS builds
-def isProductionBuild = System.getenv("EAS_BUILD_PROFILE") == "production"
-
-// ✅ NEW: Dynamic package name configuration for different EAS build profiles
-def getPackageName() {
-    def easBuildProfile = System.getenv("EAS_BUILD_PROFILE") ?: "development"
-    def finalPackageName = "forkfit.app.forkfitprod" // Default to production
-    
-    if (easBuildProfile == "development") {
-        finalPackageName = "forkfit.app.forkfitdev"
-    } else if (easBuildProfile == "preview") {
-        finalPackageName = "forkfit.app.forkfitpreview"
-    }
-    
-    println "🔧 EAS Build Profile: ${easBuildProfile}"
-    println "📱 Using Package Name: ${finalPackageName}"
-    
-    return finalPackageName
-}
+// =================================================================================
+// START OF CORRECTED CONFIGURATION
+// =================================================================================
 
 android {
     ndkVersion rootProject.ext.ndkVersion
-
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "forkfit.app.forkfitprod"
-    defaultConfig {
-        // This script reads the EAS_BUILD_PROFILE to set the correct package name
-        def easBuildProfile = System.getenv("EAS_BUILD_PROFILE") ?: "development"
-        def finalPackageName = "forkfit.app.forkfitprod" // Default to production
-        if (easBuildProfile == "development") {
-            finalPackageName = "forkfit.app.forkfitdev"
-        } else if (easBuildProfile == "preview") {
-            finalPackageName = "forkfit.app.forkfitpreview"
+    // Add this entire block
+    flavorDimensions "environment"
+    productFlavors {
+        development {
+            dimension "environment"
+            applicationId "forkfit.app.forkfitdev"
         }
-        applicationId finalPackageName
-
-        minSdkVersion = 23
-        targetSdkVersion = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        preview {
+            dimension "environment"
+            applicationId "forkfit.app.forkfitpreview"
+        }
+        production {
+            dimension "environment"
+            applicationId "forkfit.app.forkfitprod"
+        }
+        
+    // Add this entire block at the end of the android { ... } block
+applicationVariants.all { variant ->
+    def easBuildProfile = System.getenv("EAS_BUILD_PROFILE") ?: "development"
+    if (variant.buildType.name == "release" && variant.flavorName != easBuild-profile) {
+        variant.setIgnore(true)
     }
+    if (variant.buildType.name == "debug" && variant.flavorName != "development") {
+        variant.setIgnore(true)
+    }
+}
+
+
+    }
+
+
+
+    defaultConfig {
+    minSdkVersion = 23
+    targetSdkVersion = 34
+    versionCode = 1
+    versionName = "1.0.0"
+}
     
     signingConfigs {
         debug {
@@ -134,21 +80,14 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
-        
-        // ✅ NEW: Production config using EAS-managed credentials
         release {
-            if (isProductionBuild && System.getenv("FORKFIT_UPLOAD_STORE_FILE")) {
-                // Production build - use EAS-managed production keystore
-                storeFile file(System.getenv("FORKFIT_UPLOAD_STORE_FILE"))
-                storePassword System.getenv("FORKFIT_UPLOAD_STORE_PASSWORD")
-                keyAlias System.getenv("FORKFIT_UPLOAD_KEY_ALIAS")
-                keyPassword System.getenv("FORKFIT_UPLOAD_KEY_PASSWORD")
-            } else {
-                // Development/Preview build - use debug keystore
-                storeFile file('debug.keystore')
-                storePassword 'android'
-                keyAlias 'androiddebugkey'
-                keyPassword 'android'
+            // EAS provides these environment variables during a production build.
+            // This will only be used for --profile production.
+            if (System.getenv("UPLOAD_STORE_FILE")) {
+                storeFile file(System.getenv("UPLOAD_STORE_FILE"))
+                storePassword System.getenv("UPLOAD_STORE_PASSWORD")
+                keyAlias System.getenv("UPLOAD_KEY_ALIAS")
+                keyPassword System.getenv("UPLOAD_KEY_PASSWORD")
             }
         }
     }
@@ -156,80 +95,33 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
-            debuggable true
-            minifyEnabled false
         }
-        
         release {
-            // ✅ FIXED: Now uses proper signing config based on environment
+            // For --profile production, this will use the 'release' signingConfig above.
+            // For all other profiles (dev, preview), EAS will override this to use the 'debug' config.
             signingConfig signingConfigs.release
-            
-            // ✅ SMART: Different settings for different environments
-            debuggable !isProductionBuild
-            minifyEnabled isProductionBuild
-            
-            shrinkResources (findProperty('android.enableShrinkResourcesInReleaseBuilds')?.toBoolean() ?: false)
+            minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
-            crunchPngs (findProperty('android.enablePngCrunchInReleaseBuilds')?.toBoolean() ?: true)
-        }
-    }
-    packagingOptions {
-        jniLibs {
-            useLegacyPackaging (findProperty('expo.useLegacyPackaging')?.toBoolean() ?: false)
-        }
-    }
-    androidResources {
-        ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:!CVS:!thumbs.db:!picasa.ini:!*~'
-    }
-}
-
-// Apply static values from `gradle.properties` to the `android.packagingOptions`
-// Accepts values in comma delimited lists, example:
-// android.packagingOptions.pickFirsts=/LICENSE,**/picasa.ini
-["pickFirsts", "excludes", "merges", "doNotStrip"].each { prop ->
-    // Split option: 'foo,bar' -> ['foo', 'bar']
-    def options = (findProperty("android.packagingOptions.$prop") ?: "").split(",");
-    // Trim all elements in place.
-    for (i in 0..<options.size()) options[i] = options[i].trim();
-    // `[] - ""` is essentially `[""].filter(Boolean)` removing all empty strings.
-    options -= ""
-
-    if (options.length > 0) {
-        println "android.packagingOptions.$prop += $options ($options.length)"
-        // Ex: android.packagingOptions.pickFirsts += '**/SCCS/**'
-        options.each {
-            android.packagingOptions[prop] += it
         }
     }
 }
+
+// =================================================================================
+// END OF CORRECTED CONFIGURATION
+// =================================================================================
+
 
 dependencies {
-    // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
-
     def isGifEnabled = (findProperty('expo.gif.enabled') ?: "") == "true";
     def isWebpEnabled = (findProperty('expo.webp.enabled') ?: "") == "true";
     def isWebpAnimatedEnabled = (findProperty('expo.webp.animated') ?: "") == "true";
-
-    if (isGifEnabled) {
-        // For animated gif support
-        implementation("com.facebook.fresco:animated-gif:${expoLibs.versions.fresco.get()}")
-    }
-
+    if (isGifEnabled) { implementation("com.facebook.fresco:animated-gif:${expoLibs.versions.fresco.get()}") }
     if (isWebpEnabled) {
-        // For webp support
         implementation("com.facebook.fresco:webpsupport:${expoLibs.versions.fresco.get()}")
-        if (isWebpAnimatedEnabled) {
-            // Animated webp support
-            implementation("com.facebook.fresco:animated-webp:${expoLibs.versions.fresco.get()}")
-        }
+        if (isWebpAnimatedEnabled) { implementation("com.facebook.fresco:animated-webp:${expoLibs.versions.fresco.get()}") }
     }
-
-    if (hermesEnabled.toBoolean()) {
-        implementation("com.facebook.react:hermes-android")
-    } else {
-        implementation jscFlavor
-    }
+    if (hermesEnabled.toBoolean()) { implementation("com.facebook.react:hermes-android") } else { implementation jscFlavor }
 }
 
 apply plugin: 'com.google.gms.google-services'
