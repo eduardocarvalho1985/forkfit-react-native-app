@@ -2,14 +2,14 @@ const getBundleId = () => {
   // This function reads the build profile from eas.json and returns the correct bundle ID.
 
   // For 'development' builds (e.g., for Expo Go or internal testing builds)
-  // if (process.env.EAS_BUILD_PROFILE === 'development') {
-  //   return 'forkfit.app.forkfitdev';
-  // }
+  if (process.env.EAS_BUILD_PROFILE === 'development') {
+    return 'forkfit.app.forkfitdev';
+  }
 
-  // // For 'preview' builds (e.g., for TestFlight)
-  // if (process.env.EAS_BUILD_PROFILE === 'preview') {
-  //   return 'forkfit.app.forkfitpreview';
-  // }
+  // For 'preview' builds (e.g., for TestFlight)
+  if (process.env.EAS_BUILD_PROFILE === 'preview') {
+    return 'forkfit.app.forkfitpreview';
+  }
 
   // For 'production' builds (the final App Store version)
   // This also acts as the default.
