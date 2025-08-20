@@ -33,7 +33,7 @@ android {
 
     // A clean default config. The real ID comes from flavors.
     defaultConfig {
-        minSdkVersion = 23
+        minSdkVersion = 24
         targetSdkVersion = 34
         versionCode = 1
         versionName = "1.0.0"
