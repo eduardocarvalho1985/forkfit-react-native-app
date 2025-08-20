@@ -73,7 +73,10 @@ export default {
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false
       },
-      usesAppleSignIn: true
+      usesAppleSignIn: true,
+      entitlements: {
+        'com.apple.developer.applesignin': ['Default']
+      }
     },
     android: {
       googleServicesFile: './google-services.json',
@@ -96,7 +99,13 @@ export default {
       'expo-router',
       '@react-native-firebase/app',
       '@react-native-firebase/auth',
-      '@invertase/react-native-apple-authentication',
+      [
+        '@invertase/react-native-apple-authentication',
+        {
+          // This plugin requires specific iOS configuration for EAS Build
+          // The plugin will automatically configure the necessary entitlements
+        }
+      ],
       'expo-camera',
       [
         'expo-image-picker',
