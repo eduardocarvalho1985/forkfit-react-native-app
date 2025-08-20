@@ -96,6 +96,7 @@ export default {
       'expo-router',
       '@react-native-firebase/app',
       '@react-native-firebase/auth',
+      '@invertase/react-native-apple-authentication',
       'expo-camera',
       [
         'expo-image-picker',
