@@ -1,51 +1,225 @@
-# Welcome to your Expo app 👋
+# 🍴 ForkFit React Native App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A comprehensive fitness and nutrition tracking application built with React Native and Expo.
 
-## Get started
+## 🚀 Quick Start
 
-1. Install dependencies
+### **Prerequisites**
+- Node.js 18+ 
+- npm 9+
+- Expo CLI
+- Android Studio (for Android development)
+- Xcode (for iOS development, macOS only)
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+### **Package Manager Requirements**
+⚠️ **IMPORTANT**: This project uses **npm** as the package manager. Please do not use yarn.
 
 ```bash
-npm run reset-project
+# ✅ Correct: Use npm
+npm install
+npm start
+npm run android
+
+# ❌ Incorrect: Do not use yarn
+yarn install
+yarn start
+yarn android
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 🛠️ Development Setup
 
-## Learn more
+### **1. Clone and Install**
+```bash
+# Clone the repository
+git clone <your-repo-url>
+cd forkfit-react-native-app
 
-To learn more about developing your project with Expo, look at the following resources:
+# Install dependencies (npm only)
+npm install
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+# Start the development server
+npm start
+```
 
-## Join the community
+### **2. Available Scripts**
+```bash
+npm start          # Start Expo development server
+npm run android    # Run on Android device/emulator
+npm run ios        # Run on iOS device/simulator
+npm run test       # Run Jest tests
+npm run lint       # Run ESLint
+npm run reset-project # Reset project configuration
+```
 
-Join our community of developers creating universal apps.
+### **3. Build Profiles**
+The app supports three build environments:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
-# forkfit-react-native-app
+| Environment | Package Name | Purpose |
+|-------------|--------------|---------|
+| **Development** | `forkfit.app.forkfitdev` | Internal testing & development |
+| **Preview** | `forkfit.app.forkfitpreview` | Team testing & QA |
+| **Production** | `forkfit.app.forkfitprod` | App store release |
+
+### **4. Building the App**
+```bash
+# Development build
+eas build --profile development --platform android
+eas build --profile development --platform ios
+
+# Preview build
+eas build --profile preview --platform android
+eas build --profile preview --platform ios
+
+# Production build (restricted access)
+eas build --profile production --platform android
+eas build --profile production --platform ios
+```
+
+## 📱 Platform-Specific Setup
+
+### **Android Development**
+```bash
+# Ensure Android Studio is installed with:
+# - Android SDK
+# - Android SDK Platform-Tools
+# - Android Emulator
+
+# Start Android emulator or connect device
+npm run android
+```
+
+### **iOS Development (macOS only)**
+```bash
+# Ensure Xcode is installed with:
+# - iOS Simulator
+# - Command Line Tools
+
+# Start iOS simulator or connect device
+npm run ios
+```
+
+## 🔧 Project Configuration
+
+### **Key Files**
+- `app.config.js` - Expo configuration with dynamic bundle IDs
+- `eas.json` - EAS Build profiles and configuration
+- `android/app/build.gradle` - Android build configuration
+- `ios/` - iOS project configuration
+
+### **Environment Variables**
+The app automatically detects build profiles:
+- `EAS_BUILD_PROFILE=development` → Development build
+- `EAS_BUILD_PROFILE=preview` → Preview build
+- `EAS_BUILD_PROFILE=production` → Production build
+
+## 🚨 Troubleshooting
+
+### **Build Fails with "invalid config plugin"**
+```bash
+# Clean and reinstall dependencies
+rm -rf node_modules
+rm package-lock.json
+npm install
+```
+
+### **Metro Bundler Issues**
+```bash
+# Clear Metro cache
+npm start -- --clear
+
+# Reset Metro cache completely
+npm start -- --clear --reset-cache
+```
+
+### **Android Build Issues**
+```bash
+# Clean Android build
+cd android
+./gradlew clean
+cd ..
+
+# Try building again
+npm run android
+```
+
+### **iOS Build Issues**
+```bash
+# Clean iOS build
+cd ios
+xcodebuild clean
+cd ..
+
+# Try building again
+npm run ios
+```
+
+### **Package Manager Conflicts**
+```bash
+# If you see yarn.lock, remove it
+rm yarn.lock
+
+# Ensure you're using npm
+npm install
+```
+
+## 📚 Project Structure
+
+```
+forkfit-react-native-app/
+├── app/                    # Expo Router screens
+├── components/             # Reusable UI components
+├── contexts/               # React Context providers
+├── services/               # API and external services
+├── utils/                  # Utility functions
+├── assets/                 # Images, fonts, etc.
+├── android/                # Android native code
+├── ios/                    # iOS native code
+├── app.config.js           # Expo configuration
+├── eas.json               # EAS Build configuration
+└── package.json           # Dependencies and scripts
+```
+
+## 🔒 Security & Build Notes
+
+### **What You Can Do:**
+- ✅ Build development and preview versions
+- ✅ Test all app functionality
+- ✅ Debug and fix issues
+- ✅ Distribute to team members
+
+### **What You Cannot Do:**
+- ❌ Create production builds (restricted access)
+- ❌ Access production keystores
+- ❌ Override production app
+- ❌ Submit to app stores
+
+## 📖 Additional Resources
+
+- **Expo Documentation**: https://docs.expo.dev/
+- **React Native Documentation**: https://reactnative.dev/
+- **EAS Build Documentation**: https://docs.expo.dev/build/introduction/
+- **Developer Build Guide**: See `DEVELOPER_BUILD_GUIDE.md`
+
+## 🆘 Need Help?
+
+If you encounter issues:
+1. Check this README first
+2. Try the troubleshooting steps above
+3. Check the `DEVELOPER_BUILD_GUIDE.md`
+4. Ask your team lead
+5. Check the project's issues or documentation
+
+## 📝 Contributing
+
+1. **Always use npm** - never yarn
+2. **Follow the existing code style**
+3. **Test your changes** before committing
+4. **Update documentation** if needed
+5. **Use the correct build profile** for testing
+
+---
+
+**Last Updated:** December 2024  
+**Version:** 1.0  
+**Maintained by:** Development Team  
+**Package Manager:** npm (required)

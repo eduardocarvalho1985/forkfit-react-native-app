@@ -8,7 +8,13 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "test": "jest --watchAll",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "postinstall": "npm run check-lockfile",
+    "check-lockfile": "node -e \"if (require('fs').existsSync('yarn.lock')) { console.error('❌ yarn.lock detected! Please use npm instead.'); process.exit(1); } else { console.log('✅ Using npm - package-lock.json found'); }\""
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   },
   "jest": {
     "preset": "jest-expo"

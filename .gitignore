@@ -32,6 +32,10 @@ npm-debug.*
 yarn-debug.*
 yarn-error.*
 
+# Package manager lock files (enforce npm)
+yarn.lock
+.pnp.*
+
 # macOS
 .DS_Store
 *.pem
