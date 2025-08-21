@@ -6,6 +6,7 @@ import { formatNumber } from '../utils/formatters';
 
 interface MacroProgressProps {
   label: string;
+  index: number;
   current: number;
   target: number;
   unit: string;
@@ -19,7 +20,7 @@ const COLOR_MAP: Record<string, { ring: string; text: string; bg: string }> = {
   'gordura': { ring: '#ef4444', text: '#b91c1c', bg: '#fee2e2' },
 };
 
-export const MacroProgress = ({ label, current, target, unit, color, iconName }: MacroProgressProps) => {
+export const MacroProgress = ({ index, label, current, target, unit, color, iconName }: MacroProgressProps) => {
   const lowerLabel = label.toLowerCase();
   const colorSet = COLOR_MAP[lowerLabel] || { ring: color, text: color, bg: '#f1f5f9' };
 
@@ -33,7 +34,7 @@ export const MacroProgress = ({ label, current, target, unit, color, iconName }:
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
-    <View style={[styles.container, { backgroundColor: colorSet.bg }]}>
+    <View style={[styles.container, { backgroundColor: colorSet.bg, marginRight: index === 0 ? 2 : 0, marginHorizontal: index === 0 ? 0 : 2 }]}>
       {/* Circular Progress */}
       <View style={styles.svgWrapper}>
         <Svg width={radius * 2 + stroke} height={radius * 2 + stroke}>

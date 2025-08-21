@@ -666,9 +666,9 @@ export default function DashboardScreen() {
               </View>
             </View>
             <View style={styles.macrosGrid}>
-              <MacroProgress label="Proteína" current={totals.protein} target={targets.protein} unit="g" color="#3b82f6" iconName="drumstick-bite" />
-              <MacroProgress label="Carbs" current={totals.carbs} target={targets.carbs} unit="g" color="#f97316" iconName="wheat-awn" />
-              <MacroProgress label="Gordura" current={totals.fat} target={targets.fat} unit="g" color="#ef4444" iconName="bottle-droplet" />
+              <MacroProgress index={0} label="Proteína" current={totals.protein} target={targets.protein} unit="g" color="#3b82f6" iconName="drumstick-bite" />
+              <MacroProgress index={1} label="Carbs" current={totals.carbs} target={targets.carbs} unit="g" color="#f97316" iconName="wheat-awn" />
+              <MacroProgress index={2} label="Gordura" current={totals.fat} target={targets.fat} unit="g" color="#ef4444" iconName="bottle-droplet" />
             </View>
           </View>
 

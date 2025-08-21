@@ -8,7 +8,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
-import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetFlatList, BottomSheetModal, BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { api, FoodItem } from '../services/api';
 import { formatNumber } from '../utils/formatters';
@@ -68,17 +68,17 @@ const SearchBottomSheet = forwardRef<SearchBottomSheetRef, SearchBottomSheetProp
 
     const handleTextChange = (text: string) => {
       setSearchQuery(text);
-      
+
       // Clear previous timeout
       if (searchTimeoutRef) {
         clearTimeout(searchTimeoutRef);
       }
-      
+
       // Set new timeout for debounced search
       const timeout = setTimeout(() => {
         handleSearchFood(text);
       }, 500);
-      
+
       setSearchTimeoutRef(timeout);
     };
 
@@ -91,29 +91,29 @@ const SearchBottomSheet = forwardRef<SearchBottomSheetRef, SearchBottomSheetProp
         snapPoints={['80%']}
         backgroundStyle={styles.bottomSheetBackground}
         handleIndicatorStyle={styles.handleIndicator}
+        enableDynamicSizing={false}
       >
-        <BottomSheetView style={styles.container}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Buscar Alimentos</Text>
-            <Text style={styles.subtitle}>Encontre alimentos no banco de dados</Text>
-          </View>
+        <View style={styles.header}>
+          <Text style={styles.title}>Buscar Alimentos</Text>
+          <Text style={styles.subtitle}>Encontre alimentos no banco de dados</Text>
+        </View>
 
 
 
-          {/* Search Input */}
-          <View style={styles.searchContainer}>
-            <FontAwesome6 name="search" size={16} color="#64748b" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Digite o nome do alimento..."
-              placeholderTextColor="#64748b"
-              value={searchQuery}
-              onChangeText={handleTextChange}
-              autoFocus={true}
-            />
-            {loadingFoods && <ActivityIndicator size="small" color={CORAL} style={styles.loadingIcon} />}
-          </View>
-
+        {/* Search Input */}
+        <View style={styles.searchContainer}>
+          <FontAwesome6 name="search" size={16} color="#64748b" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Digite o nome do alimento..."
+            placeholderTextColor="#64748b"
+            value={searchQuery}
+            onChangeText={handleTextChange}
+            autoFocus={true}
+          />
+          {loadingFoods && <ActivityIndicator size="small" color={CORAL} style={styles.loadingIcon} />}
+        </View>
+        <BottomSheetScrollView style={styles.container}>
           {/* Search Results */}
           {searchQuery.trim() && (
             <View style={styles.resultsContainer}>
@@ -164,7 +164,7 @@ const SearchBottomSheet = forwardRef<SearchBottomSheetRef, SearchBottomSheetProp
               <Text style={styles.initialSubtext}>Encontre alimentos no banco de dados</Text>
             </View>
           )}
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </BottomSheetModal>
     );
   }
@@ -180,9 +180,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    paddingTop: 0
   },
   header: {
     marginBottom: 20,
+    marginHorizontal: 20,
   },
   title: {
     fontSize: 24,
@@ -194,7 +196,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748b',
   },
-
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -205,6 +206,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderWidth: 1,
     borderColor: BORDER,
+    marginHorizontal: 20,
   },
   searchIcon: {
     marginRight: 12,
