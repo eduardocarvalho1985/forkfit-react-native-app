@@ -99,13 +99,8 @@ export default {
       'expo-router',
       '@react-native-firebase/app',
       '@react-native-firebase/auth',
-      [
-        '@invertase/react-native-apple-authentication',
-        {
-          // This plugin requires specific iOS configuration for EAS Build
-          // The plugin will automatically configure the necessary entitlements
-        }
-      ],
+      // Apple authentication plugin removed to fix Android build issues
+      // The library is still available for use in code, but not as a config plugin
       'expo-camera',
       [
         'expo-image-picker',
