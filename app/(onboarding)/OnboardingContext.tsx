@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
-import { api } from '../../services/api';
+import { api } from '@/services/api';
 import { getAuth } from '@react-native-firebase/auth';
 
 export interface OnboardingData {
@@ -263,7 +263,10 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       case 'pacing':
         return !!(onboardingData.weeklyPacing && !onboardingData.isEventDriven);
       case 'projection':
-        return !!onboardingData.weeklyPacing;
+        // Allow projection step if we have either weeklyPacing or can calculate it
+        return !!(onboardingData.weeklyPacing || 
+                 (onboardingData.eventDate && onboardingData.weight && onboardingData.targetWeight) ||
+                 (onboardingData.weight && onboardingData.targetWeight));
       case 'socialProof':
         return true; // Always valid, just informational
       case 'loading':

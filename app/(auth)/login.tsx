@@ -1,27 +1,23 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Platform } from 'react-native';
 import { router } from 'expo-router';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 
-export default function Register() {
+export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState("");
-  const { signUp, signInWithGoogle, signInWithApple } = useAuth();
+  const { signIn, signInWithGoogle, signInWithApple } = useAuth();
 
-  const handleRegister = async () => {
-    if (!email || !password || !confirmPassword) {
+  const handleLogin = async () => {
+    if (!email || !password) {
       Alert.alert('Erro', 'Por favor, preencha todos os campos');
       return;
     }
-    if (password !== confirmPassword) {
-      Alert.alert('Erro', 'As senhas não coincidem');
-      return;
-    }
     setLoading("email")
+
     try {
-      await signUp(email, password);
+      await signIn(email, password);
       // Navigation will be handled by the root layout
     } catch (error: any) {
       Alert.alert('Erro', error.message);
@@ -57,7 +53,7 @@ export default function Register() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>ForkFit</Text>
-      <Text style={styles.subtitle}>Crie sua conta</Text>
+      <Text style={styles.subtitle}>Entre na sua conta</Text>
 
       <TextInput
         style={styles.input}
@@ -76,16 +72,15 @@ export default function Register() {
         secureTextEntry
       />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Confirmar Senha"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        secureTextEntry
-      />
+      <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading === "email"}>
+        <Text style={styles.buttonText}>{loading === "email" ? "Entrando..." : "Entrar"}</Text>
+      </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading === "email"}>
-        <Text style={styles.buttonText}>{loading === "email" ? "Cadastrando..." : "Cadastrar"}</Text>
+      <TouchableOpacity
+        style={styles.forgotPasswordButton}
+        onPress={() => router.push('/auth/forgot-password')}
+      >
+        <Text style={styles.forgotPasswordText}>Esqueceu sua senha?</Text>
       </TouchableOpacity>
 
       <View style={styles.divider}>
@@ -95,17 +90,17 @@ export default function Register() {
       </View>
 
       <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignIn} disabled={loading === "google"}>
-        <Text style={styles.socialButtonText}>{loading === "google" ? "Cadastrando com Google..." : "Cadastrar com Google"}</Text>
+        <Text style={styles.socialButtonText}>{loading === "google" ? "Entrando com Google..." : "Entrar com Google"}</Text>
       </TouchableOpacity>
 
       {Platform.OS === 'ios' && (
         <TouchableOpacity style={styles.appleButton} onPress={handleAppleSignIn} disabled={loading === "apple"}>
-          <Text style={styles.socialButtonText}>{loading === "apple" ? "Cadastrando com Apple..." : "Cadastrar com Apple"}</Text>
+          <Text style={styles.socialButtonText}>{loading === "apple" ? "Entrando com Apple..." : "Entrar com Apple"}</Text>
         </TouchableOpacity>
       )}
 
-      <TouchableOpacity onPress={() => router.push('/auth/login')}>
-        <Text style={styles.linkText}>Já tem conta? Entre aqui</Text>
+      <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
+        <Text style={styles.linkText}>Não tem conta? Cadastre-se</Text>
       </TouchableOpacity>
     </View>
   );
@@ -188,5 +183,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 16,
     fontWeight: '600',
+  },
+  forgotPasswordButton: {
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  forgotPasswordText: {
+    color: '#FF725E',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

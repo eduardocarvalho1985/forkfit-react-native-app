@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { OnboardingProvider, useOnboarding } from './OnboardingContext';
-import OnboardingProgress from '../../components/OnboardingProgress';
+import OnboardingProgress from '@/components/OnboardingProgress';
 import IntroCarouselStep from './steps/IntroCarouselStep';
 import GoalStep from './steps/GoalStep';
 import VitalsSlidersStep from './steps/VitalsSlidersStep';
@@ -18,7 +18,7 @@ import SocialProofStep from './steps/SocialProofStep';
 import LoadingStep from './steps/LoadingStep';
 import PlanPreviewStep from './steps/PlanPreviewStep';
 import PaywallStep from './steps/PaywallStep';
-import { api } from '../../services/api';
+import { api } from '@/services/api';
 import { getAuth } from '@react-native-firebase/auth';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -160,60 +160,9 @@ function OnboardingContent() {
   };
 
   const handleComplete = async () => {
-    if (!user) {
-      Alert.alert('Erro', 'Usuário não encontrado. Tente fazer login novamente.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const completeOnboardingData = getCurrentStepData();
-      console.log('Complete onboarding data to save:', completeOnboardingData);
-
-      // Calculate age from birth date
-      const calculatedAge = completeOnboardingData.birthDate ? calculateAge(completeOnboardingData.birthDate) : 0;
-      console.log('Calculated age from birth date:', completeOnboardingData.birthDate, '=', calculatedAge);
-
-      // Get authentication token
-      const token = await getAuth().currentUser?.getIdToken();
-      if (!token) {
-        throw new Error('No authentication token available');
-      }
-
-      // Direct API call with all onboarding data including calculated age
-      const userProfileData = {
-        ...completeOnboardingData,
-        age: calculatedAge, // Add calculated age
-        onboardingCompleted: true
-      };
-
-      console.log('Saving complete user profile:', userProfileData);
-      console.log('User UID:', user.uid);
-
-      await api.updateUserProfile(user.uid, userProfileData, token);
-      console.log('User profile updated successfully with all onboarding data');
-
-      // Sync updated user data to AuthContext
-      await syncUser();
-      console.log('User data synced after onboarding completion');
-
-      // Clear onboarding context data
-      clearOnboardingData();
-
-      // Navigate to dashboard
-      router.replace('/(tabs)/dashboard');
-
-    } catch (error: any) {
-      console.error('Error completing onboarding:', error);
-
-      // Simple, clear error message for MVP
-      Alert.alert(
-        'Erro de Conexão',
-        'Parece que você está sem conexão. Verifique sua internet e tente novamente.'
-      );
-    } finally {
-      setLoading(false);
-    }
+    // Onboarding completion is now handled in the signup flow
+    // This function is kept for backward compatibility but should not be called
+    console.log('Onboarding completion should be handled in signup flow');
   };
 
   const renderCurrentStep = () => {
@@ -256,10 +205,10 @@ function OnboardingContent() {
 
     if (currentStep === 'paywall') {
       return {
-        onPress: () => handleComplete(),
-        disabled: loading,
-        loading: loading,
-        buttonText: 'Finalizar'
+        onPress: () => router.push('/(auth)/register'),
+        disabled: false, // Paywall step is always accessible
+        loading: false,
+        buttonText: 'Criar Conta'
       };
     }
     return {

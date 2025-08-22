@@ -3,13 +3,13 @@ import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ScrollView, Alert
 import { BarChart, LineChart } from 'react-native-chart-kit';
 import { useRouter } from 'expo-router';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { useProgress } from '../../contexts/ProgressContext';
-import { useAuth } from '../../contexts/AuthContext';
-import { calculateDateRange, PeriodKey, getCurrentDate } from '../../utils/dateUtils';
-import { WeightInputModal } from '../../components/WeightInputModal';
-import { WeightHistoryBottomSheet } from '../../components/WeightHistoryBottomSheet';
-import { formatWeightWithUnit } from '../../utils/weightUtils';
-import { formatNumber } from '../../utils/formatters';
+import { useProgress } from '../../../contexts/ProgressContext';
+import { useAuth } from '../../../contexts/AuthContext';
+import { calculateDateRange, PeriodKey, getCurrentDate } from '../../../utils/dateUtils';
+import { WeightInputModal } from '../../../components/WeightInputModal';
+import { WeightHistoryBottomSheet } from '../../../components/WeightHistoryBottomSheet';
+import { formatWeightWithUnit } from '../../../utils/weightUtils';
+import { formatNumber } from '../../../utils/formatters';
 
 const CORAL = '#FF725E';
 const TEXT_DARK = '#1F2937';

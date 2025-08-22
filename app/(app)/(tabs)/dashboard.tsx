@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   Alert,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -16,18 +17,18 @@ import { FontAwesome6 } from '@expo/vector-icons';
 import Modal from 'react-native-modal';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import { MacroProgress } from '../../components/MacroProgress';
+import { MacroProgress } from '../../../components/MacroProgress';
 import { SafeAreaView as SafeAreaViewContext } from 'react-native-safe-area-context';
-import { FoodBottomSheet } from '../../components/FoodBottomSheet';
-import { SavedFoodsBottomSheet } from '../../components/SavedFoodsBottomSheet';
-import { AIFoodAnalysisBottomSheet, AIAnalysisResult } from '../../components/AIFoodAnalysisBottomSheet';
-import SearchBottomSheet, { SearchBottomSheetRef } from '../../components/SearchBottomSheet';
+import { FoodBottomSheet } from '../../../components/FoodBottomSheet';
+import { SavedFoodsBottomSheet } from '../../../components/SavedFoodsBottomSheet';
+import { AIFoodAnalysisBottomSheet, AIAnalysisResult } from '../../../components/AIFoodAnalysisBottomSheet';
+import SearchBottomSheet, { SearchBottomSheetRef } from '../../../components/SearchBottomSheet';
 
 import Svg, { Circle } from 'react-native-svg';
-import { useAuth } from '../../contexts/AuthContext';
-import { api, FoodItem, FoodLog, SavedFood } from '../../services/api';
+import { useAuth } from '../../../contexts/AuthContext';
+import { api, FoodItem, FoodLog, SavedFood } from '../../../services/api';
 import { getAuth } from '@react-native-firebase/auth';
-import { formatNumber } from '../../utils/formatters';
+import { formatNumber } from '../../../utils/formatters';
 
 const MEAL_TYPES = [
   'Café da Manhã',
@@ -134,30 +135,47 @@ export default function DashboardScreen() {
   // User data from auth context
   const { user } = useAuth();
 
+  console.log('DashboardScreen: Component rendering, user:', !!user, 'user data:', user ? { uid: user.uid, calories: user.calories } : 'null');
+
+  // Add loading state for user data
+  const isLoading = !user;
+
   // Format date for display
   const formattedDate = format(currentDate, 'dd MMM');
   const isToday = format(currentDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
   const dateKey = format(currentDate, 'yyyy-MM-dd');
 
+  // Validate date
+  if (isNaN(currentDate.getTime())) {
+    setCurrentDate(new Date());
+  }
+
   // Load food logs from backend when date changes or user changes
   useEffect(() => {
-    if (user?.uid) {
-      // Add a small delay to ensure Firebase auth is fully initialized
-      const timer = setTimeout(() => {
-        loadFoodLogs();
-      }, 500);
+    console.log('Dashboard useEffect: user?.uid:', user?.uid, 'currentDate:', currentDate);
+    try {
+      if (user?.uid) {
+        // Add a small delay to ensure Firebase auth is fully initialized
+        const timer = setTimeout(() => {
+          console.log('Dashboard useEffect: Calling loadFoodLogs after delay');
+          loadFoodLogs();
+        }, 500);
 
-      return () => clearTimeout(timer);
+        return () => clearTimeout(timer);
+      }
+    } catch (error) {
+      console.error('Error in useEffect for loading food logs:', error);
     }
   }, [currentDate, user?.uid]);
 
   const loadFoodLogs = async () => {
-    if (!user?.uid) {
-      console.log('No user.uid available for loading food logs');
-      return;
-    }
-
+    console.log('loadFoodLogs: Starting to load food logs');
     try {
+      if (!user?.uid) {
+        console.log('No user.uid available for loading food logs');
+        return;
+      }
+
       setLoadingLogs(true);
       const firebaseUser = getAuth().currentUser;
 
@@ -215,6 +233,12 @@ export default function DashboardScreen() {
     fat: acc.fat + (food.fat || 0),
   }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
 
+  // Ensure totals are valid numbers
+  if (isNaN(totals.calories)) totals.calories = 0;
+  if (isNaN(totals.protein)) totals.protein = 0;
+  if (isNaN(totals.carbs)) totals.carbs = 0;
+  if (isNaN(totals.fat)) totals.fat = 0;
+
   const targets = {
     calories: user?.calories || 2000,
     protein: user?.protein || 150,
@@ -222,85 +246,142 @@ export default function DashboardScreen() {
     fat: user?.fat || 65,
   };
 
-  const remainingCalories = targets.calories - totals.calories;
+  // Ensure targets are valid numbers
+  if (!targets.calories || targets.calories <= 0) {
+    targets.calories = 2000;
+  }
+  if (!targets.protein || targets.protein <= 0) {
+    targets.protein = 150;
+  }
+  if (!targets.carbs || targets.carbs <= 0) {
+    targets.carbs = 250;
+  }
+  if (!targets.fat || targets.fat <= 0) {
+    targets.fat = 65;
+  }
+
+  let remainingCalories = Math.max(0, targets.calories - totals.calories);
+  if (isNaN(remainingCalories)) {
+    remainingCalories = 0;
+  }
 
   // Get foods for each meal type
   const getFoodsForMeal = (mealType: string) => {
-    return foodLogs?.filter(food => food.mealType === mealType) || [];
+    if (!foodLogs || !Array.isArray(foodLogs)) return [];
+    return foodLogs.filter(food => food.mealType === mealType) || [];
   };
 
   const getCaloriesForMeal = (mealType: string) => {
     const foods = getFoodsForMeal(mealType);
-    return foods.reduce((sum, food) => sum + (food.calories || 0), 0);
+    const total = foods.reduce((sum, food) => sum + (food.calories || 0), 0);
+    return isNaN(total) ? 0 : total;
   };
 
   // Navigation handlers
   const handlePreviousDay = () => {
-    const newDate = new Date(currentDate);
-    newDate.setDate(currentDate.getDate() - 1);
-    setCurrentDate(newDate);
+    try {
+      const newDate = new Date(currentDate);
+      newDate.setDate(currentDate.getDate() - 1);
+      if (!isNaN(newDate.getTime())) {
+        setCurrentDate(newDate);
+      }
+    } catch (error) {
+      console.error('Error handling previous day:', error);
+    }
   };
 
   const handleNextDay = () => {
-    if (!isToday) {
-      const newDate = new Date(currentDate);
-      newDate.setDate(currentDate.getDate() + 1);
-      setCurrentDate(newDate);
+    try {
+      if (!isToday) {
+        const newDate = new Date(currentDate);
+        newDate.setDate(currentDate.getDate() + 1);
+        if (!isNaN(newDate.getTime())) {
+          setCurrentDate(newDate);
+        }
+      }
+    } catch (error) {
+      console.error('Error handling next day:', error);
     }
   };
 
   // Food management handlers
   const handleOption = (option: string) => {
-    setAddFoodVisible(false);
+    try {
+      setAddFoodVisible(false);
 
-    switch (option) {
-      case 'manual':
-        setFoodEditInitialData({ mealType: selectedMealType || 'Almoço' });
-        bottomSheetRef.current?.present();
-        break;
-      case 'recentes':
-        Alert.alert('Refeições Recentes', 'Funcionalidade em desenvolvimento');
-        break;
-      case 'salvos':
-        savedFoodsBottomSheetRef.current?.present();
-        break;
-      case 'banco':
-        searchBottomSheetRef.current?.present();
-        break;
-      case 'ai':
-        aiFoodAnalysisBottomSheetRef.current?.present();
-        break;
+      switch (option) {
+        case 'manual':
+          setFoodEditInitialData({ mealType: selectedMealType || 'Almoço' });
+          bottomSheetRef.current?.present();
+          break;
+        case 'recentes':
+          Alert.alert('Refeições Recentes', 'Funcionalidade em desenvolvimento');
+          break;
+        case 'salvos':
+          savedFoodsBottomSheetRef.current?.present();
+          break;
+        case 'banco':
+          searchBottomSheetRef.current?.present();
+          break;
+        case 'ai':
+          aiFoodAnalysisBottomSheetRef.current?.present();
+          break;
+        default:
+          console.warn('Unknown option:', option);
+      }
+    } catch (error) {
+      console.error('Error handling option:', error);
+      Alert.alert('Erro', 'Ocorreu um erro ao processar sua seleção. Tente novamente.');
     }
   };
 
   const handleAddFoodToMeal = (mealType: string) => {
-    setSelectedMealType(mealType);
-    setAddFoodVisible(true);
+    try {
+      if (!mealType || typeof mealType !== 'string') {
+        console.warn('Invalid meal type:', mealType);
+        return;
+      }
+      setSelectedMealType(mealType);
+      setAddFoodVisible(true);
+    } catch (error) {
+      console.error('Error adding food to meal:', error);
+    }
   };
 
   const handleSearchFood = async (query: string) => {
-    setSearchQuery(query);
-
-    // Only search if query has at least 2 characters
-    if (query.trim().length >= 2) {
-      try {
-        setLoadingFoods(true);
-        const foods = await api.searchFoods(query);
-        // Ensure foods is an array and has valid data
-        if (Array.isArray(foods)) {
-          setFilteredFoods(foods);
-        } else {
-          console.error('Search returned non-array result:', foods);
-          setFilteredFoods([]);
-        }
-      } catch (error) {
-        console.error('Failed to search foods:', error);
+    try {
+      if (!query || typeof query !== 'string') {
         setFilteredFoods([]);
-      } finally {
-        setLoadingFoods(false);
+        return;
       }
-    } else {
+
+      setSearchQuery(query);
+
+      // Only search if query has at least 2 characters
+      if (query.trim().length >= 2) {
+        try {
+          setLoadingFoods(true);
+          const foods = await api.searchFoods(query);
+          // Ensure foods is an array and has valid data
+          if (Array.isArray(foods)) {
+            setFilteredFoods(foods);
+          } else {
+            console.error('Search returned non-array result:', foods);
+            setFilteredFoods([]);
+          }
+        } catch (error) {
+          console.error('Failed to search foods:', error);
+          setFilteredFoods([]);
+        } finally {
+          setLoadingFoods(false);
+        }
+      } else {
+        setFilteredFoods([]);
+      }
+    } catch (error) {
+      console.error('Error in handleSearchFood:', error);
       setFilteredFoods([]);
+      setLoadingFoods(false);
     }
   };
 
@@ -335,20 +416,40 @@ export default function DashboardScreen() {
 
   // Open bottom sheet for add
   const openAddFoodModal = (mealType?: string) => {
-    setSelectedMealType(mealType || 'Almoço');
-    setAddFoodVisible(true);
+    try {
+      if (mealType && typeof mealType !== 'string') {
+        console.warn('Invalid meal type for adding food:', mealType);
+        return;
+      }
+      setSelectedMealType(mealType || 'Almoço');
+      setAddFoodVisible(true);
+    } catch (error) {
+      console.error('Error in openAddFoodModal:', error);
+    }
   };
 
   // Open bottom sheet for edit
   const openEditFoodModal = (food: any) => {
-    setFoodEditInitialData(food);
-    bottomSheetRef.current?.present();
+    try {
+      if (!food || !food.name) {
+        console.warn('Invalid food data for editing:', food);
+        return;
+      }
+      setFoodEditInitialData(food);
+      bottomSheetRef.current?.present();
+    } catch (error) {
+      console.error('Error in openEditFoodModal:', error);
+    }
   };
 
   // Handle save (add or edit)
   const handleSaveFood = async (food: any) => {
     setFoodBottomLoading(true)
     try {
+      if (!food || !food.name) {
+        Alert.alert('Erro', 'Dados do alimento inválidos');
+        return;
+      }
       const firebaseUser = getAuth().currentUser;
       const token = firebaseUser ? await firebaseUser.getIdToken() : '';
 
@@ -468,12 +569,20 @@ export default function DashboardScreen() {
     } catch (error) {
       console.error('Failed to delete food log:', error);
       Alert.alert('Erro', 'Falha ao remover alimento. Tente novamente.');
-    } finally { setFoodBottomLoading(false) }
+    } finally { 
+      setFoodBottomLoading(false) 
+    }
   };
 
   // Saved Foods handlers
   const handleSelectSavedFood = (savedFood: SavedFood) => {
-    // Convert saved food to food log format and add to current meal
+    try {
+      if (!savedFood || !savedFood.name) {
+        console.warn('Invalid saved food data:', savedFood);
+        return;
+      }
+
+      // Convert saved food to food log format and add to current meal
     const newFoodLog: FoodLog = {
       id: Math.floor(Math.random() * 1000000) + 1,
       name: savedFood.name,
@@ -499,7 +608,7 @@ export default function DashboardScreen() {
           setFoodLogs((prev: any[]) => [...prev, createdFoodLog]);
         } else {
           // Fallback to local state if no backend
-          setFoodLogs((prev: any[]) => [...prev, createdFoodLog]);
+          setFoodLogs((prev: any[]) => [...prev, newFoodLog]);
         }
       } catch (error) {
         console.error('Failed to save food log from saved food:', error);
@@ -509,27 +618,53 @@ export default function DashboardScreen() {
 
     saveToBackend();
     Alert.alert('Sucesso!', `${savedFood.name} adicionado com sucesso.`);
+    } catch (error) {
+      console.error('Error in handleSelectSavedFood:', error);
+      Alert.alert('Erro', 'Ocorreu um erro ao processar o alimento salvo. Tente novamente.');
+    }
   };
 
   const handleEditSavedFood = (savedFood: SavedFood) => {
-    // Open the food bottom sheet in edit mode with saved food data
-    setFoodEditInitialData({
-      ...savedFood,
-      mealType: selectedMealType || 'Almoço',
-      isSavedFood: true, // Flag to indicate this is a saved food being edited
-    });
-    savedFoodsBottomSheetRef.current?.dismiss();
-    bottomSheetRef.current?.present();
+    try {
+      if (!savedFood || !savedFood.name) {
+        console.warn('Invalid saved food data for editing:', savedFood);
+        return;
+      }
+
+      // Open the food bottom sheet in edit mode with saved food data
+      setFoodEditInitialData({
+        ...savedFood,
+        mealType: selectedMealType || 'Almoço',
+        isSavedFood: true, // Flag to indicate this is a saved food being edited
+      });
+      savedFoodsBottomSheetRef.current?.dismiss();
+      bottomSheetRef.current?.present();
+    } catch (error) {
+      console.error('Error in handleEditSavedFood:', error);
+    }
   };
 
   const handleDeleteSavedFood = (foodId: number) => {
-    // This will be handled by the SavedFoodsBottomSheet component
-    console.log('Saved food deleted:', foodId);
+    try {
+      if (!foodId || typeof foodId !== 'number') {
+        console.warn('Invalid food ID for deletion:', foodId);
+        return;
+      }
+      // This will be handled by the SavedFoodsBottomSheet component
+      console.log('Saved food deleted:', foodId);
+    } catch (error) {
+      console.error('Error in handleDeleteSavedFood:', error);
+    }
   };
 
   // AI Food Analysis handler
   const handleFoodAnalyzed = async (aiResult: AIAnalysisResult) => {
     try {
+      if (!aiResult || !aiResult.food) {
+        Alert.alert('Erro', 'Dados de análise inválidos');
+        return;
+      }
+
       const firebaseUser = getAuth().currentUser;
       const token = firebaseUser ? await firebaseUser.getIdToken() : '';
 
@@ -566,6 +701,15 @@ export default function DashboardScreen() {
   };
 
 
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFF8F6' }}>
+        <Text style={{ fontSize: 18, color: '#64748b', marginBottom: 16 }}>Carregando dados do usuário...</Text>
+        <ActivityIndicator size="large" color="#FF725E" />
+      </View>
+    );
+  }
 
   return (
     <BottomSheetModalProvider>
@@ -624,6 +768,9 @@ export default function DashboardScreen() {
                   const stroke = 10;
                   const circumference = 2 * Math.PI * radius;
                   const percentage = Math.min((totals.calories / (targets.calories || 1)) * 100, 100);
+                  if (isNaN(percentage)) {
+                    return null; // Don't render the progress ring if calculation fails
+                  }
                   const strokeDashoffset = circumference - (percentage / 100) * circumference;
                   return (
                     <Svg width={radius * 2} height={radius * 2}>

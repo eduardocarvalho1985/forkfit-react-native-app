@@ -3,9 +3,9 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Platform,
 import { FontAwesome6 } from '@expo/vector-icons';
 import { BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { useFocusEffect } from '@react-navigation/native';
-import { PrivacyBottomSheet } from '../../components/PrivacyBottomSheet';
-import { HelpBottomSheet } from '../../components/HelpBottomSheet';
-import { useAuth } from '../../contexts/AuthContext';
+import { PrivacyBottomSheet } from '../../../components/PrivacyBottomSheet';
+import { HelpBottomSheet } from '../../../components/HelpBottomSheet';
+import { useAuth } from '../../../contexts/AuthContext';
 import {
   getNotificationPermissionStatus,
   requestNotificationPermissions,
@@ -13,12 +13,12 @@ import {
   updateNotificationPreferences,
   getNotificationPreferences,
   pauseNotificationsTemporarily
-} from '../../services/notificationService';
+} from '../../../services/notificationService';
 import { EmailAuthProvider, getAuth, GoogleAuthProvider, OAuthProvider, reauthenticateWithCredential } from '@react-native-firebase/auth';
 import prompt from 'react-native-prompt-android';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { appleAuth } from '../../services/appleAuth';
-import { api } from '@/services/api';
+import { appleAuth } from '../../../services/appleAuth';
+import { api } from '../../../services/api';
 
 const CORAL = '#FF725E';
 const TEXT_DARK = '#1F2937';

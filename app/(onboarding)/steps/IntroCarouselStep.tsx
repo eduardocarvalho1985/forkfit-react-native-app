@@ -1,23 +1,31 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { Link } from 'expo-router';
 
 const CORAL = '#FF725E';
 const OFF_WHITE = '#FDF6F3';
 const TEXT = '#1F2937';
 
-interface EmotionalGoalStepProps {
+interface IntroCarouselStepProps {
   onSetLoading: (loading: boolean) => void;
 }
 
-export default function EmotionalGoalStep({ onSetLoading }: EmotionalGoalStepProps) {
+export default function IntroCarouselStep({ onSetLoading }: IntroCarouselStepProps) {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Emotional Goals</Text>
+        <Text style={styles.title}>Intro Carousel Step</Text>
         <Text style={styles.subtitle}>
-          Connect with the user&apos;s deeper motivations
+          The initial hook - placeholder for carousel content
         </Text>
       </View>
+      
+      {/* Sign In button for returning users */}
+      <Link href="/(auth)/login" asChild style={styles.signInButton}>
+        <Pressable>
+          <Text style={styles.signInText}>Sign In</Text>
+        </Pressable>
+      </Link>
     </View>
   );
 }
@@ -47,5 +55,15 @@ const styles = StyleSheet.create({
     color: '#64748b',
     textAlign: 'center',
     lineHeight: 24,
+  },
+  signInButton: {
+    position: 'absolute',
+    bottom: 40,
+    right: 20,
+  },
+  signInText: {
+    fontSize: 16,
+    color: '#64748b',
+    fontWeight: '600',
   },
 });

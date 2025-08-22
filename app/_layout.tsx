@@ -1,70 +1,58 @@
 // File: app/_layout.tsx
 
 import React from 'react';
-import { Stack, router } from 'expo-router';
+import { Slot, useRouter, useSegments } from 'expo-router';
 import { View, ActivityIndicator, LogBox } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import * as Notifications from 'expo-notifications';
-import { AuthProvider, useAuth } from '../contexts/AuthContext';
-import { ProgressProvider } from '../contexts/ProgressContext';
-import { ErrorBoundary } from '../components/ErrorBoundary';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { ProgressProvider } from '@/contexts/ProgressContext';
+import { OnboardingProvider } from './(onboarding)/OnboardingContext';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import * as Sentry from '@sentry/react-native';
 
 Sentry.init({
   dsn: 'https://84012556813f5be6d6393a34a9d1fe78@o4509826818048000.ingest.us.sentry.io/4509859054616576',
-
-  // Adds more context data to events (IP address, cookies, user, etc.)
-  // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
   sendDefaultPii: true,
-
-  // Configure Session Replay
   replaysSessionSampleRate: 0.1,
   replaysOnErrorSampleRate: 1,
   integrations: [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()],
-
-  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
-  // spotlight: __DEV__,
 });
 
 function RootLayoutContent() {
   const { user, loading } = useAuth();
+  const router = useRouter();
+  const segments = useSegments();
 
   React.useEffect(() => {
-    try {
-      console.log('RootLayout: useEffect triggered, loading:', loading, 'user:', user ? user.uid : 'null');
-      if (loading) {
-        console.log('RootLayout: Still loading, waiting...');
-        return;
-      }
+    if (loading) return; // Wait until we know if the user is logged in or not
 
-      if (!user) {
-        console.log('RootLayout: No user found, redirecting to login.');
-        router.replace('/auth/login');
-      } else {
-        // Check if user has completed onboarding
-        if (!user.onboardingCompleted) {
-          console.log('RootLayout: User found but onboarding not completed, redirecting to onboarding.');
-          router.replace('/onboarding');
-        } else {
-          console.log('RootLayout: User found and onboarding completed, redirecting to dashboard. User data:', {
-            uid: user.uid,
-            email: user.email,
-            onboardingCompleted: user.onboardingCompleted,
-            calories: user.calories,
-            protein: user.protein,
-            carbs: user.carbs,
-            fat: user.fat
-          });
-          router.replace('/(tabs)/dashboard');
-        }
-      }
-    } catch (error) {
-      console.error('RootLayout: Error in navigation logic:', error);
-      // Fallback to login if there's an error
-      router.replace('/auth/login');
+    const inAppGroup = segments[0] === '(app)';
+    const inOnboardingGroup = segments[0] === '(onboarding)';
+    const inAuthGroup = segments[0] === '(auth)';
+
+    console.log('RootLayout: Navigation check', {
+      loading,
+      user: user ? user.uid : 'null',
+      segments: segments,
+      inAppGroup,
+      inOnboardingGroup,
+      inAuthGroup
+    });
+
+    if (user && !inAppGroup) {
+      // User is authenticated, but not in the main app stack.
+      // Redirect them to the main app dashboard.
+      console.log('RootLayout: User authenticated, redirecting to main app');
+      router.replace('/(app)/(tabs)/dashboard');
+    } else if (!user && !inOnboardingGroup && !inAuthGroup) {
+      // User is not authenticated and not in onboarding or auth.
+      // Send them to the start of the onboarding flow.
+      console.log('RootLayout: User not authenticated, redirecting to onboarding');
+      router.replace('/(onboarding)');
     }
-  }, [user, loading]);
+  }, [user, loading, segments]);
 
   // Handle notification responses for navigation
   React.useEffect(() => {
@@ -76,13 +64,13 @@ function RootLayoutContent() {
         
         switch (screen) {
           case 'dashboard':
-            router.push('/(tabs)/dashboard');
+            router.push('/(app)/(tabs)/dashboard');
             break;
           case 'progress':
-            router.push('/(tabs)/progress');
+            router.push('/(app)/(tabs)/progress');
             break;
           default:
-            router.push('/(tabs)/dashboard');
+            router.push('/(app)/(tabs)/dashboard');
         }
       }
     });
@@ -106,14 +94,7 @@ function RootLayoutContent() {
     );
   }
 
-  return (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="auth" options={{ headerShown: false }} />
-      <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-    </Stack>
-  );
+  return <Slot />; // This renders the currently active route group
 }
 
 export default Sentry.wrap(function RootLayout() {
@@ -132,7 +113,9 @@ export default Sentry.wrap(function RootLayout() {
         <BottomSheetModalProvider>
           <AuthProvider>
             <ProgressProvider>
-              <RootLayoutContent />
+              <OnboardingProvider>
+                <RootLayoutContent />
+              </OnboardingProvider>
             </ProgressProvider>
           </AuthProvider>
         </BottomSheetModalProvider>

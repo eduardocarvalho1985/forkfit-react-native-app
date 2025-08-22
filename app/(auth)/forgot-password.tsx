@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -74,7 +74,7 @@ export default function ForgotPassword() {
 
       <TouchableOpacity 
         style={styles.backButton} 
-        onPress={() => router.push('/auth/login')}
+        onPress={() => router.push('/(auth)/login')}
         disabled={loading}
       >
         <Text style={styles.backButtonText}>Voltar para o Login</Text>

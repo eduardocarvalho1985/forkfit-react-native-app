@@ -4,9 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Image, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { FontAwesome6 } from '@expo/vector-icons';
-import { useAuth } from '../../contexts/AuthContext';
-import { api } from '../../services/api';
-import { parseWeight, formatWeightWithUnit } from '../../utils/weightUtils';
+import { useAuth } from '../../../contexts/AuthContext';
+import { api } from '../../../services/api';
+import { parseWeight, formatWeightWithUnit } from '../../../utils/weightUtils';
 import { getAuth } from '@react-native-firebase/auth';
 
 const CORAL = '#FF725E';
@@ -136,7 +136,7 @@ export default function ProfileScreen() {
         {/* Profile Card */}
         <View style={styles.profileCard}>
           <View style={{ alignItems: 'center', marginBottom: 8 }}>
-            <Image source={require('../../assets/images/partial-react-logo.png')} style={styles.avatar} />
+            <Image source={require('../../../assets/images/partial-react-logo.png')} style={styles.avatar} />
             <Text style={styles.profileName}>{name || 'Seu nome'}</Text>
             <Text style={styles.profileSince}>Membro desde junho 2025</Text>
           </View>
