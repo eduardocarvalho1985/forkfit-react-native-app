@@ -294,9 +294,42 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   };
 
   const completeOnboarding = async (notificationsEnabled: boolean) => {
-    // This function needs access to AuthContext, so it will be implemented 
-    // in the parent component instead
-    throw new Error('completeOnboarding must be implemented in parent component');
+    try {
+      console.log('Completing onboarding with notifications enabled:', notificationsEnabled);
+      
+      // Update onboarding data with notifications preference
+      const finalData = { ...onboardingData, notificationsEnabled };
+      
+      // Save final onboarding data
+      await saveOnboardingData(finalData);
+      
+      // Get current Firebase user
+      const currentUser = getAuth().currentUser;
+      if (!currentUser) {
+        throw new Error('No authenticated user found');
+      }
+      
+      // Save onboarding data to backend
+      try {
+        await api.updateUserProfile({
+          uid: currentUser.uid,
+          onboardingCompleted: true,
+          ...finalData
+        });
+        console.log('Onboarding data saved to backend successfully');
+      } catch (backendError) {
+        console.error('Failed to save onboarding data to backend:', backendError);
+        // Continue with local completion even if backend fails
+      }
+      
+      // Mark onboarding as completed locally
+      setOnboardingData(prev => ({ ...prev, onboardingCompleted: true }));
+      
+      console.log('Onboarding completed successfully');
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      throw error;
+    }
   };
 
   return (

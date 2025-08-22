@@ -26,7 +26,10 @@ function RootLayoutContent() {
   const segments = useSegments();
 
   React.useEffect(() => {
-    if (loading) return; // Wait until we know if the user is logged in or not
+    if (loading) {
+      console.log('RootLayout: Still loading, waiting...');
+      return;
+    }
 
     const inAppGroup = segments[0] === '(app)';
     const inOnboardingGroup = segments[0] === '(onboarding)';
@@ -38,18 +41,45 @@ function RootLayoutContent() {
       segments: segments,
       inAppGroup,
       inOnboardingGroup,
-      inAuthGroup
+      inAuthGroup,
+      currentPath: segments.join('/')
     });
 
-    if (user && !inAppGroup) {
-      // User is authenticated, but not in the main app stack.
-      // Redirect them to the main app dashboard.
-      console.log('RootLayout: User authenticated, redirecting to main app');
-      router.replace('/(app)/(tabs)/dashboard');
-    } else if (!user && !inOnboardingGroup && !inAuthGroup) {
-      // User is not authenticated and not in onboarding or auth.
-      // Send them to the start of the onboarding flow.
-      console.log('RootLayout: User not authenticated, redirecting to onboarding');
+    // Handle initial route and redirects
+    if (user) {
+      // User is authenticated
+      if (!inAppGroup) {
+        console.log('RootLayout: User authenticated, redirecting to main app');
+        router.replace('/(app)/(tabs)/dashboard');
+      }
+    } else {
+      // User is not authenticated
+      // Allow access to auth screens and onboarding
+      if (!inOnboardingGroup && !inAuthGroup && !inAppGroup) {
+        console.log('RootLayout: User not authenticated, redirecting to onboarding');
+        router.replace('/(onboarding)');
+      }
+    }
+  }, [user, loading, segments]);
+
+  // Remove the aggressive setTimeout redirect that was causing issues
+  // React.useEffect(() => {
+  //   if (!loading && !user) {
+  //     console.log('RootLayout: User not authenticated, ensuring redirect to onboarding');
+  //     // Force redirect to onboarding if not already there
+  //     setTimeout(() => {
+  //       if (!segments || segments[0] !== '(onboarding)') {
+  //         console.log('RootLayout: Forcing redirect to onboarding');
+  //         router.replace('/(onboarding)');
+  //       }
+  //     }, 100);
+  //   }
+  // }, [loading, user, segments]);
+
+  // Handle user sign out - redirect to onboarding
+  React.useEffect(() => {
+    if (!loading && !user && segments[0] === '(app)') {
+      console.log('RootLayout: User signed out, redirecting to onboarding');
       router.replace('/(onboarding)');
     }
   }, [user, loading, segments]);

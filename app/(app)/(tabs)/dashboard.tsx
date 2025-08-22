@@ -29,6 +29,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { api, FoodItem, FoodLog, SavedFood } from '../../../services/api';
 import { getAuth } from '@react-native-firebase/auth';
 import { formatNumber } from '../../../utils/formatters';
+import { V1APIDebugPanel } from '../../../components/V1APIDebugPanel';
 
 const MEAL_TYPES = [
   'Café da Manhã',
@@ -128,6 +129,7 @@ export default function DashboardScreen() {
   const [filteredFoods, setFilteredFoods] = useState<FoodItem[]>([]);
   const [foodEditInitialData, setFoodEditInitialData] = useState<any>(null);
   const [foodBottomloading, setFoodBottomLoading] = useState(false);
+  const [debugPanelVisible, setDebugPanelVisible] = useState(false);
 
   // Food database loading state
   const [loadingFoods, setLoadingFoods] = useState(false);
@@ -733,9 +735,17 @@ export default function DashboardScreen() {
                 <Text style={styles.appTitle}>ForkFit</Text>
                 <Icon name="restaurant" size={22} color="#fff" style={styles.titleIcon} />
               </View>
-              <TouchableOpacity style={styles.notificationButton}>
-                <Icon name="notifications-outline" size={26} color="#fff" />
-              </TouchableOpacity>
+              <View style={styles.headerButtons}>
+                <TouchableOpacity 
+                  style={styles.debugButton} 
+                  onPress={() => setDebugPanelVisible(true)}
+                >
+                  <Icon name="bug-outline" size={20} color="#fff" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.notificationButton}>
+                  <Icon name="notifications-outline" size={26} color="#fff" />
+                </TouchableOpacity>
+              </View>
             </View>
           </SafeAreaViewContext>
         </LinearGradient>
@@ -965,6 +975,16 @@ export default function DashboardScreen() {
           onSelectFood={handleSelectFood}
           selectedMealType={selectedMealType || 'Almoço'}
         />
+
+        {/* V1 API Debug Panel Modal */}
+        <Modal
+          isVisible={debugPanelVisible}
+          onBackdropPress={() => setDebugPanelVisible(false)}
+          onBackButtonPress={() => setDebugPanelVisible(false)}
+          style={styles.debugModal}
+        >
+          <V1APIDebugPanel onClose={() => setDebugPanelVisible(false)} />
+        </Modal>
       </View>
     </BottomSheetModalProvider>
   );
@@ -1001,8 +1021,22 @@ const styles = StyleSheet.create({
   titleIcon: {
     marginLeft: 4,
   },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  debugButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
   notificationButton: {
     padding: 8,
+  },
+  debugModal: {
+    margin: 0,
+    justifyContent: 'flex-end',
   },
   content: {
     flex: 1,

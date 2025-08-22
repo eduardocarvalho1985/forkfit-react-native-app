@@ -75,6 +75,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Firebase auth state listener
   useEffect(() => {
     console.log('AuthContext: Setting up auth state listener');
+    console.log('AuthContext: Initial loading state:', loading);
+    console.log('AuthContext: Initial user state:', user);
+    
     const unsubscribe = onAuthStateChanged(
       getAuth(),
       async (firebaseUser) => {
@@ -109,6 +112,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // Set user to null as a fallback
           setUser(null);
         } finally {
+          console.log('AuthContext: Setting loading to false');
           setLoading(false);
         }
       }
@@ -120,6 +124,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const syncUserWithBackend = async (firebaseUser: FirebaseAuthTypes.User) => {
     try {
       console.log('Syncing user with backend:', firebaseUser.uid);
+      
+      // First, sync the basic user with backend
       const backendUser = await api.syncUser({
         uid: firebaseUser.uid,
         email: firebaseUser.email || undefined,
@@ -144,6 +150,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log('Name field from backend:', backendUser.name);
       console.log('Name field in combined user:', combinedUser.name);
       setUser(combinedUser);
+      
+      // If user is not onboarded, redirect to onboarding
+      if (!combinedUser.onboardingCompleted) {
+        console.log('User not onboarded, redirecting to onboarding');
+        // The root layout will handle this redirect
+      }
+      
     } catch (backendError) {
       console.error('Failed to sync with backend:', backendError);
       // Still set the Firebase user even if backend fails
@@ -276,17 +289,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const signOut = async () => {
     try {
-      await firebaseSignOut(getAuth());
-      // Also sign out from Google if they were signed in with Google
+      console.log('AuthContext: Starting sign out process');
+      
+      // Check if there's a current Firebase user
+      const currentUser = getAuth().currentUser;
+      if (currentUser) {
+        console.log('AuthContext: Signing out Firebase user:', currentUser.uid);
+        await firebaseSignOut(getAuth());
+        console.log('AuthContext: Firebase sign out successful');
+      } else {
+        console.log('AuthContext: No current Firebase user to sign out');
+      }
+      
+      // Always try to sign out from Google Sign-In
       try {
         await GoogleSignin.signOut();
+        console.log('AuthContext: Google Sign-In sign out successful');
       } catch (googleError) {
-        console.log('Google sign out not needed or failed:', googleError);
+        console.log('AuthContext: Google Sign-In sign out error (non-critical):', googleError);
       }
+      
+      // Clear local user state
       setUser(null);
-      console.log('Sign out successful');
+      console.log('AuthContext: Local user state cleared');
+      
     } catch (error: any) {
-      console.error('Sign out error:', error);
+      console.error('AuthContext: Error during sign out:', error);
+      // Even if there's an error, clear the local state
+      setUser(null);
       throw new Error('Failed to sign out');
     }
   };
@@ -331,8 +361,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser({ ...user, ...updates });
     }
   };
-
-
 
   return (
     <AuthContext.Provider value={{

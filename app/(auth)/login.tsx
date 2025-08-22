@@ -14,46 +14,49 @@ export default function Login() {
       Alert.alert('Erro', 'Por favor, preencha todos os campos');
       return;
     }
-    setLoading("email")
-
+    
+    setLoading("email");
     try {
       await signIn(email, password);
       // Navigation will be handled by the root layout
     } catch (error: any) {
       Alert.alert('Erro', error.message);
     } finally {
-      setLoading("")
+      setLoading("");
     }
   };
 
   const handleGoogleSignIn = async () => {
     try {
-      setLoading("google")
+      setLoading("google");
       await signInWithGoogle();
       // Navigation will be handled by the root layout
     } catch (error: any) {
       Alert.alert('Erro', error.message);
     } finally {
-      setLoading("")
+      setLoading("");
     }
   };
 
   const handleAppleSignIn = async () => {
     try {
-      setLoading("apple")
+      setLoading("apple");
       await signInWithApple();
       // Navigation will be handled by the root layout
     } catch (error: any) {
       Alert.alert('Erro', error.message);
     } finally {
-      setLoading("")
+      setLoading("");
     }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>ForkFit</Text>
-      <Text style={styles.subtitle}>Entre na sua conta</Text>
+      <Text style={styles.subtitle}>Entrar na sua conta</Text>
+      <Text style={styles.description}>
+        Acesse seu plano personalizado e continue sua jornada
+      </Text>
 
       <TextInput
         style={styles.input}
@@ -76,13 +79,6 @@ export default function Login() {
         <Text style={styles.buttonText}>{loading === "email" ? "Entrando..." : "Entrar"}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.forgotPasswordButton}
-        onPress={() => router.push('/auth/forgot-password')}
-      >
-        <Text style={styles.forgotPasswordText}>Esqueceu sua senha?</Text>
-      </TouchableOpacity>
-
       <View style={styles.divider}>
         <View style={styles.dividerLine} />
         <Text style={styles.dividerText}>ou</Text>
@@ -93,14 +89,26 @@ export default function Login() {
         <Text style={styles.socialButtonText}>{loading === "google" ? "Entrando com Google..." : "Entrar com Google"}</Text>
       </TouchableOpacity>
 
+      {/* Apple Sign-In Button - iOS ONLY */}
       {Platform.OS === 'ios' && (
         <TouchableOpacity style={styles.appleButton} onPress={handleAppleSignIn} disabled={loading === "apple"}>
           <Text style={styles.socialButtonText}>{loading === "apple" ? "Entrando com Apple..." : "Entrar com Apple"}</Text>
         </TouchableOpacity>
       )}
 
-      <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
-        <Text style={styles.linkText}>Não tem conta? Cadastre-se</Text>
+      {/* Debug info in development */}
+      {__DEV__ && (
+        <Text style={styles.debugText}>
+          Platform: {Platform.OS} | Apple Button: {Platform.OS === 'ios' ? 'Visible' : 'Hidden'}
+        </Text>
+      )}
+
+      <TouchableOpacity onPress={() => router.push('/(auth)/forgot-password')}>
+        <Text style={styles.linkText}>Esqueceu sua senha?</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => router.push('/(onboarding)')}>
+        <Text style={styles.linkText}>Não tem conta? Volte ao onboarding</Text>
       </TouchableOpacity>
     </View>
   );
@@ -122,6 +130,12 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 32,
+    color: '#666',
+  },
+  description: {
+    fontSize: 14,
     textAlign: 'center',
     marginBottom: 32,
     color: '#666',
@@ -192,5 +206,11 @@ const styles = StyleSheet.create({
     color: '#FF725E',
     fontSize: 14,
     fontWeight: '500',
+  },
+  debugText: {
+    marginTop: 20,
+    textAlign: 'center',
+    color: '#333',
+    fontSize: 12,
   },
 });

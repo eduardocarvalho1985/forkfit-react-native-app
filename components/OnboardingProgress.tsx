@@ -15,26 +15,28 @@ interface OnboardingProgressProps {
 export default function OnboardingProgress({ 
   currentStep, 
   totalSteps, 
-  showPercentage = true 
+  showPercentage = true
 }: OnboardingProgressProps) {
   const progress = (currentStep / totalSteps) * 100;
 
   return (
     <View style={styles.container}>
-      <View style={styles.progressContainer}>
-        <View style={styles.progressBar}>
-          <View 
-            style={[
-              styles.progressFill, 
-              { width: `${progress}%` }
-            ]} 
-          />
+      <View style={styles.headerRow}>
+        <View style={styles.progressContainer}>
+          <View style={styles.progressBar}>
+            <View 
+              style={[
+                styles.progressFill, 
+                { width: `${progress}%` }
+              ]} 
+            />
+          </View>
+          {showPercentage && (
+            <Text style={styles.percentageText}>
+              {Math.round(progress)}%
+            </Text>
+          )}
         </View>
-        {showPercentage && (
-          <Text style={styles.percentageText}>
-            {Math.round(progress)}%
-          </Text>
-        )}
       </View>
       <Text style={styles.stepText}>
         Passo {currentStep} de {totalSteps}
@@ -49,10 +51,16 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     backgroundColor: OFF_WHITE,
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
   progressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    flex: 1,
   },
   progressBar: {
     flex: 1,

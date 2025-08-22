@@ -4,7 +4,6 @@ import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOnboarding } from '@/app/(onboarding)/OnboardingContext';
 import { api } from '@/services/api';
-import { getAuth } from '@react-native-firebase/auth';
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -14,59 +13,98 @@ export default function Register() {
   const { signUp, signInWithGoogle, signInWithApple } = useAuth();
   const { getCurrentStepData, clearOnboardingData } = useOnboarding();
 
+  // Password validation state
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Validate password in real-time
+  const validatePassword = (password: string) => {
+    const errors: string[] = [];
+    
+    if (password.length < 8) {
+      errors.push('Mínimo 8 caracteres');
+    }
+    if (!/[a-z]/.test(password)) {
+      errors.push('Uma letra minúscula');
+    }
+    if (!/[A-Z]/.test(password)) {
+      errors.push('Uma letra maiúscula');
+    }
+    if (!/[0-9]/.test(password)) {
+      errors.push('Um número');
+    }
+    if (!/[^a-zA-Z0-9]/.test(password)) {
+      errors.push('Um caractere especial (!@#$%^&*)');
+    }
+    
+    setPasswordErrors(errors);
+    return errors.length === 0;
+  };
+
+  // Handle password change
+  const handlePasswordChange = (text: string) => {
+    setPassword(text);
+    validatePassword(text);
+  };
+
+  // Get Firebase error message in Portuguese
+  const getFirebaseErrorMessage = (error: any): string => {
+    const errorCode = error?.code || '';
+    
+    switch (errorCode) {
+      case 'auth/email-already-in-use':
+        return 'Este email já está em uso. Tente fazer login ou use outro email.';
+      case 'auth/invalid-email':
+        return 'Email inválido. Verifique o formato do email.';
+      case 'auth/weak-password':
+        return 'Senha muito fraca. Verifique os requisitos abaixo.';
+      case 'auth/password-does':
+        return 'Senha não atende aos requisitos de segurança. Verifique os critérios abaixo.';
+      case 'auth/network-request-failed':
+        return 'Erro de conexão. Verifique sua internet e tente novamente.';
+      default:
+        return error?.message || 'Ocorreu um erro inesperado. Tente novamente.';
+    }
+  };
+
   const handleRegister = async () => {
     if (!email || !password || !confirmPassword) {
       Alert.alert('Erro', 'Por favor, preencha todos os campos');
       return;
     }
+    
     if (password !== confirmPassword) {
       Alert.alert('Erro', 'As senhas não coincidem');
+      return;
+    }
+
+    if (passwordErrors.length > 0) {
+      Alert.alert('Erro', 'A senha não atende aos requisitos de segurança');
       return;
     }
     
     setLoading("email");
     try {
-      // Create the user account
-      await signUp(email, password);
-      
-      // Get the current user and onboarding data
-      const currentUser = getAuth().currentUser;
-      if (!currentUser) {
-        throw new Error('User creation failed');
-      }
-      
       // Get all onboarding data
       const onboardingData = getCurrentStepData();
-      console.log('Onboarding data to save:', onboardingData);
+      console.log('Register: Onboarding data to save:', onboardingData);
       
-      // Get authentication token
-      const token = await currentUser.getIdToken();
-      if (!token) {
-        throw new Error('No authentication token available');
-      }
+      // Create Firebase account
+      await signUp(email, password);
       
-      // Create user profile with all onboarding data
-      const userProfileData = {
-        ...onboardingData,
-        onboardingCompleted: true,
-        notificationsEnabled: false // Will be set later
-      };
+      // The AuthContext will handle the backend sync automatically
+      // and redirect to the dashboard when complete
       
-      console.log('Creating user profile with data:', userProfileData);
-      
-      // Save user profile to backend
-      await api.updateUserProfile(currentUser.uid, userProfileData, token);
-      console.log('User profile created successfully');
-      
-      // Clear onboarding data
+      // Clear onboarding data after successful account creation
       clearOnboardingData();
       
-      // Navigate to main app
-      router.replace('/(app)');
+      console.log('Register: Account created successfully');
       
     } catch (error: any) {
       console.error('Error in registration flow:', error);
-      Alert.alert('Erro', error.message || 'Erro ao criar conta');
+      const errorMessage = getFirebaseErrorMessage(error);
+      Alert.alert('Erro no Cadastro', errorMessage);
     } finally {
       setLoading("");
     }
@@ -75,10 +113,21 @@ export default function Register() {
   const handleGoogleSignIn = async () => {
     try {
       setLoading("google");
+      
+      // Get onboarding data for new users
+      const onboardingData = getCurrentStepData();
+      console.log('Register: Google sign in with onboarding data:', onboardingData);
+      
       await signInWithGoogle();
-      // Navigation will be handled by the root layout
+      
+      // Clear onboarding data after successful sign in
+      clearOnboardingData();
+      
+      console.log('Register: Google sign in successful');
+      
     } catch (error: any) {
-      Alert.alert('Erro', error.message);
+      console.error('Error during Google sign in:', error);
+      Alert.alert('Erro', error.message || 'Erro no login com Google');
     } finally {
       setLoading("");
     }
@@ -87,10 +136,21 @@ export default function Register() {
   const handleAppleSignIn = async () => {
     try {
       setLoading("apple");
+      
+      // Get onboarding data for new users
+      const onboardingData = getCurrentStepData();
+      console.log('Register: Apple sign in with onboarding data:', onboardingData);
+      
       await signInWithApple();
-      // Navigation will be handled by the root layout
+      
+      // Clear onboarding data after successful sign in
+      clearOnboardingData();
+      
+      console.log('Register: Apple sign in successful');
+      
     } catch (error: any) {
-      Alert.alert('Erro', error.message);
+      console.error('Error during Apple sign in:', error);
+      Alert.alert('Erro', error.message || 'Erro no login com Apple');
     } finally {
       setLoading("");
     }
@@ -113,23 +173,80 @@ export default function Register() {
         autoCapitalize="none"
       />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Senha"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Senha"
+          value={password}
+          onChangeText={handlePasswordChange}
+          secureTextEntry={!showPassword}
+        />
+        <TouchableOpacity 
+          style={styles.eyeButton} 
+          onPress={() => setShowPassword(!showPassword)}
+        >
+          <Text style={styles.eyeButtonText}>{showPassword ? '👁️' : '👁️‍🗨️'}</Text>
+        </TouchableOpacity>
+      </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Confirmar Senha"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        secureTextEntry
-      />
+      {/* Password requirements */}
+      {password.length > 0 && (
+        <View style={styles.passwordRequirements}>
+          <Text style={styles.requirementsTitle}>A senha deve conter:</Text>
+          {[
+            { text: 'Mínimo 8 caracteres', valid: password.length >= 8 },
+            { text: 'Uma letra minúscula', valid: /[a-z]/.test(password) },
+            { text: 'Uma letra maiúscula', valid: /[A-Z]/.test(password) },
+            { text: 'Um número', valid: /[0-9]/.test(password) },
+            { text: 'Um caractere especial (!@#$%^&*)', valid: /[^a-zA-Z0-9]/.test(password) }
+          ].map((requirement, index) => (
+            <Text 
+              key={index} 
+              style={[
+                styles.requirementText,
+                { color: requirement.valid ? '#10B981' : '#EF4444' }
+              ]}
+            >
+              {requirement.valid ? '✅' : '❌'} {requirement.text}
+            </Text>
+          ))}
+        </View>
+      )}
 
-      <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading === "email"}>
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Confirmar Senha"
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          secureTextEntry={!showConfirmPassword}
+        />
+        <TouchableOpacity 
+          style={styles.eyeButton} 
+          onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+        >
+          <Text style={styles.eyeButtonText}>{showConfirmPassword ? '👁️' : '👁️‍🗨️'}</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Password match indicator */}
+      {confirmPassword.length > 0 && (
+        <Text style={[
+          styles.matchIndicator,
+          { color: password === confirmPassword ? '#10B981' : '#EF4444' }
+        ]}>
+          {password === confirmPassword ? '✅ Senhas coincidem' : '❌ Senhas não coincidem'}
+        </Text>
+      )}
+
+      <TouchableOpacity 
+        style={[
+          styles.button, 
+          { opacity: loading === "email" || passwordErrors.length > 0 || password !== confirmPassword ? 0.5 : 1 }
+        ]} 
+        onPress={handleRegister} 
+        disabled={loading === "email" || passwordErrors.length > 0 || password !== confirmPassword}
+      >
         <Text style={styles.buttonText}>{loading === "email" ? "Cadastrando..." : "Criar Conta"}</Text>
       </TouchableOpacity>
 
@@ -143,12 +260,14 @@ export default function Register() {
         <Text style={styles.socialButtonText}>{loading === "google" ? "Cadastrando com Google..." : "Cadastrar com Google"}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.appleButton} onPress={handleAppleSignIn} disabled={loading === "apple"}>
-        <Text style={styles.socialButtonText}>{loading === "apple" ? "Cadastrando com Apple..." : "Cadastrar com Apple"}</Text>
-      </TouchableOpacity>
+      {Platform.OS === 'ios' && (
+        <TouchableOpacity style={styles.appleButton} onPress={handleAppleSignIn} disabled={loading === "apple"}>
+          <Text style={styles.socialButtonText}>{loading === "apple" ? "Cadastrando com Apple..." : "Cadastrar com Apple"}</Text>
+        </TouchableOpacity>
+      )}
 
-      <TouchableOpacity style={styles.loginLink} onPress={() => router.push('/(auth)/login')}>
-        <Text style={styles.loginLinkText}>Já tem uma conta? Faça login</Text>
+      <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
+        <Text style={styles.linkText}>Já tem conta? Entre aqui</Text>
       </TouchableOpacity>
     </View>
   );
@@ -238,12 +357,42 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  loginLink: {
-    marginTop: 20,
-    alignSelf: 'center',
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 16,
   },
-  loginLinkText: {
-    color: '#FF725E',
-    fontSize: 16,
+  eyeButton: {
+    padding: 8,
+  },
+  eyeButtonText: {
+    fontSize: 24,
+  },
+  passwordRequirements: {
+    marginTop: -10,
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 8,
+  },
+  requirementsTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#666',
+  },
+  requirementText: {
+    fontSize: 13,
+    marginBottom: 4,
+  },
+  matchIndicator: {
+    fontSize: 14,
+    marginTop: -10,
+    marginBottom: 16,
+    textAlign: 'center',
   },
 });

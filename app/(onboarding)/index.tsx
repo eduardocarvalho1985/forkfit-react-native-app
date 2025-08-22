@@ -90,7 +90,7 @@ function OnboardingContent() {
   useEffect(() => {
     if (user?.onboardingCompleted) {
       console.log('User already onboarded, redirecting to dashboard');
-      router.replace('/(tabs)/dashboard');
+      router.replace('/(app)/(tabs)/dashboard');
       return;
     }
   }, [user?.onboardingCompleted]);
@@ -205,10 +205,10 @@ function OnboardingContent() {
 
     if (currentStep === 'paywall') {
       return {
-        onPress: () => router.push('/(auth)/register'),
+        onPress: handleNext, // Use handleNext to complete onboarding
         disabled: false, // Paywall step is always accessible
         loading: false,
-        buttonText: 'Criar Conta'
+        buttonText: 'Completar Onboarding'
       };
     }
     return {
@@ -305,5 +305,9 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 18,
+  },
+  debugModal: {
+    margin: 0,
+    justifyContent: 'flex-end',
   },
 }); 

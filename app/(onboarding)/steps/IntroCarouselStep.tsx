@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 
 const CORAL = '#FF725E';
 const OFF_WHITE = '#FDF6F3';
@@ -11,21 +11,33 @@ interface IntroCarouselStepProps {
 }
 
 export default function IntroCarouselStep({ onSetLoading }: IntroCarouselStepProps) {
+  const router = useRouter();
+
+  const handleSignIn = () => {
+    console.log('IntroCarouselStep: Sign In button pressed, navigating to auth');
+    router.push('/(auth)/login');
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Intro Carousel Step</Text>
+        <Text style={styles.title}>Bem-vindo ao ForkFit</Text>
         <Text style={styles.subtitle}>
-          The initial hook - placeholder for carousel content
+          Seu parceiro personalizado para uma vida mais saudável
+        </Text>
+        <Text style={styles.description}>
+          Vamos criar um plano personalizado baseado nos seus objetivos e estilo de vida
         </Text>
       </View>
       
-      {/* Sign In button for returning users */}
-      <Link href="/(auth)/login" asChild style={styles.signInButton}>
-        <Pressable>
-          <Text style={styles.signInText}>Sign In</Text>
-        </Pressable>
-      </Link>
+      {/* Sign In button for EXISTING users ONLY */}
+      <Pressable style={styles.signInButton} onPress={handleSignIn}>
+        <Text style={styles.signInText}>Já tem conta? Entrar</Text>
+      </Pressable>
+      
+      <Text style={styles.newUserText}>
+        Novo usuário? Complete o onboarding para criar sua conta
+      </Text>
     </View>
   );
 }
@@ -56,6 +68,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
   },
+  description: {
+    fontSize: 16,
+    color: '#64748b',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginTop: 12,
+  },
   signInButton: {
     position: 'absolute',
     bottom: 40,
@@ -63,7 +82,14 @@ const styles = StyleSheet.create({
   },
   signInText: {
     fontSize: 16,
-    color: '#64748b',
+    color: CORAL,
     fontWeight: '600',
+  },
+  newUserText: {
+    position: 'absolute',
+    bottom: 10,
+    left: 20,
+    fontSize: 14,
+    color: '#64748b',
   },
 });
