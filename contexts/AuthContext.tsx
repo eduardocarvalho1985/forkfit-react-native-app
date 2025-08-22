@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { Platform } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import auth, {
   FirebaseAuthTypes,
   getAuth,
@@ -9,12 +9,14 @@ import auth, {
   signOut as firebaseSignOut,
   signInWithCredential,
   sendPasswordResetEmail,
+  AppleAuthProvider,
+  GoogleAuthProvider
 } from '@react-native-firebase/auth';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { AppleAuthProvider, GoogleAuthProvider } from '@react-native-firebase/auth';
 import { api, BackendUser } from '../services/api';
 import { getFirebaseErrorMessage } from '../utils/firebaseErrors';
 import { appleAuth } from '../services/appleAuth';
+import jwt_decode from 'jwt-decode';
 
 // Configure Google Sign-In
 GoogleSignin.configure({
@@ -244,15 +246,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
         throw new Error('Apple Sign-In failed - no identity token returned');
       }
 
+      let res: any;
+      if (appleAuthRequestResponse.email == null || appleAuthRequestResponse.email === undefined) {
+        res = jwt_decode(appleAuthRequestResponse.identityToken)
+      } else {
+        res = appleAuthRequestResponse
+      }
+
+      const signInMethods = await auth().fetchSignInMethodsForEmail(res?.email);
+
       // Create a Firebase credential from the response
       const { identityToken, nonce } = appleAuthRequestResponse;
       const appleCredential = AppleAuthProvider.credential(identityToken, nonce);
 
       console.log('Apple Credential created');
-
-      // Sign the user in with the credential
-      const userCredential = await signInWithCredential(getAuth(), appleCredential);
-      console.log('User signed in with Apple:', userCredential.user.uid);
+      if (signInMethods.includes('password')) {
+        // Email already registered; ask the user to link the accounts
+        Alert.alert("Apple Sign-In", "You have an existing account with the same email. Use Email and password option to Login in your account!")
+      } else {
+        const userCredential = await auth().signInWithCredential(appleCredential);
+        console.log('User signed in with Apple:', userCredential.user.uid);
+      }
 
     } catch (error: any) {
       console.error('Error during Apple Sign-In:', error);
