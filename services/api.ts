@@ -381,6 +381,35 @@ class ForkFitAPI {
     });
   }
 
+  async analyzeFoodDescription(
+    uid: string,
+    description: string,
+    mealType: string,
+    date: string,
+    token: string
+  ): Promise<{
+    food: string;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    quantity: number;
+    unit: string;
+    mealType: string;
+    date: string;
+  }> {
+    return this.request(`/users/${uid}/food-description`, {
+      method: "POST",
+      body: {
+        description,
+        mealType,
+        date,
+      },
+      token,
+      timeout: 30000, // 30 seconds timeout for AI analysis
+    });
+  }
+
   // Weight Tracking
   async getWeightHistory(uid: string, token: string): Promise<WeightEntry[]> {
     return this.request(`/users/${uid}/weight-logs`, { token });
