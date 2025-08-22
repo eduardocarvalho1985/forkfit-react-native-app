@@ -45,9 +45,9 @@ export default function PlanStep({ onSetLoading }: PlanStepProps) {
       <View style={styles.content}>
         <View style={styles.celebrationContainer}>
           <Text style={styles.celebrationIcon}>🎉</Text>
-          <Text style={styles.title}>Seu plano personalizado está pronto!</Text>
+          <Text style={styles.title}>Your Personalized Plan Preview</Text>
           <Text style={styles.subtitle}>
-            Baseado nas suas informações, criamos um plano perfeito para você.
+            The &quot;Aha!&quot; moment. Display the final plan.
           </Text>
         </View>
 

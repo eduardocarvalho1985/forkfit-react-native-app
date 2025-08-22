@@ -5,18 +5,34 @@ import { api } from '../../services/api';
 import { getAuth } from '@react-native-firebase/auth';
 
 export interface OnboardingData {
+  // --- Existing Fields ---
   goal?: 'lose_weight' | 'maintain' | 'gain_muscle';
   gender?: 'male' | 'female' | 'other';
   birthDate?: string; // ISO date string
   age?: number; // Calculated age from birth date
-  height?: number;
-  weight?: number;
+  height?: number; // Store in cm
+  weight?: number; // Store in kg
   activityLevel?: 'sedentary' | 'light' | 'moderate' | 'very_active';
+  
+  // --- New Additions for Revamped Flow ---
+  targetWeight?: number; // User's desired final weight
+  emotionalGoal?: string; // User's deeper motivation (e.g., "feel confident", "be healthy")
+  motivatingEvent?: 'wedding' | 'vacation' | 'reunion' | 'beach_season' | 'none'; // Specific event or none
+  
+  // --- Date-Driven Goal Logic ---
+  isEventDriven?: boolean; // Flag to determine if pacing is calculated or chosen
+  eventDate?: string; // Stored as 'YYYY-MM-DD'
+  
+  // --- Pacing Logic ---
+  // This value is EITHER set by the user in PacingStep OR calculated from eventDate
+  weeklyPacing?: number; // e.g., 0.5 for 0.5kg/week loss
+  
+  // --- Calculated Data ---
   calories?: number;
   protein?: number;
   carbs?: number;
   fat?: number;
-  notificationsEnabled?: boolean;
+  notificationsEnabled?: boolean; // This will now be set after onboarding
 }
 
 interface CalculatedPlan {
@@ -34,6 +50,7 @@ interface OnboardingContextType {
   isStepValid: (stepId: string) => boolean;
   getCurrentStepData: () => OnboardingData;
   calculatePlan: () => CalculatedPlan | null;
+  calculateWeeklyPacing: () => number | null;
   completeOnboarding: (notificationsEnabled: boolean) => Promise<void>;
 }
 
@@ -89,6 +106,12 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       case 'height': return onboardingData.height;
       case 'weight': return onboardingData.weight;
       case 'activityLevel': return onboardingData.activityLevel;
+      case 'targetWeight': return onboardingData.targetWeight;
+      case 'emotionalGoal': return onboardingData.emotionalGoal;
+      case 'motivatingEvent': return onboardingData.motivatingEvent;
+      case 'isEventDriven': return onboardingData.isEventDriven;
+      case 'eventDate': return onboardingData.eventDate;
+      case 'weeklyPacing': return onboardingData.weeklyPacing;
       case 'calories': return onboardingData.calories;
       case 'protein': return onboardingData.protein;
       case 'carbs': return onboardingData.carbs;
@@ -159,8 +182,33 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     };
   };
 
+  const calculateWeeklyPacing = (): number | null => {
+    const { weight, targetWeight, eventDate, isEventDriven } = onboardingData;
+    
+    if (!weight || !targetWeight) return null;
+    
+    if (isEventDriven && eventDate) {
+      const totalWeightToChange = weight - targetWeight;
+      const today = new Date();
+      const eventDateTime = new Date(eventDate);
+      const weeksUntilEvent = Math.max(1, (eventDateTime.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 7));
+      const calculatedPacing = totalWeightToChange / weeksUntilEvent;
+      
+      // Business Rule: Safety check for unsafe pacing
+      if (Math.abs(calculatedPacing) > 1.5) {
+        console.warn('Calculated pacing is unsafe:', calculatedPacing);
+        // Return a safe maximum pacing
+        return calculatedPacing > 0 ? 1.5 : -1.5;
+      }
+      
+      return Math.round(calculatedPacing * 10) / 10; // Round to 1 decimal place
+    }
+    
+    return onboardingData.weeklyPacing || null;
+  };
+
   const calculatePlan = (): CalculatedPlan | null => {
-    const { goal, gender, birthDate, height, weight, activityLevel } = onboardingData;
+    const { goal, gender, birthDate, height, weight, activityLevel, weeklyPacing } = onboardingData;
     
     if (!goal || !gender || !birthDate || !height || !weight || !activityLevel) {
       return null;
@@ -170,10 +218,19 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       const age = calculateAge(birthDate);
       const bmr = calculateBMR(weight, height, age, gender);
       const tdee = calculateTDEE(bmr, activityLevel);
-      const macros = calculateMacros(tdee, goal);
+      
+      // Apply weekly pacing adjustment to calories
+      let adjustedCalories = tdee;
+      if (weeklyPacing) {
+        // 7700 calories = 1kg of fat
+        const dailyCalorieAdjustment = (weeklyPacing * 7700) / 7;
+        adjustedCalories = tdee - dailyCalorieAdjustment;
+      }
+      
+      const macros = calculateMacros(adjustedCalories, goal);
       
       return {
-        calories: tdee,
+        calories: Math.round(adjustedCalories),
         protein: macros.protein,
         carbs: macros.carbs,
         fat: macros.fat
@@ -186,16 +243,34 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
 
   const isStepValid = (stepId: string): boolean => {
     switch (stepId) {
+      case 'introCarousel':
+        return true; // Always valid, just informational
       case 'goal':
         return !!onboardingData.goal;
-      case 'vitals':
+      case 'vitalsSliders':
         return !!(onboardingData.gender && onboardingData.birthDate && 
                  onboardingData.height && onboardingData.weight);
       case 'activity':
         return !!onboardingData.activityLevel;
-      case 'plan':
+      case 'targetWeight':
+        return !!(onboardingData.targetWeight && onboardingData.targetWeight !== onboardingData.weight);
+      case 'emotionalGoal':
+        return !!onboardingData.emotionalGoal;
+      case 'motivation':
+        return !!onboardingData.motivatingEvent;
+      case 'eventDate':
+        return !!(onboardingData.eventDate && onboardingData.isEventDriven);
+      case 'pacing':
+        return !!(onboardingData.weeklyPacing && !onboardingData.isEventDriven);
+      case 'projection':
+        return !!onboardingData.weeklyPacing;
+      case 'socialProof':
+        return true; // Always valid, just informational
+      case 'loading':
+        return true; // Always valid, just loading state
+      case 'planPreview':
         return !!calculatePlan();
-      case 'notifications':
+      case 'paywall':
         return true; // Always valid, user can choose
       default:
         return true;
@@ -230,6 +305,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       isStepValid,
       getCurrentStepData,
       calculatePlan,
+      calculateWeeklyPacing,
       completeOnboarding
     }}>
       {children}

@@ -103,9 +103,9 @@ export default function VitalsStep({ onSetLoading }: VitalsStepProps) {
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
-        <Text style={styles.title}>Sobre você</Text>
+        <Text style={styles.title}>Height & Weight Sliders</Text>
         <Text style={styles.subtitle}>
-          Para calcular suas necessidades calóricas, precisamos de algumas informações.
+          Collect height and weight using engaging sliders
         </Text>
 
         <View style={styles.formSection}>
