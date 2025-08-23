@@ -5,7 +5,7 @@ import { getAuth } from '@react-native-firebase/auth';
 import { useOnboardingStorage, OnboardingData } from '@/hooks/useOnboardingStorage';
 import { 
   calculateNutritionPlan, 
-  calculateWeeklyPacing 
+  calculateWeeklyPacing as calculateWeeklyPacingUtil
 } from '@/utils/onboardingCalculations';
 
 /**
@@ -87,7 +87,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     if (!weight || !targetWeight) return null;
     
     // Use the utility function from onboardingCalculations
-    return calculateWeeklyPacing(weight, targetWeight, eventDate, isEventDriven, weeklyPacing);
+    return calculateWeeklyPacingUtil(weight, targetWeight, eventDate, isEventDriven, weeklyPacing);
   };
 
   const calculatePlan = (): CalculatedPlan | null => {
@@ -130,7 +130,10 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       case 'introCarousel':
         return true; // Always valid, just informational
       case 'goal':
-        return !!onboardingData.goal;
+        console.log('Goal step validation - onboardingData.goal:', onboardingData.goal);
+        const isValid = !!onboardingData.goal;
+        console.log('Goal step isValid:', isValid);
+        return isValid;
       case 'vitalsSliders':
         return !!(onboardingData.gender && onboardingData.birthDate && 
                  onboardingData.height && onboardingData.weight);

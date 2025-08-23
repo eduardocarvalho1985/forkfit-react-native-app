@@ -1,30 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useOnboarding } from '../OnboardingContext';
-
-const CORAL = '#FF725E';
-const OFF_WHITE = '#FDF6F3';
-const BORDER = '#FFA28F';
-const TEXT = '#1F2937';
+import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
 
 const GOAL_OPTIONS = [
   { 
-    label: 'Perder Peso', 
+    label: 'Lose weight', 
     value: 'lose_weight' as const,
-    description: 'Reduzir peso de forma saudável',
-    icon: '⚖️'
   },
   { 
-    label: 'Manter o Peso', 
+    label: 'Maintain', 
     value: 'maintain' as const,
-    description: 'Manter peso atual e saúde',
-    icon: '🎯'
   },
   { 
-    label: 'Ganhar Músculo', 
+    label: 'Gain weight', 
     value: 'gain_muscle' as const,
-    description: 'Aumentar massa muscular',
-    icon: '💪'
   },
 ];
 
@@ -49,15 +39,16 @@ export default function GoalStep({ onSetLoading }: GoalStepProps) {
     if (goal) {
       updateStepData('goal', { goal });
       console.log('Goal updated in context:', goal);
+      console.log('Goal step should now be valid');
     }
   }, [goal]);
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Qual é o seu objetivo principal?</Text>
+        <Text style={styles.title}>What is your goal?</Text>
         <Text style={styles.subtitle}>
-          Escolha o que mais importa para você agora.
+          This helps us generate a plan for your calorie intake.
         </Text>
 
         <View style={styles.goalsContainer}>
@@ -70,7 +61,6 @@ export default function GoalStep({ onSetLoading }: GoalStepProps) {
               ]}
               onPress={() => setGoal(option.value)}
             >
-              <Text style={styles.goalIcon}>{option.icon}</Text>
               <Text
                 style={[
                   styles.goalLabel,
@@ -79,103 +69,78 @@ export default function GoalStep({ onSetLoading }: GoalStepProps) {
               >
                 {option.label}
               </Text>
-              <Text
-                style={[
-                  styles.goalDescription,
-                  goal === option.value && styles.goalDescriptionSelected
-                ]}
-              >
-                {option.description}
-              </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <Text style={styles.note}>
-          Você poderá alterar seu objetivo a qualquer momento nos Ajustes.
+        <Text style={styles.disclaimer}>
+          * Your information will be deleted after generating a plan.
         </Text>
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: OFF_WHITE,
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 120, // Extra padding for fixed footer
+    paddingHorizontal: spacing.screenPadding,
+    paddingTop: spacing.xxl,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: TEXT,
+    fontSize: typography['3xl'],
+    fontWeight: typography.bold,
+    color: colors.textPrimary,
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#64748b',
+    fontSize: typography.base,
+    color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 40,
+    lineHeight: typography.base * 1.5,
+    marginBottom: spacing.xxl,
+    paddingHorizontal: spacing.md,
   },
   goalsContainer: {
-    marginBottom: 32,
+    width: '100%',
+    marginBottom: spacing.xxl,
   },
   goalButton: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: BORDER,
-    paddingVertical: 24,
-    paddingHorizontal: 20,
-    marginBottom: 16,
+    backgroundColor: colors.backgroundTertiary,
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    marginBottom: spacing.md,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    justifyContent: 'center',
+    minHeight: 60,
+    ...shadows.sm,
   },
   goalButtonSelected: {
-    backgroundColor: CORAL,
-    borderColor: CORAL,
-    shadowColor: CORAL,
-    shadowOpacity: 0.3,
-  },
-  goalIcon: {
-    fontSize: 32,
-    marginBottom: 12,
+    backgroundColor: colors.primary,
+    ...shadows.md,
   },
   goalLabel: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: TEXT,
-    marginBottom: 4,
+    fontSize: typography.lg,
+    fontWeight: typography.semibold,
+    color: colors.textPrimary,
   },
   goalLabelSelected: {
-    color: '#fff',
+    color: colors.textInverse,
   },
-  goalDescription: {
-    fontSize: 14,
-    color: '#64748b',
+  disclaimer: {
+    fontSize: typography.sm,
+    color: colors.textTertiary,
     textAlign: 'center',
-    lineHeight: 20,
-  },
-  goalDescriptionSelected: {
-    color: '#fff',
-    opacity: 0.9,
-  },
-
-  note: {
-    fontSize: 14,
-    color: '#64748b',
-    textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: typography.sm * 1.4,
+    position: 'absolute',
+    bottom: spacing.xxl,
   },
 }); 

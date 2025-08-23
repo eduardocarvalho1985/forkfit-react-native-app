@@ -222,18 +222,15 @@ function OnboardingContent() {
       <OnboardingProgress
         currentStep={getCurrentStepIndex()}
         totalSteps={STEP_ORDER.length}
+        onBack={handleBack}
+        canGoBack={canGoBack()}
       />
       <View style={styles.content}>
         {renderCurrentStep()}
       </View>
 
-      {/* Fixed Footer */}
+      {/* Fixed Footer - Only Continue Button */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.footerPadding }]}>
-        {canGoBack() && (
-          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-            <Text style={styles.backButtonText}>← Voltar</Text>
-          </TouchableOpacity>
-        )}
         <TouchableOpacity
           style={[styles.continueButton, getStepProps().disabled && styles.continueButtonDisabled]}
           onPress={getStepProps().onPress}
@@ -259,20 +256,18 @@ export default function OnboardingManager() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundSecondary,
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
   },
   footer: {
-    backgroundColor: colors.backgroundSecondary,
+    backgroundColor: colors.background,
     paddingHorizontal: spacing.screenPadding,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.primaryLight + '20', // 20% opacity
-    flexDirection: 'row',
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.sm,
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
   },
   backButton: {
     paddingVertical: spacing.sm,
@@ -289,12 +284,13 @@ const styles = StyleSheet.create({
     fontWeight: typography.semibold,
   },
   continueButton: {
-    flex: 1,
     backgroundColor: colors.primary,
     borderRadius: borderRadius.md,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xl,
     alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 200,
   },
   continueButtonDisabled: {
     backgroundColor: colors.textTertiary,
