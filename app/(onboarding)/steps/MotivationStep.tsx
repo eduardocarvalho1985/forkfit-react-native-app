@@ -10,27 +10,19 @@ interface MotivationStepProps {
 const MOTIVATION_OPTIONS = [
   {
     value: 'saude',
-    label: 'Saúde',
-    description: 'Alimentar melhor meu corpo e mente',
-    emoji: '💚'
+    label: 'Saúde'
   },
   {
     value: 'energia',
-    label: 'Energia',
-    description: 'Aumentar minha vitalidade e felicidade',
-    emoji: '⚡'
+    label: 'Energia'
   },
   {
     value: 'disciplina',
-    label: 'Disciplina',
-    description: 'Melhorar minha disciplina e seguir um plano',
-    emoji: '🎯'
+    label: 'Disciplina'
   },
   {
     value: 'geral',
-    label: 'Geral',
-    description: 'Me sentir melhor e mais confiante',
-    emoji: '🌟'
+    label: 'Geral'
   }
 ];
 
@@ -76,25 +68,14 @@ export default function MotivationStep({ onSetLoading }: MotivationStepProps) {
               ]}
               onPress={() => handleMotivationSelect(option.value)}
             >
-              <Text style={styles.motivationEmoji}>{option.emoji}</Text>
-              <View style={styles.motivationTextContainer}>
-                <Text
-                  style={[
-                    styles.motivationLabel,
-                    selectedMotivation === option.value && styles.motivationLabelSelected
-                  ]}
-                >
-                  {option.label}
-                </Text>
-                <Text
-                  style={[
-                    styles.motivationDescription,
-                    selectedMotivation === option.value && styles.motivationDescriptionSelected
-                  ]}
-                >
-                  {option.description}
-                </Text>
-              </View>
+              <Text
+                style={[
+                  styles.motivationButtonText,
+                  selectedMotivation === option.value && styles.motivationButtonTextSelected
+                ]}
+              >
+                {option.label}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -141,45 +122,26 @@ const styles = StyleSheet.create({
   },
   motivationButton: {
     backgroundColor: colors.backgroundTertiary,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.md,
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.xl,
     marginBottom: spacing.md,
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    minHeight: 80,
-    flexDirection: 'row',
-    gap: spacing.lg,
+    justifyContent: 'center',
+    minHeight: 60,
     ...shadows.sm,
   },
   motivationButtonSelected: {
     backgroundColor: colors.primary,
     ...shadows.md,
   },
-  motivationEmoji: {
-    fontSize: typography['2xl'],
-    marginRight: spacing.sm,
-  },
-  motivationTextContainer: {
-    flex: 1,
-    alignItems: 'flex-start',
-  },
-  motivationLabel: {
+  motivationButtonText: {
     fontSize: typography.lg,
-    fontWeight: typography.bold,
+    fontWeight: typography.semibold,
     color: colors.textPrimary,
-    marginBottom: spacing.xs,
   },
-  motivationLabelSelected: {
-    color: colors.background,
-  },
-  motivationDescription: {
-    fontSize: typography.base,
-    color: colors.textSecondary,
-    lineHeight: typography.base * 1.4,
-  },
-  motivationDescriptionSelected: {
-    color: colors.backgroundSecondary,
+  motivationButtonTextSelected: {
+    color: colors.textInverse,
   },
   disclaimer: {
     fontSize: typography.sm,

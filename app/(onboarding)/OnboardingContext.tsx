@@ -91,7 +91,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   };
 
   const calculatePlan = (): CalculatedPlan | null => {
-    const { goal, height, weight, activityLevel, weeklyPacing } = onboardingData;
+    const { goal, height, weight, activityLevel, weeklyPacing, gender, age } = onboardingData;
     
     if (!goal || !height || !weight || !activityLevel) {
       return null;
@@ -102,7 +102,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       const plan = calculateNutritionPlan({
         goal,
         gender,
-        birthDate,
+        age, // Use age instead of birthDate
         height,
         weight,
         activityLevel,

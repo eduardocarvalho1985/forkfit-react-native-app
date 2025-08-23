@@ -8,17 +8,31 @@ interface LoadingStepProps {
 }
 
 export default function LoadingStep({ onSetLoading }: LoadingStepProps) {
-  const { updateStepData } = useOnboarding();
+  const { updateStepData, calculatePlan } = useOnboarding();
 
-  // Auto-advance after 3 seconds
+  // Auto-advance when plan calculation is complete
   useEffect(() => {
-    const timer = setTimeout(() => {
-      // Mark this step as completed
-      updateStepData('loading', { loadingCompleted: true });
-      console.log('Loading step completed, auto-advancing...');
-    }, 3000);
+    const checkPlanAndAdvance = async () => {
+      // Wait a bit for any pending data updates
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Try to calculate the plan
+      const plan = calculatePlan();
+      
+      if (plan) {
+        // Plan calculated successfully, advance to next step
+        console.log('Plan calculated successfully, auto-advancing...');
+        updateStepData('loading', { loadingCompleted: true });
+      } else {
+        // Fallback: advance after 3 seconds if plan calculation fails
+        console.log('Plan calculation failed, using fallback timer...');
+        setTimeout(() => {
+          updateStepData('loading', { loadingCompleted: true });
+        }, 2000);
+      }
+    };
 
-    return () => clearTimeout(timer);
+    checkPlanAndAdvance();
   }, []);
 
   return (

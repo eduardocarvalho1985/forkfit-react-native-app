@@ -142,6 +142,15 @@ function OnboardingContent() {
       return 'eventChoice';
     }
 
+    if (currentStep === 'eventChoice') {
+      // If user chose "no specific event", skip eventDate and go to lossPlanInfo
+      if (data.motivatingEvent === 'none') {
+        return 'lossPlanInfo';
+      }
+      // Otherwise, go to eventDate (next step in order)
+      return 'eventDate';
+    }
+
     if (currentStep === 'eventDate') {
       return 'lossPlanInfo'; // Go to loss plan info after setting event date
     }
@@ -158,6 +167,17 @@ function OnboardingContent() {
   const handleBack = () => {
     const currentIndex = STEP_ORDER.indexOf(currentStep);
     if (currentIndex > 0) {
+      // Special case: if we're at lossPlanInfo and user skipped eventDate
+      if (currentStep === 'lossPlanInfo') {
+        const currentData = getCurrentStepData();
+        // If user chose "no specific event", go back to eventChoice
+        if (currentData.motivatingEvent === 'none') {
+          setCurrentStep('eventChoice');
+          return;
+        }
+      }
+      
+      // Default back navigation
       setCurrentStep(STEP_ORDER[currentIndex - 1]);
     }
   };

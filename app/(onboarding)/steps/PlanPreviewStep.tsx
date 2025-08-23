@@ -18,6 +18,17 @@ export default function PlanStep({ onSetLoading }: PlanStepProps) {
       setPlan(calculatedPlan);
       // Save the calculated plan to context
       updateStepData('plan', calculatedPlan);
+    } else {
+      // If plan is not available, try to calculate it again after a short delay
+      const timer = setTimeout(() => {
+        const retryPlan = calculatePlan();
+        if (retryPlan) {
+          setPlan(retryPlan);
+          updateStepData('plan', retryPlan);
+        }
+      }, 1000);
+      
+      return () => clearTimeout(timer);
     }
   }, []);
 
@@ -29,7 +40,10 @@ export default function PlanStep({ onSetLoading }: PlanStepProps) {
         <View style={styles.content}>
           <Text style={styles.title}>Calculando seu plano...</Text>
           <Text style={styles.subtitle}>
-            Estamos criando seu plano personalizado.
+            Estamos criando seu plano personalizado baseado nas suas informações.
+          </Text>
+          <Text style={styles.subtitle}>
+            Se o plano não aparecer em alguns segundos, você pode continuar para o próximo passo.
           </Text>
         </View>
       </View>

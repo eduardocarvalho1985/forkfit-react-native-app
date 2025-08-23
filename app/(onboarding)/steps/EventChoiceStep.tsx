@@ -10,33 +10,23 @@ interface EventChoiceStepProps {
 const EVENT_OPTIONS = [
   {
     value: 'wedding',
-    label: 'Casamento',
-    description: 'Quero estar no meu melhor para o grande dia',
-    emoji: '💒'
+    label: 'Casamento'
   },
   {
     value: 'vacation',
-    label: 'Férias',
-    description: 'Preparando-me para uma viagem especial',
-    emoji: '✈️'
+    label: 'Férias'
   },
   {
     value: 'reunion',
-    label: 'Reunião de Família',
-    description: 'Encontrando familiares após muito tempo',
-    emoji: '👨‍👩‍👧‍👦'
+    label: 'Reunião de Família'
   },
   {
     value: 'beach_season',
-    label: 'Temporada de Praia',
-    description: 'Quero me sentir confiante na praia',
-    emoji: '🏖️'
+    label: 'Temporada de Praia'
   },
   {
     value: 'none',
-    label: 'Nenhum evento específico',
-    description: 'Só quero melhorar minha saúde e bem-estar',
-    emoji: '🌟'
+    label: 'Nenhum evento específico'
   }
 ];
 
@@ -86,25 +76,14 @@ export default function EventChoiceStep({ onSetLoading }: EventChoiceStepProps) 
               ]}
               onPress={() => handleEventSelect(option.value)}
             >
-              <Text style={styles.eventEmoji}>{option.emoji}</Text>
-              <View style={styles.eventTextContainer}>
-                <Text
-                  style={[
-                    styles.eventLabel,
-                    motivatingEvent === option.value && styles.eventLabelSelected
-                  ]}
-                >
-                  {option.label}
-                </Text>
-                <Text
-                  style={[
-                    styles.eventDescription,
-                    motivatingEvent === option.value && styles.eventDescriptionSelected
-                  ]}
-                >
-                  {option.description}
-                </Text>
-              </View>
+              <Text
+                style={[
+                  styles.eventButtonText,
+                  motivatingEvent === option.value && styles.eventButtonTextSelected
+                ]}
+              >
+                {option.label}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -125,7 +104,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: spacing.screenPadding,
-    paddingTop: spacing.xxxl + spacing.xl + spacing.xl,
+    paddingTop: spacing.xxxl + spacing.xl + spacing.xl + spacing.lg,
     paddingBottom: spacing.xxl,
     alignItems: 'center',
     justifyContent: 'center',
@@ -151,45 +130,26 @@ const styles = StyleSheet.create({
   },
   eventButton: {
     backgroundColor: colors.backgroundTertiary,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.md,
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.xl,
     marginBottom: spacing.md,
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    minHeight: 80,
-    flexDirection: 'row',
-    gap: spacing.lg,
+    justifyContent: 'center',
+    minHeight: 60,
     ...shadows.sm,
   },
   eventButtonSelected: {
     backgroundColor: colors.primary,
     ...shadows.md,
   },
-  eventEmoji: {
-    fontSize: typography['2xl'],
-    marginRight: spacing.sm,
-  },
-  eventTextContainer: {
-    flex: 1,
-    alignItems: 'flex-start',
-  },
-  eventLabel: {
+  eventButtonText: {
     fontSize: typography.lg,
-    fontWeight: typography.bold,
+    fontWeight: typography.semibold,
     color: colors.textPrimary,
-    marginBottom: spacing.xs,
   },
-  eventLabelSelected: {
-    color: colors.background,
-  },
-  eventDescription: {
-    fontSize: typography.base,
-    color: colors.textSecondary,
-    lineHeight: typography.base * 1.4,
-  },
-  eventDescriptionSelected: {
-    color: colors.backgroundSecondary,
+  eventButtonTextSelected: {
+    color: colors.textInverse,
   },
   disclaimer: {
     fontSize: typography.sm,
