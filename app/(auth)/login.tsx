@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Platform } 
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { colors, spacing, typography, borderRadius } from '@/theme';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -86,12 +87,14 @@ export default function Login() {
       </View>
 
       <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignIn} disabled={loading === "google"}>
+        <Icon name="g-translate" size={20} color={colors.textInverse} style={styles.buttonIcon} />
         <Text style={styles.socialButtonText}>{loading === "google" ? "Entrando com Google..." : "Entrar com Google"}</Text>
       </TouchableOpacity>
 
       {/* Apple Sign-In Button - iOS ONLY */}
       {Platform.OS === 'ios' && (
         <TouchableOpacity style={styles.appleButton} onPress={handleAppleSignIn} disabled={loading === "apple"}>
+          <Icon name="apple" size={20} color={colors.textInverse} style={styles.buttonIcon} />
           <Text style={styles.socialButtonText}>{loading === "apple" ? "Entrando com Apple..." : "Entrar com Apple"}</Text>
         </TouchableOpacity>
       )}
@@ -176,18 +179,28 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     borderRadius: borderRadius.sm,
     marginBottom: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   appleButton: {
     backgroundColor: colors.apple,
     padding: spacing.md,
     borderRadius: borderRadius.sm,
     marginBottom: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   socialButtonText: {
     color: colors.textInverse,
     textAlign: 'center',
     fontSize: typography.base,
     fontWeight: typography.semibold,
+    marginLeft: spacing.sm,
+  },
+  buttonIcon: {
+    marginRight: spacing.sm,
   },
   createAccountButton: {
     backgroundColor: colors.primary,
