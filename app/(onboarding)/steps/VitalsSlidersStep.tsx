@@ -160,7 +160,8 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: spacing.screenPadding,
-    paddingTop: spacing.xxl,
+    paddingTop: spacing.xxxl + spacing.xl,
+    paddingBottom: spacing.xxl,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -233,7 +234,6 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     textAlign: 'center',
     lineHeight: typography.sm * 1.4,
-    position: 'absolute',
-    bottom: spacing.xxl,
+    marginTop: spacing.xl,
   },
 }); 

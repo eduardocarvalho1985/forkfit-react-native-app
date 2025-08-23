@@ -148,13 +148,13 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       case 'weightLossInfo':
         return true; // Always valid, just informational
       case 'pacing':
-        return !!(onboardingData.weeklyPacing && !onboardingData.isEventDriven);
+        return !!(onboardingData.weeklyPacing && (!onboardingData.motivatingEvent || onboardingData.motivatingEvent === 'none'));
       case 'motivation':
         return !!onboardingData.motivatingEvent;
       case 'eventChoice':
-        return !!onboardingData.emotionalGoal;
+        return !!onboardingData.motivatingEvent;
       case 'eventDate':
-        return !!(onboardingData.eventDate && onboardingData.isEventDriven);
+        return !!(onboardingData.eventDate && onboardingData.motivatingEvent && onboardingData.motivatingEvent !== 'none');
       case 'lossPlanInfo':
         return true; // Always valid, just informational
       case 'moreInfo':

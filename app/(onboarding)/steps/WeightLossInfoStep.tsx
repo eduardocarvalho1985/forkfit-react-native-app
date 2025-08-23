@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useOnboarding } from '../OnboardingContext';
 import { colors, spacing, typography, borderRadius } from '@/theme';
 
@@ -18,47 +18,53 @@ export default function WeightLossInfoStep({ onSetLoading }: WeightLossInfoStepP
 
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Entenda a Curva de Perda de Peso</Text>
-        
-        <View style={styles.infoSection}>
-          <Text style={styles.sectionTitle}>📊 Como Funciona a Perda de Peso</Text>
-          <Text style={styles.infoText}>
-            A perda de peso não é linear. Você pode perder mais peso no início e depois estabilizar. 
-            Isso é normal e saudável!
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.content}>
+          <Text style={styles.title}>Entenda a Curva de Perda de Peso</Text>
+          
+          <View style={styles.infoSection}>
+            <Text style={styles.sectionTitle}>📊 Como Funciona a Perda de Peso</Text>
+            <Text style={styles.infoText}>
+              A perda de peso não é linear. Você pode perder mais peso no início e depois estabilizar. 
+              Isso é normal e saudável!
+            </Text>
+          </View>
+
+          <View style={styles.infoSection}>
+            <Text style={styles.sectionTitle}>🎯 Expectativas Realistas</Text>
+            <Text style={styles.infoText}>
+              • Primeiras semanas: 1-2kg por semana{'\n'}
+              • Meses seguintes: 0.5-1kg por semana{'\n'}
+              • Estabilização: 0.2-0.5kg por semana
+            </Text>
+          </View>
+
+          <View style={styles.infoSection}>
+            <Text style={styles.sectionTitle}>💡 Dicas Importantes</Text>
+            <Text style={styles.infoText}>
+              • Foque na consistência, não na velocidade{'\n'}
+              • Pequenas mudanças levam a grandes resultados{'\n'}
+              • O peso pode variar diariamente (água, hormônios)
+            </Text>
+          </View>
+
+          <View style={styles.infoSection}>
+            <Text style={styles.sectionTitle}>🌟 Sua Jornada</Text>
+            <Text style={styles.infoText}>
+              Cada pessoa é única. Seu plano será personalizado para maximizar 
+              seus resultados de forma segura e sustentável.
+            </Text>
+          </View>
+
+          <Text style={styles.disclaimer}>
+            * Suas informações serão excluídas após gerar o plano.
           </Text>
         </View>
-
-        <View style={styles.infoSection}>
-          <Text style={styles.sectionTitle}>🎯 Expectativas Realistas</Text>
-          <Text style={styles.infoText}>
-            • Primeiras semanas: 1-2kg por semana{'\n'}
-            • Meses seguintes: 0.5-1kg por semana{'\n'}
-            • Estabilização: 0.2-0.5kg por semana
-          </Text>
-        </View>
-
-        <View style={styles.infoSection}>
-          <Text style={styles.sectionTitle}>💡 Dicas Importantes</Text>
-          <Text style={styles.infoText}>
-            • Foque na consistência, não na velocidade{'\n'}
-            • Pequenas mudanças levam a grandes resultados{'\n'}
-            • O peso pode variar diariamente (água, hormônios)
-          </Text>
-        </View>
-
-        <View style={styles.infoSection}>
-          <Text style={styles.sectionTitle}>🌟 Sua Jornada</Text>
-          <Text style={styles.infoText}>
-            Cada pessoa é única. Seu plano será personalizado para maximizar 
-            seus resultados de forma segura e sustentável.
-          </Text>
-        </View>
-
-        <Text style={styles.disclaimer}>
-          * Suas informações serão excluídas após gerar o plano.
-        </Text>
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -67,6 +73,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   content: {
     flex: 1,
@@ -103,7 +115,7 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     textAlign: 'center',
     lineHeight: typography.sm * 1.4,
-    position: 'absolute',
-    bottom: spacing.xxl,
+    marginTop: spacing.xl,
+    marginBottom: spacing.lg,
   },
 });

@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useOnboarding } from '../OnboardingContext';
-
-const CORAL = '#FF725E';
-const OFF_WHITE = '#FDF6F3';
-const TEXT = '#1F2937';
+import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
 
 interface PacingStepProps {
   onSetLoading: (loading: boolean) => void;
@@ -119,100 +116,102 @@ export default function PacingStep({ onSetLoading }: PacingStepProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: OFF_WHITE,
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 120,
+    paddingHorizontal: spacing.screenPadding,
+    paddingTop: spacing.xxxl + spacing.xl,
+    paddingBottom: spacing.xxl,
     justifyContent: 'center',
     alignItems: 'center',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: TEXT,
+    fontSize: typography['3xl'],
+    fontWeight: typography.bold,
+    color: colors.textPrimary,
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#64748b',
+    fontSize: typography.base,
+    color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 40,
-    paddingHorizontal: 20,
+    lineHeight: typography.base * 1.5,
+    marginBottom: spacing.xl,
+    paddingHorizontal: spacing.md,
   },
   pacingContainer: {
     width: '100%',
-    marginBottom: 30,
+    marginBottom: spacing.xl,
   },
   pacingOption: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.lg,
     borderWidth: 2,
-    borderColor: '#e2e8f0',
-    padding: 20,
-    marginBottom: 16,
+    borderColor: colors.backgroundTertiary,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    ...shadows.sm,
   },
   pacingOptionSelected: {
-    borderColor: CORAL,
-    backgroundColor: CORAL,
+    borderColor: colors.primary,
+    backgroundColor: colors.primary,
   },
   pacingHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   pacingLabel: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: TEXT,
+    fontSize: typography.lg,
+    fontWeight: typography.semibold,
+    color: colors.textPrimary,
   },
   pacingLabelSelected: {
-    color: '#fff',
+    color: colors.background,
   },
   pacingValue: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#64748b',
+    fontSize: typography.base,
+    fontWeight: typography.medium,
+    color: colors.textSecondary,
   },
   pacingValueSelected: {
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: colors.background + 'E6', // 90% opacity
   },
   pacingDetail: {
-    fontSize: 14,
-    color: '#64748b',
-    lineHeight: 20,
+    fontSize: typography.sm,
+    color: colors.textSecondary,
+    lineHeight: typography.sm * 1.4,
   },
   pacingDetailSelected: {
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: colors.background + 'CC', // 80% opacity
   },
   infoContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.backgroundTertiary,
+    ...shadows.sm,
   },
   infoText: {
-    fontSize: 14,
-    color: TEXT,
+    fontSize: typography.sm,
+    color: colors.textPrimary,
     textAlign: 'center',
-    lineHeight: 20,
-    fontWeight: '500',
+    lineHeight: typography.sm * 1.4,
+    fontWeight: typography.medium,
   },
   footerInfo: {
     width: '100%',
     alignItems: 'center',
   },
   footerInfoText: {
-    color: '#64748b',
-    fontSize: 14,
+    color: colors.textTertiary,
+    fontSize: typography.sm,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: typography.sm * 1.4,
   },
 });

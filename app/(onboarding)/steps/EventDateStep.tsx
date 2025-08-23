@@ -1,10 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useOnboarding } from '../OnboardingContext';
-
-const CORAL = '#FF725E';
-const OFF_WHITE = '#FDF6F3';
-const TEXT = '#1F2937';
+import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
 
 interface EventDateStepProps {
   onSetLoading: (loading: boolean) => void;
@@ -13,23 +10,23 @@ interface EventDateStepProps {
 export default function EventDateStep({ onSetLoading }: EventDateStepProps) {
   const { updateStepData, onboardingData } = useOnboarding();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  // Initialize with existing data
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Initialize with existing data only once
   useEffect(() => {
+    if (isInitialized) return;
+    
     try {
       if (onboardingData.eventDate) {
         const parsedDate = new Date(onboardingData.eventDate);
         if (!isNaN(parsedDate.getTime())) {
           setSelectedDate(parsedDate);
-        } else {
-          throw new Error('Invalid date from onboarding data');
         }
       } else {
         // Default to 3 months from now
         const defaultDate = new Date();
         defaultDate.setMonth(defaultDate.getMonth() + 3);
-        if (!isNaN(defaultDate.getTime())) {
-          setSelectedDate(defaultDate);
-        }
+        setSelectedDate(defaultDate);
       }
     } catch (error) {
       console.error('Error initializing date:', error);
@@ -37,11 +34,15 @@ export default function EventDateStep({ onSetLoading }: EventDateStepProps) {
       const fallbackDate = new Date();
       fallbackDate.setMonth(fallbackDate.getMonth() + 3);
       setSelectedDate(fallbackDate);
+    } finally {
+      setIsInitialized(true);
     }
-  }, [onboardingData.eventDate]);
+  }, [onboardingData.eventDate, isInitialized]);
 
-  // Auto-save when date changes
+  // Auto-save when date changes (only after initialization)
   useEffect(() => {
+    if (!isInitialized) return;
+    
     if (selectedDate && !isNaN(selectedDate.getTime())) {
       try {
         const dateString = selectedDate.toISOString().split('T')[0]; // YYYY-MM-DD format
@@ -66,17 +67,15 @@ export default function EventDateStep({ onSetLoading }: EventDateStepProps) {
         
         updateStepData('eventDate', { 
           eventDate: dateString,
-          weeklyPacing: weeklyPacing // Auto-calculate pacing for event-driven goals
+          weeklyPacing: weeklyPacing
         });
       } catch (error) {
         console.error('Error saving date:', error);
       }
     }
-  }, [selectedDate, onboardingData.weight, onboardingData.targetWeight]);
+  }, [selectedDate, onboardingData.weight, onboardingData.targetWeight, isInitialized]);
 
   const showDatePickerModal = () => {
-    // Simple date selection using Alert
-    const today = new Date();
     const options = [
       { label: '1 mês', months: 1 },
       { label: '2 meses', months: 2 },
@@ -91,50 +90,44 @@ export default function EventDateStep({ onSetLoading }: EventDateStepProps) {
       options.map(option => ({
         text: option.label,
         onPress: () => {
-          try {
-            const newDate = new Date();
-            newDate.setMonth(newDate.getMonth() + option.months);
-            if (!isNaN(newDate.getTime())) {
-              setSelectedDate(newDate);
-            }
-          } catch (error) {
-            console.error('Error setting date:', error);
-          }
+          const newDate = new Date();
+          newDate.setMonth(newDate.getMonth() + option.months);
+          setSelectedDate(newDate);
         }
       }))
     );
   };
 
   const formatDate = (date: Date) => {
-    try {
-      if (!date || isNaN(date.getTime())) {
-        return 'Data inválida';
-      }
-      return date.toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch (error) {
-      console.error('Error formatting date:', error);
+    if (!date || isNaN(date.getTime())) {
       return 'Data inválida';
     }
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   };
 
   const getDaysUntilEvent = () => {
-    try {
-      const today = new Date();
-      const timeDiff = selectedDate.getTime() - today.getTime();
-      const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
-      return isNaN(daysDiff) ? 0 : daysDiff;
-    } catch (error) {
-      console.error('Error calculating days until event:', error);
-      return 0;
-    }
+    const today = new Date();
+    const timeDiff = selectedDate.getTime() - today.getTime();
+    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+    return isNaN(daysDiff) ? 0 : daysDiff;
   };
 
   // Memoize the days calculation to prevent unnecessary recalculations
   const daysUntilEvent = useMemo(() => getDaysUntilEvent(), [selectedDate]);
+
+  if (!isInitialized) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <Text style={styles.title}>Carregando...</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -172,8 +165,6 @@ export default function EventDateStep({ onSetLoading }: EventDateStepProps) {
           </View>
         )}
 
-
-
         {/* Navigation is handled by the parent component's footer */}
         <View style={styles.infoContainer}>
           <Text style={styles.infoText}>
@@ -188,88 +179,88 @@ export default function EventDateStep({ onSetLoading }: EventDateStepProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: OFF_WHITE,
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 120,
+    paddingHorizontal: spacing.screenPadding,
+    paddingTop: spacing.xxxl + spacing.xl,
+    paddingBottom: spacing.xxl,
     justifyContent: 'center',
     alignItems: 'center',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: TEXT,
+    fontSize: typography['3xl'],
+    fontWeight: typography.bold,
+    color: colors.textPrimary,
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#64748b',
+    fontSize: typography.base,
+    color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 40,
-    paddingHorizontal: 20,
+    lineHeight: typography.base * 1.5,
+    marginBottom: spacing.xl,
+    paddingHorizontal: spacing.md,
   },
   dateContainer: {
     width: '100%',
-    marginBottom: 40,
+    marginBottom: spacing.xl,
     alignItems: 'center',
   },
   dateButton: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    borderWidth: 3,
-    borderColor: CORAL,
-    paddingVertical: 24,
-    paddingHorizontal: 32,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.xl,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.xxl,
     alignItems: 'center',
     minWidth: 200,
+    ...shadows.md,
   },
   dateButtonText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: CORAL,
-    marginBottom: 8,
+    fontSize: typography.xl,
+    fontWeight: typography.bold,
+    color: colors.primary,
+    marginBottom: spacing.sm,
   },
   dateButtonSubtext: {
-    fontSize: 14,
-    color: '#64748b',
+    fontSize: typography.sm,
+    color: colors.textSecondary,
   },
   countdownContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: spacing.xl,
   },
   countdownTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: TEXT,
-    marginBottom: 8,
+    fontSize: typography.lg,
+    fontWeight: typography.semibold,
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
   },
   countdownText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: CORAL,
-    marginBottom: 8,
+    fontSize: typography['3xl'],
+    fontWeight: typography.bold,
+    color: colors.primary,
+    marginBottom: spacing.sm,
   },
   countdownSubtext: {
-    fontSize: 14,
-    color: '#64748b',
+    fontSize: typography.sm,
+    color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: typography.sm * 1.4,
   },
-
   infoContainer: {
     width: '100%',
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: spacing.lg,
   },
   infoText: {
-    color: '#64748b',
-    fontSize: 14,
+    color: colors.textTertiary,
+    fontSize: typography.sm,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: typography.sm * 1.4,
   },
 });

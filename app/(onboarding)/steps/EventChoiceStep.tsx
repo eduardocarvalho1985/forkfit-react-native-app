@@ -51,7 +51,7 @@ export default function EventChoiceStep({ onSetLoading }: EventChoiceStepProps) 
   useEffect(() => {
     if (motivatingEvent) {
       const isEventDriven = motivatingEvent !== 'none';
-      updateStepData('eventChoice', { 
+      updateStepData('motivatingEvent', { 
         motivatingEvent, 
         isEventDriven 
       });
@@ -106,7 +106,8 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: spacing.screenPadding,
-    paddingTop: spacing.xxl,
+    paddingTop: spacing.xxxl + spacing.xl + spacing.md,
+    paddingBottom: spacing.xxl,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -164,7 +165,6 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     textAlign: 'center',
     lineHeight: typography.sm * 1.4,
-    position: 'absolute',
-    bottom: spacing.xxl,
+    marginTop: spacing.xl,
   },
 });
