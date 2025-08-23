@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useOnboarding } from '../OnboardingContext';
 import { colors, spacing, typography, borderRadius } from '@/theme';
@@ -9,11 +9,15 @@ interface WeightLossInfoStepProps {
 
 export default function WeightLossInfoStep({ onSetLoading }: WeightLossInfoStepProps) {
   const { updateStepData } = useOnboarding();
+  const hasMarkedCompleted = useRef(false);
 
-  // Mark this step as completed when component mounts
+  // Mark this step as completed when component mounts (only once)
   useEffect(() => {
-    updateStepData('weightLossInfo', { weightLossCurveInfo: true });
-    console.log('Weight loss info step completed');
+    if (!hasMarkedCompleted.current) {
+      hasMarkedCompleted.current = true;
+      updateStepData('weightLossInfo', { weightLossCurveInfo: true });
+      console.log('Weight loss info step completed');
+    }
   }, []);
 
   return (

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useOnboarding } from '../OnboardingContext';
 import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
-import DatePicker from '@/components/DatePicker';
 
 interface AgeStepProps {
   onSetLoading: (loading: boolean) => void;
@@ -10,42 +9,43 @@ interface AgeStepProps {
 
 export default function AgeStep({ onSetLoading }: AgeStepProps) {
   const { getStepData, updateStepData } = useOnboarding();
-  const [birthDate, setBirthDate] = useState(getStepData('birthDate') || '');
+  const [selectedAge, setSelectedAge] = useState(getStepData('age') || 35);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Load existing data when component mounts
   useEffect(() => {
-    const existingBirthDate = getStepData('birthDate');
-    if (existingBirthDate) {
-      setBirthDate(existingBirthDate);
+    const existingAge = getStepData('age');
+    if (existingAge) {
+      setSelectedAge(existingAge);
     }
   }, []);
 
-  // Update birth date in context whenever it changes
+  // Update age in context whenever it changes
   useEffect(() => {
-    if (birthDate) {
-      // Calculate age from birth date
-      const today = new Date();
-      const [year, month, day] = birthDate.split('-').map(Number);
-      if (year && month && day) {
-        const birth = new Date(year, month - 1, day);
-        let age = today.getFullYear() - birth.getFullYear();
-        const monthDiff = today.getMonth() - birth.getMonth();
-        
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-          age--;
-        }
-        
-        updateStepData('age', { birthDate, age });
-        console.log('Age updated in context:', { birthDate, age });
-      }
+    if (selectedAge) {
+      updateStepData('age', { age: selectedAge });
+      console.log('Age updated in context:', selectedAge);
     }
-  }, [birthDate]);
+  }, [selectedAge]);
 
-  const validateBirthDate = (date: string): boolean => {
-    const selectedDate = new Date(date);
-    const today = new Date();
-    const minDate = new Date('1900-01-01');
-    return selectedDate >= minDate && selectedDate <= today;
+  const generateAges = () => {
+    return Array.from({ length: 84 }, (_, i) => 16 + i); // 16 to 99
+  };
+
+  const AgeItem = ({ age, isSelected, onPress }: { age: number; isSelected: boolean; onPress: () => void }) => (
+    <TouchableOpacity
+      style={[styles.ageItem, isSelected && styles.ageItemSelected]}
+      onPress={onPress}
+    >
+      <Text style={[styles.ageItemText, isSelected && styles.ageItemTextSelected]}>
+        {age} anos
+      </Text>
+    </TouchableOpacity>
+  );
+
+  const handleAgeSelect = (age: number) => {
+    setSelectedAge(age);
+    setIsExpanded(false); // Close the slider after selection
   };
 
   return (
@@ -56,31 +56,36 @@ export default function AgeStep({ onSetLoading }: AgeStepProps) {
           Isso nos ajuda a calcular suas necessidades calóricas com precisão.
         </Text>
 
-        <View style={styles.datePickerContainer}>
-          <Text style={styles.dateLabel}>Data de Nascimento:</Text>
-          <DatePicker
-            value={birthDate}
-            onChange={setBirthDate}
-            placeholder="Selecione sua data de nascimento"
-            validateDate={validateBirthDate}
-          />
-          {birthDate && (
-            <Text style={styles.ageDisplay}>
-              Idade: {(() => {
-                const today = new Date();
-                const [year, month, day] = birthDate.split('-').map(Number);
-                if (year && month && day) {
-                  const birth = new Date(year, month - 1, day);
-                  let age = today.getFullYear() - birth.getFullYear();
-                  const monthDiff = today.getMonth() - birth.getMonth();
-                  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-                    age--;
-                  }
-                  return `${age} anos`;
-                }
-                return '';
-              })()}
-            </Text>
+        <View style={styles.ageSelectorContainer}>
+          <Text style={styles.selectorLabel}>Sua idade:</Text>
+          
+          {/* Single Age Display */}
+          <TouchableOpacity 
+            style={styles.singleAgeDisplay}
+            onPress={() => setIsExpanded(!isExpanded)}
+          >
+            <Text style={styles.singleAgeText}>{selectedAge} anos</Text>
+            <Text style={styles.tapToChangeText}>Toque para alterar</Text>
+          </TouchableOpacity>
+
+          {/* Expandable Age Slider */}
+          {isExpanded && (
+            <View style={styles.ageSelector}>
+              <ScrollView 
+                style={styles.ageScroll}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.ageScrollContent}
+              >
+                {generateAges().map((age) => (
+                  <AgeItem
+                    key={age}
+                    age={age}
+                    isSelected={selectedAge === age}
+                    onPress={() => handleAgeSelect(age)}
+                  />
+                ))}
+              </ScrollView>
+            </View>
           )}
         </View>
 
@@ -100,7 +105,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: spacing.screenPadding,
-    paddingTop: spacing.xxl,
+    paddingTop: spacing.xxxl + spacing.xl,
     paddingBottom: spacing.xxl,
     alignItems: 'center',
     justifyContent: 'center',
@@ -117,34 +122,75 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: typography.base * 1.5,
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.xl,
     paddingHorizontal: spacing.md,
   },
-  datePickerContainer: {
+  ageSelectorContainer: {
     width: '100%',
     alignItems: 'center',
     marginBottom: spacing.xxl,
   },
-  dateLabel: {
+  selectorLabel: {
     fontSize: typography.lg,
     fontWeight: typography.bold,
     color: colors.textPrimary,
     marginBottom: spacing.md,
     textAlign: 'center',
   },
-  ageDisplay: {
-    fontSize: typography.lg,
-    fontWeight: typography.semibold,
-    color: colors.textPrimary,
-    marginTop: spacing.md,
-    textAlign: 'center',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
+  singleAgeDisplay: {
     backgroundColor: colors.backgroundTertiary,
     borderRadius: borderRadius.lg,
-    alignSelf: 'center',
-    minWidth: 250,
-    borderWidth: 0,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    alignItems: 'center',
+    minWidth: 150,
+    ...shadows.sm,
+  },
+  singleAgeText: {
+    fontSize: typography.xl,
+    fontWeight: typography.bold,
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
+  },
+  tapToChangeText: {
+    fontSize: typography.sm,
+    color: colors.textSecondary,
+  },
+  ageSelector: {
+    backgroundColor: colors.backgroundTertiary,
+    borderRadius: borderRadius.lg,
+    padding: spacing.sm,
+    maxHeight: 300,
+    minWidth: 120,
+    marginTop: spacing.md,
+    ...shadows.sm,
+  },
+  ageScroll: {
+    maxHeight: 280,
+  },
+  ageScrollContent: {
+    alignItems: 'center',
+  },
+  ageItem: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.md,
+    marginVertical: 2,
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  ageItemSelected: {
+    backgroundColor: colors.primary,
+    ...shadows.md,
+  },
+  ageItemText: {
+    fontSize: typography.base,
+    fontWeight: typography.medium,
+    color: colors.textSecondary,
+  },
+  ageItemTextSelected: {
+    color: colors.background,
+    fontWeight: typography.semibold,
   },
   disclaimer: {
     fontSize: typography.sm,

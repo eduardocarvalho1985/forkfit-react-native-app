@@ -132,14 +132,14 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       case 'gender':
         return !!onboardingData.gender;
       case 'age':
-        return !!onboardingData.birthDate;
+        return !!onboardingData.age;
       case 'goal':
         console.log('Goal step validation - onboardingData.goal:', onboardingData.goal);
         const isValid = !!onboardingData.goal;
         console.log('Goal step isValid:', isValid);
         return isValid;
       case 'vitalsSliders':
-        return !!(onboardingData.gender && onboardingData.birthDate && 
+        return !!(onboardingData.gender && onboardingData.age && 
                  onboardingData.height && onboardingData.weight);
       case 'exerciseFrequency':
         return !!onboardingData.activityLevel;

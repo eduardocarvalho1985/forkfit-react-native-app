@@ -142,7 +142,7 @@ function OnboardingContent() {
     }
 
     if (currentStep === 'eventDate') {
-      return 'projection'; // Always skip 'pacing' after setting a date
+      return 'lossPlanInfo'; // Go to loss plan info after setting event date
     }
 
     // If no special conditions are met, return the next step in the array

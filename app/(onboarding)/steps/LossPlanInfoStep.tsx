@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useOnboarding } from '../OnboardingContext';
 import { colors, spacing, typography, borderRadius } from '@/theme';
@@ -9,11 +9,15 @@ interface LossPlanInfoStepProps {
 
 export default function LossPlanInfoStep({ onSetLoading }: LossPlanInfoStepProps) {
   const { updateStepData } = useOnboarding();
+  const hasMarkedCompleted = useRef(false);
 
-  // Mark this step as completed when component mounts
+  // Mark this step as completed when component mounts (only once)
   useEffect(() => {
-    updateStepData('lossPlanInfo', { lossPlanInfo: true });
-    console.log('Loss plan info step completed');
+    if (!hasMarkedCompleted.current) {
+      hasMarkedCompleted.current = true;
+      updateStepData('lossPlanInfo', { lossPlanInfo: true });
+      console.log('Loss plan info step completed');
+    }
   }, []);
 
   return (
