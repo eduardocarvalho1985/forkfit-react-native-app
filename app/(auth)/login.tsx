@@ -9,6 +9,7 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const { signIn, signInWithGoogle, signInWithApple } = useAuth();
 
   const handleLogin = async () => {
@@ -68,13 +69,25 @@ export default function Login() {
         autoCapitalize="none"
       />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Senha"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.passwordInput}
+          placeholder="Senha"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!showPassword}
+        />
+        <TouchableOpacity 
+          style={styles.eyeButton} 
+          onPress={() => setShowPassword(!showPassword)}
+        >
+          <Icon 
+            name={showPassword ? 'visibility' : 'visibility-off'} 
+            size={20} 
+            color={colors.textSecondary}
+          />
+        </TouchableOpacity>
+      </View>
 
       <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading === "email"}>
         <Text style={styles.buttonText}>{loading === "email" ? "Entrando..." : "Entrar"}</Text>
@@ -140,6 +153,30 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
     marginBottom: spacing.md,
     fontSize: typography.base,
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    borderRadius: borderRadius.sm,
+    marginBottom: spacing.md,
+  },
+  passwordInput: {
+    flex: 1,
+    fontSize: typography.base,
+  },
+  eyeButton: {
+    padding: spacing.sm,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    minWidth: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   button: {
     backgroundColor: colors.primary,

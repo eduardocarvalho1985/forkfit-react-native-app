@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOnboarding } from '@/app/(onboarding)/OnboardingContext';
 import { api } from '@/services/api';
 import { colors, spacing, typography, borderRadius } from '@/theme';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -196,7 +197,6 @@ export default function Register() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>ForkFit</Text>
       <Text style={styles.subtitle}>Crie sua conta</Text>
       <Text style={styles.description}>
         Complete seu cadastro para acessar seu plano personalizado
@@ -213,7 +213,7 @@ export default function Register() {
 
       <View style={styles.passwordContainer}>
         <TextInput
-          style={styles.input}
+          style={styles.passwordInput}
           placeholder="Senha"
           value={password}
           onChangeText={handlePasswordChange}
@@ -224,7 +224,11 @@ export default function Register() {
           style={styles.eyeButton} 
           onPress={() => setShowPassword(!showPassword)}
         >
-          <Text style={styles.eyeButtonText}>{showPassword ? '👁️' : '👁️‍🗨️'}</Text>
+          <Icon 
+            name={showPassword ? 'visibility' : 'visibility-off'} 
+            size={20} 
+            color={colors.textSecondary}
+          />
         </TouchableOpacity>
       </View>
 
@@ -243,7 +247,7 @@ export default function Register() {
               key={index} 
               style={[
                 styles.requirementText,
-                { color: requirement.valid ? '#10B981' : '#EF4444' }
+                { color: requirement.valid ? colors.success : colors.error }
               ]}
             >
               {requirement.valid ? '✅' : '❌'} {requirement.text}
@@ -254,7 +258,7 @@ export default function Register() {
 
       <View style={styles.passwordContainer}>
         <TextInput
-          style={styles.input}
+          style={styles.passwordInput}
           placeholder="Confirmar Senha"
           value={confirmPassword}
           onChangeText={setConfirmPassword}
@@ -265,7 +269,11 @@ export default function Register() {
           style={styles.eyeButton} 
           onPress={() => setShowConfirmPassword(!showConfirmPassword)}
         >
-          <Text style={styles.eyeButtonText}>{showConfirmPassword ? '👁️' : '👁️‍🗨️'}</Text>
+          <Icon 
+            name={showConfirmPassword ? 'visibility' : 'visibility-off'} 
+            size={20} 
+            color={colors.textSecondary}
+          />
         </TouchableOpacity>
       </View>
 
@@ -273,18 +281,18 @@ export default function Register() {
       {confirmPassword.length > 0 && (
         <Text style={[
           styles.matchIndicator,
-          { color: password === confirmPassword ? '#10B981' : '#EF4444' }
+          { color: password === confirmPassword ? colors.success : colors.error }
         ]}>
           {password === confirmPassword ? '✅ Senhas coincidem' : '❌ Senhas não coincidem'}
         </Text>
       )}
 
       <TouchableOpacity 
-        style={[styles.registerButton, loading === "email" && styles.registerButtonDisabled]} 
+        style={[styles.button, loading === "email" && styles.buttonDisabled]} 
         onPress={handleRegister}
         disabled={loading === "email"}
       >
-        <Text style={styles.registerButtonText}>
+        <Text style={styles.buttonText}>
           {loading === "email" ? 'Criando Conta...' : 'Criar Conta'}
         </Text>
       </TouchableOpacity>
@@ -296,11 +304,13 @@ export default function Register() {
       </View>
 
       <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignIn} disabled={loading === "google"}>
+        <Icon name="g-translate" size={20} color={colors.textInverse} style={styles.buttonIcon} />
         <Text style={styles.socialButtonText}>{loading === "google" ? "Cadastrando com Google..." : "Cadastrar com Google"}</Text>
       </TouchableOpacity>
 
       {Platform.OS === 'ios' && (
         <TouchableOpacity style={styles.appleButton} onPress={handleAppleSignIn} disabled={loading === "apple"}>
+          <Icon name="apple" size={20} color={colors.textInverse} style={styles.buttonIcon} />
           <Text style={styles.socialButtonText}>{loading === "apple" ? "Cadastrando com Apple..." : "Cadastrar com Apple"}</Text>
         </TouchableOpacity>
       )}
@@ -319,24 +329,19 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     backgroundColor: colors.background,
   },
-  title: {
-    fontSize: typography['4xl'],
+  subtitle: {
+    fontSize: typography['2xl'],
     fontWeight: typography.bold,
     textAlign: 'center',
-    marginBottom: spacing.sm,
-    color: colors.primary,
-  },
-  subtitle: {
-    fontSize: typography.base,
-    textAlign: 'center',
     marginBottom: spacing.xl,
-    color: colors.textSecondary,
+    color: colors.textPrimary,
   },
   description: {
     fontSize: typography.sm,
     textAlign: 'center',
     marginBottom: spacing.xl,
     color: colors.textSecondary,
+    lineHeight: typography.lineHeightNormal * typography.sm,
   },
   input: {
     borderWidth: 1,
@@ -345,12 +350,66 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
     marginBottom: spacing.md,
     fontSize: typography.base,
+    backgroundColor: colors.background,
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.sm,
+    marginBottom: spacing.md,
+    backgroundColor: colors.background,
+  },
+  passwordInput: {
+    flex: 1,
+    padding: spacing.md,
+    fontSize: typography.base,
+  },
+  eyeButton: {
+    padding: spacing.sm,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    minWidth: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  passwordRequirements: {
+    marginTop: -spacing.sm,
+    marginBottom: spacing.md,
+    padding: spacing.md,
+    backgroundColor: colors.backgroundTertiary,
+    borderRadius: borderRadius.sm,
+  },
+  requirementsTitle: {
+    fontSize: typography.sm,
+    fontWeight: typography.bold,
+    marginBottom: spacing.sm,
+    color: colors.textSecondary,
+  },
+  requirementText: {
+    fontSize: typography.xs,
+    marginBottom: spacing.xs,
+  },
+  matchIndicator: {
+    fontSize: typography.sm,
+    marginTop: -spacing.sm,
+    marginBottom: spacing.md,
+    textAlign: 'center',
   },
   button: {
     backgroundColor: colors.primary,
     padding: spacing.md,
     borderRadius: borderRadius.sm,
     marginBottom: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonDisabled: {
+    opacity: 0.5,
   },
   buttonText: {
     color: colors.textInverse,
@@ -362,6 +421,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: colors.primary,
     fontSize: typography.base,
+    marginTop: spacing.md,
   },
   divider: {
     flexDirection: 'row',
@@ -383,70 +443,26 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     borderRadius: borderRadius.sm,
     marginBottom: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   appleButton: {
     backgroundColor: colors.apple,
     padding: spacing.md,
     borderRadius: borderRadius.sm,
     marginBottom: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   socialButtonText: {
     color: colors.textInverse,
     fontSize: typography.base,
     fontWeight: typography.semibold,
-    textAlign: 'center',
+    marginLeft: spacing.sm,
   },
-  passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
-    borderRadius: borderRadius.sm,
-    marginBottom: spacing.md,
-  },
-  eyeButton: {
-    padding: spacing.sm,
-  },
-  eyeButtonText: {
-    fontSize: typography['2xl'],
-  },
-  passwordRequirements: {
-    marginTop: -10,
-    marginBottom: spacing.md,
-    paddingHorizontal: spacing.md,
-    backgroundColor: colors.backgroundTertiary,
-    borderRadius: borderRadius.sm,
-  },
-  requirementsTitle: {
-    fontSize: typography.sm,
-    fontWeight: typography.bold,
-    marginBottom: spacing.sm,
-    color: colors.textSecondary,
-  },
-  requirementText: {
-    fontSize: typography.xs,
-    marginBottom: spacing.xs,
-  },
-  matchIndicator: {
-    fontSize: typography.sm,
-    marginTop: -10,
-    marginBottom: spacing.md,
-    textAlign: 'center',
-  },
-  registerButton: {
-    backgroundColor: colors.primary,
-    padding: spacing.md,
-    borderRadius: borderRadius.sm,
-    marginBottom: spacing.md,
-  },
-  registerButtonText: {
-    color: colors.textInverse,
-    textAlign: 'center',
-    fontSize: typography.base,
-    fontWeight: typography.semibold,
-  },
-  registerButtonDisabled: {
-    opacity: 0.5,
+  buttonIcon: {
+    marginRight: spacing.sm,
   },
 });
