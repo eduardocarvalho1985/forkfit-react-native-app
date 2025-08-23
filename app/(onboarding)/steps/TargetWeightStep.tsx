@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import CustomSlider from '@/components/CustomSlider';
 import { useOnboarding } from '../OnboardingContext';
 import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 interface TargetWeightStepProps {
   onSetLoading: (loading: boolean) => void;
@@ -31,12 +34,7 @@ export default function TargetWeightStep({ onSetLoading }: TargetWeightStepProps
     const currentWeight = onboardingData.weight || 70;
     const minWeight = Math.max(40, currentWeight * 0.6); // 60% of current weight
     const maxWeight = Math.min(150, currentWeight * 1.4); // 140% of current weight
-    const step = 1;
     
-    const handleWeightChange = (value: number) => {
-      setTargetWeight(value);
-    };
-
     return (
       <View style={styles.sliderContainer}>
         <View style={styles.sliderHeader}>
@@ -63,45 +61,19 @@ export default function TargetWeightStep({ onSetLoading }: TargetWeightStepProps
         
         <Text style={styles.valueDisplay}>{targetWeight}{weightUnit === 'kg' ? 'kg' : 'lbs'}</Text>
         
-        <View style={styles.sliderContainer}>
-          <View style={styles.sliderTrack}>
-            {Array.from({ length: Math.floor((maxWeight - minWeight) / step) + 1 }, (_, i) => {
-              const value = minWeight + (i * step);
-              const isMajorTick = value % 10 === 0;
-              const isCurrentValue = value === targetWeight;
-              const isCurrentWeight = value === currentWeight;
-              
-              return (
-                <View key={value} style={styles.tickContainer}>
-                  <View style={[
-                    styles.tick,
-                    isMajorTick && styles.majorTick,
-                    isCurrentWeight && styles.currentWeightTick,
-                    isCurrentValue && styles.targetWeightTick
-                  ]} />
-                  {isMajorTick && (
-                    <Text style={styles.tickLabel}>{value}</Text>
-                  )}
-                  {isCurrentWeight && (
-                    <View style={styles.currentWeightMarker}>
-                      <Text style={styles.currentWeightLabel}>Atual</Text>
-                      <View style={styles.currentWeightLine} />
-                    </View>
-                  )}
-                  {isCurrentValue && (
-                    <View style={styles.targetWeightMarker}>
-                      <View style={styles.targetWeightTriangle} />
-                      <View style={styles.targetWeightLine} />
-                    </View>
-                  )}
-                </View>
-              );
-            })}
-          </View>
-          
-          <View style={styles.sliderHandle}>
-            <View style={styles.handleCircle} />
-          </View>
+        <View style={styles.sliderWrapper}>
+          <CustomSlider
+            value={targetWeight}
+            onValueChange={setTargetWeight}
+            minimumValue={minWeight}
+            maximumValue={maxWeight}
+            step={1}
+            width={screenWidth - 80}
+            height={40}
+            thumbSize={24}
+            trackHeight={6}
+            showLabels={true}
+          />
         </View>
         
         <View style={styles.weightInfo}>
@@ -208,98 +180,9 @@ const styles = StyleSheet.create({
     color: colors.primary,
     marginBottom: spacing.lg,
   },
-  sliderTrack: {
+  sliderWrapper: {
     width: '100%',
-    height: 60,
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    position: 'relative',
-    backgroundColor: colors.backgroundTertiary,
-    borderRadius: borderRadius.lg,
-    paddingHorizontal: spacing.md,
-  },
-  tickContainer: {
     alignItems: 'center',
-    position: 'relative',
-    flex: 1,
-  },
-  tick: {
-    width: 1,
-    height: 8,
-    backgroundColor: colors.border,
-  },
-  majorTick: {
-    height: 16,
-    backgroundColor: colors.textSecondary,
-  },
-  currentWeightTick: {
-    backgroundColor: colors.textSecondary,
-  },
-  targetWeightTick: {
-    backgroundColor: colors.primary,
-  },
-  tickLabel: {
-    fontSize: typography.sm,
-    color: colors.textSecondary,
-    marginTop: spacing.xs,
-  },
-  currentWeightMarker: {
-    position: 'absolute',
-    bottom: 0,
-    alignItems: 'center',
-  },
-  currentWeightLabel: {
-    fontSize: typography.xs,
-    color: colors.textSecondary,
-    marginBottom: spacing.xs,
-  },
-  currentWeightLine: {
-    width: 2,
-    height: 20,
-    backgroundColor: colors.textSecondary,
-  },
-  targetWeightMarker: {
-    position: 'absolute',
-    bottom: 0,
-    alignItems: 'center',
-  },
-  targetWeightTriangle: {
-    width: 0,
-    height: 0,
-    backgroundColor: 'transparent',
-    borderStyle: 'solid',
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderBottomWidth: 8,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderBottomColor: colors.primary,
-  },
-  targetWeightLine: {
-    width: 2,
-    height: 20,
-    backgroundColor: colors.primary,
-    marginTop: -1,
-  },
-  sliderHandle: {
-    position: 'absolute',
-    top: 0,
-    left: '50%',
-    transform: [{ translateX: -15 }],
-    width: 30,
-    height: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  handleCircle: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: colors.primary,
-    borderWidth: 3,
-    borderColor: colors.background,
-    ...shadows.md,
   },
   weightInfo: {
     alignItems: 'center',

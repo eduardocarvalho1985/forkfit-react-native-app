@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import CustomSlider from '@/components/CustomSlider';
 import { useOnboarding } from '../OnboardingContext';
 import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
 
@@ -39,12 +40,7 @@ export default function VitalsStep({ onSetLoading }: VitalsStepProps) {
   const renderHeightSlider = () => {
     const minHeight = 140;
     const maxHeight = 200;
-    const step = 1;
     
-    const handleHeightChange = (value: number) => {
-      setHeight(value);
-    };
-
     return (
       <View style={styles.sliderContainer}>
         <View style={styles.sliderHeader}>
@@ -71,37 +67,19 @@ export default function VitalsStep({ onSetLoading }: VitalsStepProps) {
         
         <Text style={styles.valueDisplay}>{height}{heightUnit === 'cm' ? 'cm' : 'ft'}</Text>
         
-        <View style={styles.sliderContainer}>
-          <View style={styles.sliderTrack}>
-            {Array.from({ length: Math.floor((maxHeight - minHeight) / step) + 1 }, (_, i) => {
-              const value = minHeight + (i * step);
-              const isMajorTick = value % 10 === 0;
-              const isCurrentValue = value === height;
-              
-              return (
-                <View key={value} style={styles.tickContainer}>
-                  <View style={[
-                    styles.tick,
-                    isMajorTick && styles.majorTick,
-                    isCurrentValue && styles.currentTick
-                  ]} />
-                  {isMajorTick && (
-                    <Text style={styles.tickLabel}>{value}</Text>
-                  )}
-                  {isCurrentValue && (
-                    <View style={styles.currentValueMarker}>
-                      <View style={styles.markerTriangle} />
-                      <View style={styles.markerLine} />
-                    </View>
-                  )}
-                </View>
-              );
-            })}
-          </View>
-          
-          <View style={styles.sliderHandle}>
-            <View style={styles.handleCircle} />
-          </View>
+        <View style={styles.sliderWrapper}>
+          <CustomSlider
+            value={height}
+            onValueChange={setHeight}
+            minimumValue={minHeight}
+            maximumValue={maxHeight}
+            step={1}
+            width={screenWidth - 80}
+            height={40}
+            thumbSize={24}
+            trackHeight={6}
+            showLabels={true}
+          />
         </View>
       </View>
     );
@@ -110,12 +88,7 @@ export default function VitalsStep({ onSetLoading }: VitalsStepProps) {
   const renderWeightSlider = () => {
     const minWeight = 40;
     const maxWeight = 150;
-    const step = 1;
     
-    const handleWeightChange = (value: number) => {
-      setWeight(value);
-    };
-
     return (
       <View style={styles.sliderContainer}>
         <View style={styles.sliderHeader}>
@@ -142,37 +115,19 @@ export default function VitalsStep({ onSetLoading }: VitalsStepProps) {
         
         <Text style={styles.valueDisplay}>{weight}{weightUnit === 'kg' ? 'kg' : 'lbs'}</Text>
         
-        <View style={styles.sliderContainer}>
-          <View style={styles.sliderTrack}>
-            {Array.from({ length: Math.floor((maxWeight - minWeight) / step) + 1 }, (_, i) => {
-              const value = minWeight + (i * step);
-              const isMajorTick = value % 10 === 0;
-              const isCurrentValue = value === weight;
-              
-              return (
-                <View key={value} style={styles.tickContainer}>
-                  <View style={[
-                    styles.tick,
-                    isMajorTick && styles.majorTick,
-                    isCurrentValue && styles.currentTick
-                  ]} />
-                  {isMajorTick && (
-                    <Text style={styles.tickLabel}>{value}</Text>
-                  )}
-                  {isCurrentValue && (
-                    <View style={styles.currentValueMarker}>
-                      <View style={styles.markerTriangle} />
-                      <View style={styles.markerLine} />
-                    </View>
-                  )}
-                </View>
-              );
-            })}
-          </View>
-          
-          <View style={styles.sliderHandle}>
-            <View style={styles.handleCircle} />
-          </View>
+        <View style={styles.sliderWrapper}>
+          <CustomSlider
+            value={weight}
+            onValueChange={setWeight}
+            minimumValue={minWeight}
+            maximumValue={maxWeight}
+            step={1}
+            width={screenWidth - 80}
+            height={40}
+            thumbSize={24}
+            trackHeight={6}
+            showLabels={true}
+          />
         </View>
       </View>
     );
@@ -207,6 +162,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.screenPadding,
     paddingTop: spacing.xxl,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontSize: typography['3xl'],
@@ -265,89 +221,12 @@ const styles = StyleSheet.create({
   valueDisplay: {
     fontSize: typography['2xl'],
     fontWeight: typography.bold,
-    color: colors.textPrimary,
+    color: colors.primary,
     marginBottom: spacing.lg,
   },
-  sliderContainer: {
+  sliderWrapper: {
     width: '100%',
-    height: 80,
-    position: 'relative',
-    marginBottom: spacing.md,
-  },
-  sliderTrack: {
-    width: '100%',
-    height: 60,
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    position: 'relative',
-    backgroundColor: colors.backgroundTertiary,
-    borderRadius: borderRadius.lg,
-    paddingHorizontal: spacing.md,
-  },
-  tickContainer: {
     alignItems: 'center',
-    position: 'relative',
-    flex: 1,
-  },
-  tick: {
-    width: 1,
-    height: 8,
-    backgroundColor: colors.border,
-  },
-  majorTick: {
-    height: 16,
-    backgroundColor: colors.textSecondary,
-  },
-  currentTick: {
-    backgroundColor: colors.primary,
-  },
-  tickLabel: {
-    fontSize: typography.sm,
-    color: colors.textSecondary,
-    marginTop: spacing.xs,
-  },
-  currentValueMarker: {
-    position: 'absolute',
-    bottom: 0,
-    alignItems: 'center',
-  },
-  markerTriangle: {
-    width: 0,
-    height: 0,
-    backgroundColor: 'transparent',
-    borderStyle: 'solid',
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderBottomWidth: 8,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderBottomColor: colors.textPrimary,
-  },
-  markerLine: {
-    width: 2,
-    height: 20,
-    backgroundColor: colors.textPrimary,
-    marginTop: -1,
-  },
-  sliderHandle: {
-    position: 'absolute',
-    top: 0,
-    left: '50%',
-    transform: [{ translateX: -15 }],
-    width: 30,
-    height: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  handleCircle: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: colors.primary,
-    borderWidth: 3,
-    borderColor: colors.background,
-    ...shadows.md,
   },
   disclaimer: {
     fontSize: typography.sm,
