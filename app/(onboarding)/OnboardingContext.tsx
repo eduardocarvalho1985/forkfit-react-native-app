@@ -150,7 +150,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       case 'pacing':
         return !!(onboardingData.weeklyPacing && (!onboardingData.motivatingEvent || onboardingData.motivatingEvent === 'none'));
       case 'motivation':
-        return !!onboardingData.motivatingEvent;
+        return !!onboardingData.motivation;
       case 'eventChoice':
         return !!onboardingData.motivatingEvent;
       case 'eventDate':
@@ -166,7 +166,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       case 'loading':
         return true; // Always valid, just loading state
       case 'planPreview':
-        return !!calculatePlan();
+        return true; // Always valid for now, will be enhanced later
       case 'paywall':
         return true; // Always valid, user can choose
       default:

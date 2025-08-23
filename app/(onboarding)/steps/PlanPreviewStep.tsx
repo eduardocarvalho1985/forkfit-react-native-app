@@ -91,7 +91,7 @@ export default function PlanStep({ onSetLoading }: PlanStepProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundSecondary,
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,

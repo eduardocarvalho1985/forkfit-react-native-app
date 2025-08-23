@@ -1,10 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useOnboarding } from '../OnboardingContext';
-
-const CORAL = '#FF725E';
-const OFF_WHITE = '#FDF6F3';
-const TEXT = '#1F2937';
+import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
 
 interface SocialProofStepProps {
   onSetLoading: (loading: boolean) => void;
@@ -102,7 +99,7 @@ export default function SocialProofStep({ onSetLoading }: SocialProofStepProps) 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: OFF_WHITE,
+    backgroundColor: colors.background,
   },
   scrollView: {
     flex: 1,
@@ -114,19 +111,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: TEXT,
+    fontSize: typography['3xl'],
+    fontWeight: typography.bold,
+    color: colors.textPrimary,
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#64748b',
+    fontSize: typography.base,
+    color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 40,
-    paddingHorizontal: 20,
+    lineHeight: typography.base * 1.5,
+    marginBottom: spacing.xxl,
+    paddingHorizontal: spacing.md,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -135,24 +132,23 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   statCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.backgroundTertiary,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
     alignItems: 'center',
     flex: 1,
-    marginHorizontal: 4,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    marginHorizontal: spacing.xs,
+    ...shadows.sm,
   },
   statNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: CORAL,
-    marginBottom: 4,
+    fontSize: typography.xl,
+    fontWeight: typography.bold,
+    color: colors.primary,
+    marginBottom: spacing.xs,
   },
   statLabel: {
-    fontSize: 12,
-    color: '#64748b',
+    fontSize: typography.sm,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   testimonialsContainer: {
@@ -160,24 +156,18 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   testimonialsTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: TEXT,
+    fontSize: typography.xl,
+    fontWeight: typography.bold,
+    color: colors.textPrimary,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: spacing.lg,
   },
   testimonialCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    backgroundColor: colors.backgroundTertiary,
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    ...shadows.md,
   },
   testimonialHeader: {
     flexDirection: 'row',
@@ -192,52 +182,50 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   testimonialName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: TEXT,
-    marginBottom: 2,
+    fontSize: typography.base,
+    fontWeight: typography.semibold,
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
   },
   testimonialResult: {
-    fontSize: 14,
-    color: CORAL,
-    fontWeight: '500',
+    fontSize: typography.sm,
+    color: colors.primary,
+    fontWeight: typography.medium,
   },
   testimonialText: {
-    fontSize: 14,
-    color: '#64748b',
-    lineHeight: 20,
+    fontSize: typography.sm,
+    color: colors.textSecondary,
+    lineHeight: typography.sm * 1.4,
     fontStyle: 'italic',
   },
   motivationContainer: {
-    backgroundColor: '#f0f9ff',
-    borderRadius: 16,
-    padding: 24,
-    marginBottom: 30,
-    borderWidth: 1,
-    borderColor: '#0ea5e9',
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.xxl,
     alignItems: 'center',
   },
   motivationTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#0c4a6e',
-    marginBottom: 12,
+    fontSize: typography.lg,
+    fontWeight: typography.bold,
+    color: colors.background,
+    marginBottom: spacing.sm,
     textAlign: 'center',
   },
   motivationText: {
-    fontSize: 14,
-    color: '#0c4a6e',
+    fontSize: typography.sm,
+    color: colors.background,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: typography.sm * 1.4,
   },
   infoContainer: {
     width: '100%',
     alignItems: 'center',
   },
   infoText: {
-    color: '#64748b',
-    fontSize: 14,
+    color: colors.textSecondary,
+    fontSize: typography.sm,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: typography.sm * 1.4,
   },
 });

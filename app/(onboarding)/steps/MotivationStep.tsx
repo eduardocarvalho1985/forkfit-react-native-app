@@ -1,88 +1,107 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useOnboarding } from '../OnboardingContext';
-
-const CORAL = '#FF725E';
-const OFF_WHITE = '#FDF6F3';
-const TEXT = '#1F2937';
+import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
 
 interface MotivationStepProps {
   onSetLoading: (loading: boolean) => void;
 }
 
-const MOTIVATING_EVENTS = [
-  { id: 'wedding', label: 'Casamento', description: 'Quero estar no meu melhor para o grande dia' },
-  { id: 'vacation', label: 'Férias', description: 'Preparando-me para uma viagem especial' },
-  { id: 'reunion', label: 'Reunião de Família', description: 'Encontrando familiares após muito tempo' },
-  { id: 'beach_season', label: 'Temporada de Praia', description: 'Quero me sentir confiante na praia' },
-  { id: 'none', label: 'Nenhum evento especial', description: 'Só quero melhorar minha saúde e bem-estar' }
+const MOTIVATION_OPTIONS = [
+  {
+    value: 'saude',
+    label: 'Saúde',
+    description: 'Alimentar melhor meu corpo e mente',
+    emoji: '💚'
+  },
+  {
+    value: 'energia',
+    label: 'Energia',
+    description: 'Aumentar minha vitalidade e felicidade',
+    emoji: '⚡'
+  },
+  {
+    value: 'disciplina',
+    label: 'Disciplina',
+    description: 'Melhorar minha disciplina e seguir um plano',
+    emoji: '🎯'
+  },
+  {
+    value: 'geral',
+    label: 'Geral',
+    description: 'Me sentir melhor e mais confiante',
+    emoji: '🌟'
+  }
 ];
 
 export default function MotivationStep({ onSetLoading }: MotivationStepProps) {
-  const { updateStepData, onboardingData } = useOnboarding();
-  const [selectedEvent, setSelectedEvent] = useState<string>('');
+  const { getStepData, updateStepData } = useOnboarding();
+  const [selectedMotivation, setSelectedMotivation] = useState<string>('');
 
-  // Initialize with existing data
+  // Load existing data when component mounts
   useEffect(() => {
-    if (onboardingData.motivatingEvent) {
-      setSelectedEvent(onboardingData.motivatingEvent);
+    const existingData = getStepData('motivation');
+    if (existingData?.motivation) {
+      setSelectedMotivation(existingData.motivation);
     }
-  }, [onboardingData.motivatingEvent]);
+  }, []);
 
-  // Auto-save when selection changes
+  // Update motivation in context whenever it changes
   useEffect(() => {
-    if (selectedEvent) {
-      updateStepData('motivation', { 
-        motivatingEvent: selectedEvent,
-        isEventDriven: selectedEvent !== 'none'
-      });
+    if (selectedMotivation) {
+      updateStepData('motivation', { motivation: selectedMotivation });
+      console.log('Motivation updated in context:', selectedMotivation);
     }
-  }, [selectedEvent]);
+  }, [selectedMotivation]);
 
-  const handleEventSelect = (eventId: string) => {
-    setSelectedEvent(eventId);
+  const handleMotivationSelect = (motivation: string) => {
+    setSelectedMotivation(motivation);
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Você tem algum evento especial em mente?</Text>
+        <Text style={styles.title}>Qual o seu principal objetivo?</Text>
         <Text style={styles.subtitle}>
-          Isso nos ajudará a personalizar sua jornada e definir prazos realistas
+          Escolha o que mais te motiva a começar essa jornada
         </Text>
-        
-        <View style={styles.eventsContainer}>
-          {MOTIVATING_EVENTS.map((event) => (
+
+        <View style={styles.motivationContainer}>
+          {MOTIVATION_OPTIONS.map((option) => (
             <TouchableOpacity
-              key={event.id}
+              key={option.value}
               style={[
-                styles.eventButton,
-                selectedEvent === event.id && styles.eventButtonSelected
+                styles.motivationButton,
+                selectedMotivation === option.value && styles.motivationButtonSelected
               ]}
-              onPress={() => handleEventSelect(event.id)}
+              onPress={() => handleMotivationSelect(option.value)}
             >
-              <Text style={[
-                styles.eventTitle,
-                selectedEvent === event.id && styles.eventTitleSelected
-              ]}>
-                {event.label}
-              </Text>
-              <Text style={[
-                styles.eventDescription,
-                selectedEvent === event.id && styles.eventDescriptionSelected
-              ]}>
-                {event.description}
-              </Text>
+              <Text style={styles.motivationEmoji}>{option.emoji}</Text>
+              <View style={styles.motivationTextContainer}>
+                <Text
+                  style={[
+                    styles.motivationLabel,
+                    selectedMotivation === option.value && styles.motivationLabelSelected
+                  ]}
+                >
+                  {option.label}
+                </Text>
+                <Text
+                  style={[
+                    styles.motivationDescription,
+                    selectedMotivation === option.value && styles.motivationDescriptionSelected
+                  ]}
+                >
+                  {option.description}
+                </Text>
+              </View>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Navigation is handled by the parent component's footer */}
-        <View style={styles.infoContainer}>
-          <Text style={styles.infoText}>
-            Use o botão "Continuar" na parte inferior da tela para prosseguir
-          </Text>
-        </View>
+        <Text style={styles.disclaimer}>
+          * Suas informações serão excluídas após gerar o plano.
+        </Text>
       </View>
     </View>
   );
@@ -91,77 +110,82 @@ export default function MotivationStep({ onSetLoading }: MotivationStepProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: OFF_WHITE,
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 120,
-    justifyContent: 'center',
+    paddingHorizontal: spacing.screenPadding,
+    paddingTop: spacing.xxxl + spacing.xl,
+    paddingBottom: spacing.xxl,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: TEXT,
+    fontSize: typography['3xl'],
+    fontWeight: typography.bold,
+    color: colors.textPrimary,
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#64748b',
+    fontSize: typography.base,
+    color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 40,
-    paddingHorizontal: 20,
+    lineHeight: typography.base * 1.5,
+    marginBottom: spacing.xxl,
+    paddingHorizontal: spacing.md,
   },
-  eventsContainer: {
+  motivationContainer: {
     width: '100%',
-    gap: 16,
-    marginBottom: 30,
+    marginBottom: spacing.xxl,
   },
-  eventButton: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#e2e8f0',
-    paddingVertical: 20,
-    paddingHorizontal: 24,
+  motivationButton: {
+    backgroundColor: colors.backgroundTertiary,
+    borderRadius: borderRadius.lg,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    marginBottom: spacing.md,
     alignItems: 'center',
+    justifyContent: 'flex-start',
+    minHeight: 80,
+    flexDirection: 'row',
+    gap: spacing.lg,
+    ...shadows.sm,
   },
-  eventButtonSelected: {
-    borderColor: CORAL,
-    backgroundColor: CORAL,
+  motivationButtonSelected: {
+    backgroundColor: colors.primary,
+    ...shadows.md,
   },
-  eventTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: TEXT,
-    marginBottom: 8,
+  motivationEmoji: {
+    fontSize: typography['2xl'],
+    marginRight: spacing.sm,
+  },
+  motivationTextContainer: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
+  motivationLabel: {
+    fontSize: typography.lg,
+    fontWeight: typography.bold,
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
+  },
+  motivationLabelSelected: {
+    color: colors.background,
+  },
+  motivationDescription: {
+    fontSize: typography.base,
+    color: colors.textSecondary,
+    lineHeight: typography.base * 1.4,
+  },
+  motivationDescriptionSelected: {
+    color: colors.backgroundSecondary,
+  },
+  disclaimer: {
+    fontSize: typography.sm,
+    color: colors.textTertiary,
     textAlign: 'center',
-  },
-  eventTitleSelected: {
-    color: '#fff',
-  },
-  eventDescription: {
-    fontSize: 14,
-    color: '#64748b',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  eventDescriptionSelected: {
-    color: 'rgba(255, 255, 255, 0.9)',
-  },
-  infoContainer: {
-    width: '100%',
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  infoText: {
-    color: '#64748b',
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: typography.sm * 1.4,
+    marginTop: spacing.xl,
   },
 });

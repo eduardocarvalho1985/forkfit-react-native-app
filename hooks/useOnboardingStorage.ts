@@ -32,6 +32,7 @@ export interface OnboardingData {
   
   // Goal-specific information
   targetWeight?: number; // User's desired final weight
+  motivation?: string; // User's primary motivation (saude, energia, disciplina, geral)
   emotionalGoal?: string; // User's deeper motivation
   motivatingEvent?: 'wedding' | 'vacation' | 'reunion' | 'beach_season' | 'none';
   
@@ -46,6 +47,8 @@ export interface OnboardingData {
   weightLossCurveInfo?: boolean; // User has seen weight loss curve info
   lossPlanInfo?: boolean; // User has seen loss plan info
   moreInfo?: boolean; // User has seen additional info
+  socialProofViewed?: boolean; // User has seen social proof
+  loadingCompleted?: boolean; // Loading step completed
   
   // Calculated data
   calories?: number;

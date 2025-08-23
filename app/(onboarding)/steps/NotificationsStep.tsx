@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Switch, Alert, Linking } from 'react-native';
 import { useOnboarding } from '../OnboardingContext';
 import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
+import {
+  getNotificationPermissionStatus,
+  requestNotificationPermissions,
+  updateNotificationPreferences
+} from '../../../services/notificationService';
 
 interface NotificationsStepProps {
   onSetLoading: (loading: boolean) => void;
@@ -9,14 +14,12 @@ interface NotificationsStepProps {
 
 export default function NotificationsStep({ onSetLoading }: NotificationsStepProps) {
   const { getStepData, updateStepData } = useOnboarding();
-  const [notificationsEnabled, setNotificationsEnabled] = useState(getStepData('notificationsEnabled') || false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [permissionStatus, setPermissionStatus] = useState<'undetermined' | 'granted' | 'denied' | 'blocked'>('undetermined');
 
-  // Load existing data when component mounts
+  // Check notification permission status on mount
   useEffect(() => {
-    const existingNotifications = getStepData('notificationsEnabled');
-    if (existingNotifications !== undefined) {
-      setNotificationsEnabled(existingNotifications);
-    }
+    checkNotificationStatus();
   }, []);
 
   // Update notifications preference in context whenever it changes
@@ -25,8 +28,67 @@ export default function NotificationsStep({ onSetLoading }: NotificationsStepPro
     console.log('Notifications preference updated in context:', notificationsEnabled);
   }, [notificationsEnabled]);
 
-  const toggleNotifications = () => {
-    setNotificationsEnabled(prev => !prev);
+  const checkNotificationStatus = async () => {
+    try {
+      const status = await getNotificationPermissionStatus();
+      setPermissionStatus(status.status);
+      setNotificationsEnabled(status.granted);
+    } catch (error) {
+      console.error('Error checking notification status:', error);
+    }
+  };
+
+  const handleNotificationToggle = async (enabled: boolean) => {
+    if (enabled) {
+      // Always try to request permissions when turning ON
+      try {
+        const status = await requestNotificationPermissions();
+        if (status.granted) {
+          setNotificationsEnabled(true);
+          setPermissionStatus('granted');
+          // Update preferences when notifications are enabled
+          await updateNotificationPreferences(true, true);
+          Alert.alert(
+            'Notificações Ativadas!',
+            'Agora você receberá lembretes e atualizações importantes.',
+            [{ text: 'Ótimo!' }]
+          );
+        } else if (status.status === 'denied') {
+          Alert.alert(
+            'Permissões Negadas',
+            'Para receber notificações, você precisa permitir o acesso nas configurações do dispositivo.',
+            [
+              { text: 'Cancelar', style: 'cancel' },
+              { text: 'Configurações', onPress: () => Linking.openSettings() }
+            ]
+          );
+        } else if (status.status === 'blocked') {
+          Alert.alert(
+            'Permissões Bloqueadas',
+            'Para ativar notificações, você precisa permitir o acesso nas configurações do dispositivo.',
+            [
+              { text: 'Cancelar', style: 'cancel' },
+              { text: 'Configurações', onPress: () => Linking.openSettings() }
+            ]
+          );
+        }
+        // Update the permission status in the UI
+        setPermissionStatus(status.status);
+      } catch (error) {
+        console.error('Error requesting notification permissions:', error);
+        Alert.alert(
+          'Erro',
+          'Não foi possível solicitar permissões de notificação. Tente novamente.',
+          [{ text: 'OK' }]
+        );
+      }
+    } else {
+      setNotificationsEnabled(false);
+      // Update preferences when disabling
+      await updateNotificationPreferences(false, false);
+      // Reset permission status to undetermined so user can request again
+      setPermissionStatus('undetermined');
+    }
   };
 
   return (
@@ -47,7 +109,7 @@ export default function NotificationsStep({ onSetLoading }: NotificationsStepPro
             </View>
             <Switch
               value={notificationsEnabled}
-              onValueChange={toggleNotifications}
+              onValueChange={handleNotificationToggle}
               trackColor={{ false: colors.border, true: colors.primaryLight }}
               thumbColor={notificationsEnabled ? colors.primary : colors.textTertiary}
             />

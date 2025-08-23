@@ -138,11 +138,17 @@ function OnboardingContent() {
 
     // --- Conditional Logic Lives Here ---
     if (currentStep === 'motivation') {
-      return data.motivatingEvent && data.motivatingEvent !== 'none' ? 'eventDate' : 'pacing';
+      // After motivation, always go to eventChoice (next step in order)
+      return 'eventChoice';
     }
 
     if (currentStep === 'eventDate') {
       return 'lossPlanInfo'; // Go to loss plan info after setting event date
+    }
+
+    if (currentStep === 'loading') {
+      // Auto-advance to plan preview after loading completes
+      return 'planPreview';
     }
 
     // If no special conditions are met, return the next step in the array
@@ -244,12 +250,14 @@ function OnboardingContent() {
 
   return (
     <View style={styles.container}>
-      <OnboardingProgress
-        currentStep={getCurrentStepIndex()}
-        totalSteps={STEP_ORDER.length}
-        onBack={handleBack}
-        canGoBack={canGoBack()}
-      />
+      {currentStep !== 'introCarousel' && (
+        <OnboardingProgress
+          currentStep={getCurrentStepIndex()}
+          totalSteps={STEP_ORDER.length}
+          onBack={handleBack}
+          canGoBack={canGoBack()}
+        />
+      )}
       <View style={styles.content}>
         {renderCurrentStep()}
       </View>

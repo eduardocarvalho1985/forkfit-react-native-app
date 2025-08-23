@@ -1,22 +1,33 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-
-const CORAL = '#FF725E';
-const OFF_WHITE = '#FDF6F3';
-const TEXT = '#1F2937';
+import { useOnboarding } from '../OnboardingContext';
+import { colors, spacing, typography } from '@/theme';
 
 interface LoadingStepProps {
   onSetLoading: (loading: boolean) => void;
 }
 
 export default function LoadingStep({ onSetLoading }: LoadingStepProps) {
+  const { updateStepData } = useOnboarding();
+
+  // Auto-advance after 3 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // Mark this step as completed
+      updateStepData('loading', { loadingCompleted: true });
+      console.log('Loading step completed, auto-advancing...');
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <ActivityIndicator size="large" color={CORAL} style={styles.spinner} />
-        <Text style={styles.title}>We&apos;re personalizing your plan...</Text>
+        <ActivityIndicator size="large" color={colors.primary} style={styles.spinner} />
+        <Text style={styles.title}>Personalizando seu plano...</Text>
         <Text style={styles.subtitle}>
-          Creating anticipation while calculations are performed
+          Criando um plano único baseado nas suas informações
         </Text>
       </View>
     </View>
@@ -26,30 +37,30 @@ export default function LoadingStep({ onSetLoading }: LoadingStepProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: OFF_WHITE,
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 120, // Extra padding for fixed footer
+    paddingHorizontal: spacing.screenPadding,
+    paddingTop: spacing.xxl,
+    paddingBottom: spacing.xxl,
     justifyContent: 'center',
     alignItems: 'center',
   },
   spinner: {
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: TEXT,
+    fontSize: typography['3xl'],
+    fontWeight: typography.bold,
+    color: colors.textPrimary,
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#64748b',
+    fontSize: typography.base,
+    color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: typography.base * 1.5,
   },
 });

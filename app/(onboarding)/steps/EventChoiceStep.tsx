@@ -3,47 +3,52 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useOnboarding } from '../OnboardingContext';
 import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
 
-const EVENT_OPTIONS = [
-  { 
-    label: 'Casamento', 
-    value: 'wedding' as const,
-    emoji: '💒'
-  },
-  { 
-    label: 'Férias', 
-    value: 'vacation' as const,
-    emoji: '🏖️'
-  },
-  { 
-    label: 'Reunião', 
-    value: 'reunion' as const,
-    emoji: '👥'
-  },
-  { 
-    label: 'Temporada de Praia', 
-    value: 'beach_season' as const,
-    emoji: '🏊‍♀️'
-  },
-  { 
-    label: 'Nenhum evento específico', 
-    value: 'none' as const,
-    emoji: '🎯'
-  },
-];
-
 interface EventChoiceStepProps {
   onSetLoading: (loading: boolean) => void;
 }
 
+const EVENT_OPTIONS = [
+  {
+    value: 'wedding',
+    label: 'Casamento',
+    description: 'Quero estar no meu melhor para o grande dia',
+    emoji: '💒'
+  },
+  {
+    value: 'vacation',
+    label: 'Férias',
+    description: 'Preparando-me para uma viagem especial',
+    emoji: '✈️'
+  },
+  {
+    value: 'reunion',
+    label: 'Reunião de Família',
+    description: 'Encontrando familiares após muito tempo',
+    emoji: '👨‍👩‍👧‍👦'
+  },
+  {
+    value: 'beach_season',
+    label: 'Temporada de Praia',
+    description: 'Quero me sentir confiante na praia',
+    emoji: '🏖️'
+  },
+  {
+    value: 'none',
+    label: 'Nenhum evento específico',
+    description: 'Só quero melhorar minha saúde e bem-estar',
+    emoji: '🌟'
+  }
+];
+
 export default function EventChoiceStep({ onSetLoading }: EventChoiceStepProps) {
   const { getStepData, updateStepData } = useOnboarding();
-  const [motivatingEvent, setMotivatingEvent] = useState<'wedding' | 'vacation' | 'reunion' | 'beach_season' | 'none' | null>(getStepData('motivatingEvent') || null);
+  const [motivatingEvent, setMotivatingEvent] = useState<string>('');
 
   // Load existing data when component mounts
   useEffect(() => {
-    const existingEvent = getStepData('motivatingEvent');
-    if (existingEvent) {
-      setMotivatingEvent(existingEvent);
+    const existingData = getStepData('eventChoice');
+    if (existingData?.motivatingEvent) {
+      setMotivatingEvent(existingData.motivatingEvent);
     }
   }, []);
 
@@ -58,6 +63,10 @@ export default function EventChoiceStep({ onSetLoading }: EventChoiceStepProps) 
       console.log('Event choice updated in context:', { motivatingEvent, isEventDriven });
     }
   }, [motivatingEvent]);
+
+  const handleEventSelect = (eventValue: string) => {
+    setMotivatingEvent(eventValue);
+  };
 
   return (
     <View style={styles.container}>
@@ -75,17 +84,27 @@ export default function EventChoiceStep({ onSetLoading }: EventChoiceStepProps) 
                 styles.eventButton,
                 motivatingEvent === option.value && styles.eventButtonSelected
               ]}
-              onPress={() => setMotivatingEvent(option.value)}
+              onPress={() => handleEventSelect(option.value)}
             >
               <Text style={styles.eventEmoji}>{option.emoji}</Text>
-              <Text
-                style={[
-                  styles.eventLabel,
-                  motivatingEvent === option.value && styles.eventLabelSelected
-                ]}
-              >
-                {option.label}
-              </Text>
+              <View style={styles.eventTextContainer}>
+                <Text
+                  style={[
+                    styles.eventLabel,
+                    motivatingEvent === option.value && styles.eventLabelSelected
+                  ]}
+                >
+                  {option.label}
+                </Text>
+                <Text
+                  style={[
+                    styles.eventDescription,
+                    motivatingEvent === option.value && styles.eventDescriptionSelected
+                  ]}
+                >
+                  {option.description}
+                </Text>
+              </View>
             </TouchableOpacity>
           ))}
         </View>
@@ -132,15 +151,15 @@ const styles = StyleSheet.create({
   },
   eventButton: {
     backgroundColor: colors.backgroundTertiary,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.lg,
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.xl,
     marginBottom: spacing.md,
     alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 70,
+    justifyContent: 'flex-start',
+    minHeight: 80,
     flexDirection: 'row',
-    gap: spacing.md,
+    gap: spacing.lg,
     ...shadows.sm,
   },
   eventButtonSelected: {
@@ -148,17 +167,29 @@ const styles = StyleSheet.create({
     ...shadows.md,
   },
   eventEmoji: {
-    fontSize: typography.xl,
+    fontSize: typography['2xl'],
+    marginRight: spacing.sm,
+  },
+  eventTextContainer: {
+    flex: 1,
+    alignItems: 'flex-start',
   },
   eventLabel: {
     fontSize: typography.lg,
-    fontWeight: typography.semibold,
+    fontWeight: typography.bold,
     color: colors.textPrimary,
-    textAlign: 'center',
-    flex: 1,
+    marginBottom: spacing.xs,
   },
   eventLabelSelected: {
-    color: colors.textInverse,
+    color: colors.background,
+  },
+  eventDescription: {
+    fontSize: typography.base,
+    color: colors.textSecondary,
+    lineHeight: typography.base * 1.4,
+  },
+  eventDescriptionSelected: {
+    color: colors.backgroundSecondary,
   },
   disclaimer: {
     fontSize: typography.sm,
@@ -167,4 +198,4 @@ const styles = StyleSheet.create({
     lineHeight: typography.sm * 1.4,
     marginTop: spacing.xl,
   },
-});
+}); 

@@ -50,7 +50,7 @@ export default function PaywallStep({ onSetLoading }: PaywallStepProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundSecondary,
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
