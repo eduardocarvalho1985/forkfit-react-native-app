@@ -100,8 +100,11 @@ export default function Login() {
         <Text style={styles.linkText}>Esqueceu sua senha?</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push('/(onboarding)')}>
-        <Text style={styles.linkText}>Não tem conta? Comece aqui</Text>
+      <TouchableOpacity 
+        style={styles.createAccountButton} 
+        onPress={() => router.push('/(onboarding)')}
+      >
+        <Text style={styles.createAccountButtonText}>Não tem conta? Comece aqui</Text>
       </TouchableOpacity>
     </View>
   );
@@ -185,5 +188,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: typography.base,
     fontWeight: typography.semibold,
+  },
+  createAccountButton: {
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 200,
+    marginTop: spacing.lg,
+  },
+  createAccountButtonText: {
+    color: colors.textInverse,
+    fontWeight: typography.bold,
+    fontSize: typography.lg,
   },
 });
