@@ -5,15 +5,15 @@ import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
 
 const GOAL_OPTIONS = [
   { 
-    label: 'Lose weight', 
+    label: 'Perder peso', 
     value: 'lose_weight' as const,
   },
   { 
-    label: 'Maintain', 
+    label: 'Manter peso', 
     value: 'maintain' as const,
   },
   { 
-    label: 'Gain weight', 
+    label: 'Ganhar peso', 
     value: 'gain_muscle' as const,
   },
 ];
@@ -46,9 +46,9 @@ export default function GoalStep({ onSetLoading }: GoalStepProps) {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>What is your goal?</Text>
+        <Text style={styles.title}>Qual é o seu objetivo?</Text>
         <Text style={styles.subtitle}>
-          This helps us generate a plan for your calorie intake.
+          Isso nos ajuda a gerar um plano para sua ingestão de calorias.
         </Text>
 
         <View style={styles.goalsContainer}>
@@ -74,7 +74,7 @@ export default function GoalStep({ onSetLoading }: GoalStepProps) {
         </View>
 
         <Text style={styles.disclaimer}>
-          * Your information will be deleted after generating a plan.
+          * Suas informações serão excluídas após gerar o plano.
         </Text>
       </View>
     </View>
