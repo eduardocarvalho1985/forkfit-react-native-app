@@ -78,7 +78,7 @@ export const typography = {
   
   // Line heights
   tight: 1.2,      // Tight spacing for headings
-  normal: 1.4,     // Normal spacing for body text
+  lineHeightNormal: 1.4,     // Normal spacing for body text
   relaxed: 1.6,    // Relaxed spacing for long text
   loose: 1.8,      // Loose spacing for captions
 } as const;

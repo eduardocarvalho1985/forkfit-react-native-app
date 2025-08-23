@@ -7,10 +7,7 @@ export default function OnboardingLayout() {
       <Stack.Screen 
         name="index" 
         options={{
-          title: 'Onboarding ForkFit',
-          headerStyle: { backgroundColor: '#FF725E' },
-          headerTintColor: '#FFFFFF',
-          headerTitleStyle: { fontWeight: 'bold', color: '#FFFFFF' }
+          headerShown: false
         }}
       />
     </Stack>
