@@ -14,16 +14,26 @@ export default function PaywallStep({ onSetLoading }: PaywallStepProps) {
 
   const handleCreateAccount = () => {
     try {
-      // Get all onboarding data
-      const onboardingData = getCurrentStepData();
-      console.log('PaywallStep: Onboarding data to save:', onboardingData);
+      console.log('🎯 PaywallStep: Starting account creation process...');
       
-      // Navigate to register with onboarding data
-      // The register screen will handle Firebase account creation and backend sync
-      router.push('/(auth)/register');
+      // Get all onboarding data
+      console.log('📊 PaywallStep: Getting current step data...');
+      const onboardingData = getCurrentStepData();
+      console.log('📦 PaywallStep: Onboarding data to save:', onboardingData);
+      console.log('📊 PaywallStep: Onboarding data keys:', Object.keys(onboardingData));
+      console.log('📊 PaywallStep: Onboarding data values:', onboardingData);
+      
+      // Navigate to register with onboarding data as navigation params
+      // This ensures the data survives the navigation between route groups
+      console.log('🧭 PaywallStep: Navigating to register with onboarding data...');
+      router.push({
+        pathname: '/(auth)/register',
+        params: { onboardingData: JSON.stringify(onboardingData) }
+      });
+      console.log('✅ PaywallStep: Navigation initiated successfully');
       
     } catch (error: any) {
-      console.error('Error preparing for account creation:', error);
+      console.error('❌ PaywallStep: Error preparing for account creation:', error);
       Alert.alert('Erro', 'Erro ao preparar dados para criação de conta');
     }
   };

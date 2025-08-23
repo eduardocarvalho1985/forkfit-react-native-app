@@ -99,10 +99,40 @@ export interface SyncUserRequest {
   name?: string;
   displayName?: string | null;
   photoURL?: string | null;
-  onboardingCompleted?: boolean;
 }
 
-class ForkFitAPI {
+// New interface for onboarding completion
+export interface OnboardingCompleteRequest {
+  uid: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  profile: {
+    gender: 'male' | 'female' | 'other';
+    age: number;
+    height: number;
+    weight: number;
+    targetWeight: number;
+    goal: 'lose_weight' | 'maintain' | 'gain_muscle';
+    motivation: string;
+    weeklyPacing: number;
+    activityLevel: string;
+    motivatingEvent: string;
+    isEventDriven: boolean;
+    eventDate?: string;
+    notificationsEnabled: boolean;
+  };
+  calculatedPlan: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    bmr: number;
+    tdee: number;
+  };
+}
+
+export class ForkFitAPI {
   // Updated with working backend URL
   private baseUrl = "https://forkfit.app/api";
 
@@ -135,24 +165,20 @@ class ForkFitAPI {
     }
 
     const fullUrl = `${this.baseUrl}${endpoint}`;
-    console.log(`API ${method} ${fullUrl}`, body ? { body } : "");
+    console.log(`🌐 API ${method} ${fullUrl}`);
+    console.log(`📤 Request body:`, body ? JSON.stringify(body, null, 2) : 'No body');
+    console.log(`🔑 Has token:`, !!token);
 
     try {
       const response = await fetch(fullUrl, config);
       clearTimeout(timeoutId); // Clear timeout on successful response
 
-      console.log(`Response status: ${response.status}`);
-      console.log(
-        `Response headers:`,
-        Object.fromEntries(response.headers.entries())
-      );
+      console.log(`📥 Response status: ${response.status}`);
+      console.log(`📋 Response headers:`, Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => "");
-        console.error(
-          `API Error ${response.status} - Raw response:`,
-          errorText.substring(0, 200)
-        );
+        console.error(`❌ API Error ${response.status} - Raw response:`, errorText.substring(0, 200));
 
         let errorData;
         try {
@@ -170,18 +196,18 @@ class ForkFitAPI {
       }
 
       const responseText = await response.text();
-      console.log(`Raw response:`, responseText.substring(0, 200));
+      console.log(`📄 Raw response:`, responseText.substring(0, 200));
 
       const result = JSON.parse(responseText);
-      console.log(`API Response:`, result);
+      console.log(`✅ API Response:`, result);
       return result;
     } catch (error: any) {
       clearTimeout(timeoutId); // Clear timeout on error
       if (error.name === "AbortError") {
-        console.error("API request timeout");
+        console.error("⏰ API request timeout");
         throw new Error("Request timeout - backend may be unavailable");
       }
-      console.error("API request failed:", error);
+      console.error("💥 API request failed:", error);
       throw new Error(error.message || "Failed to connect to backend");
     }
   }
@@ -205,15 +231,38 @@ class ForkFitAPI {
   }
 
   async getUserProfile(uid: string, token: string): Promise<BackendUser> {
-    return this.request(`/users/${uid}`, { token });
+    try {
+      console.log('🌐 API: Calling GET /api/users/{uid} with:', { uid, hasToken: !!token });
+      
+      const response: BackendUser = await this.request(`/users/${uid}`, { token });
+      
+      console.log('✅ API: GET /api/users/{uid} successful:', response);
+      return response;
+      
+    } catch (error: any) {
+      console.error('❌ API: GET /api/users/{uid} failed:', error);
+      throw error;
+    }
   }
 
   async updateUserProfile(uid: string, userData: Partial<BackendUser>, token: string): Promise<BackendUser> {
-    return this.request(`/users/${uid}`, {
-      method: "PUT",
-      body: userData,
-      token,
-    });
+    try {
+      console.log('🌐 API: Calling PUT /api/users/{uid} with:', { uid, userData: Object.keys(userData), hasToken: !!token });
+      console.log('📊 Update data keys:', Object.keys(userData));
+      
+      const response: BackendUser = await this.request(`/users/${uid}`, {
+        method: "PUT",
+        body: userData,
+        token,
+      });
+      
+      console.log('✅ API: PUT /api/users/{uid} successful:', response);
+      return response;
+      
+    } catch (error: any) {
+      console.error('❌ API: PUT /api/users/{uid} failed:', error);
+      throw error;
+    }
   }
 
   async updateOnboardingStatus(uid: string, onboardingCompleted: boolean, token: string): Promise<BackendUser> {
@@ -234,24 +283,33 @@ class ForkFitAPI {
 
   async syncUser(userData: SyncUserRequest): Promise<BackendUser> {
     try {
+      console.log('🌐 API: Calling /api/users/sync with:', userData);
+      console.log('📊 User data keys:', Object.keys(userData));
+      
       // Try the sync endpoint first
-      return await this.request("/users/sync", {
+      const response: BackendUser = await this.request("/users/sync", {
         method: "POST",
         body: userData,
       });
+      
+      console.log('✅ API: /api/users/sync successful:', response);
+      return response;
+      
     } catch (error: any) {
+      console.error('❌ API: /api/users/sync failed:', error);
+      
       // If sync endpoint doesn't exist, try the alternative endpoint
       if (
         error.message.includes("HTML instead of JSON") ||
         error.message.includes("<!DOCTYPE")
       ) {
-        console.log(
-          "Sync endpoint not found, trying alternative user endpoint..."
-        );
-        return await this.request(`/users/${userData.uid}`, {
+        console.log('🔄 Sync endpoint not found, trying alternative user endpoint...');
+        const altResponse: BackendUser = await this.request(`/users/${userData.uid}`, {
           method: "POST",
           body: userData,
         });
+        console.log('✅ API: Alternative endpoint successful:', altResponse);
+        return altResponse;
       }
       throw error;
     }
@@ -464,6 +522,14 @@ class ForkFitAPI {
   async deleteUserAccount(uid: string): Promise<DeletionResponse> {
     return this.request(`/users/${uid}`, {
       method: "DELETE",
+    });
+  }
+
+  // Onboarding completion - NEW ENDPOINT
+  async completeOnboarding(onboardingData: OnboardingCompleteRequest): Promise<any> {
+    return this.request('/onboarding/complete', {
+      method: 'POST',
+      body: onboardingData,
     });
   }
 }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Platform } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOnboarding } from '@/app/(onboarding)/OnboardingContext';
 import { api } from '@/services/api';
@@ -12,7 +12,11 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState("");
   const { signUp, signInWithGoogle, signInWithApple } = useAuth();
-  const { getCurrentStepData, clearOnboardingData } = useOnboarding();
+  const { getCurrentStepData } = useOnboarding();
+  
+  // Get onboarding data from navigation params
+  const params = useLocalSearchParams();
+  const onboardingDataFromParams = params.onboardingData ? JSON.parse(params.onboardingData as string) : null;
 
   // Password validation state
   const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
@@ -70,17 +74,26 @@ export default function Register() {
   };
 
   const handleRegister = async () => {
+    console.log('🚀 Register: Starting registration process...');
+    console.log('📧 Email:', email);
+    console.log('🔒 Password length:', password.length);
+    console.log('✅ Confirm password matches:', password === confirmPassword);
+    console.log('📋 Password errors:', passwordErrors);
+    
     if (!email || !password || !confirmPassword) {
+      console.log('❌ Register: Missing required fields');
       Alert.alert('Erro', 'Por favor, preencha todos os campos');
       return;
     }
     
     if (password !== confirmPassword) {
+      console.log('❌ Register: Passwords do not match');
       Alert.alert('Erro', 'As senhas não coincidem');
       return;
     }
-
+    
     if (passwordErrors.length > 0) {
+      console.log('❌ Register: Password validation failed');
       Alert.alert('Erro', 'A senha não atende aos requisitos de segurança');
       return;
     }
@@ -88,25 +101,41 @@ export default function Register() {
     setLoading("email");
     try {
       // Get all onboarding data
-      const onboardingData = getCurrentStepData();
-      console.log('Register: Onboarding data to save:', onboardingData);
+      console.log('📊 Register: Getting onboarding data...');
+      const onboardingData = onboardingDataFromParams || getCurrentStepData();
+      console.log('📦 Register: Onboarding data to save:', onboardingData);
+      console.log('📊 Register: Onboarding data keys:', onboardingData ? Object.keys(onboardingData) : 'None');
       
-      // Create Firebase account
-      await signUp(email, password);
+      if (!onboardingData || Object.keys(onboardingData).length === 0) {
+        console.log('❌ Register: No onboarding data found');
+        Alert.alert('Erro', 'Dados de onboarding não encontrados. Por favor, complete o onboarding primeiro.');
+        return;
+      }
       
-      // The AuthContext will handle the backend sync automatically
-      // and redirect to the dashboard when complete
+      // 1. Create Firebase account using existing working method
+      console.log('🔥 Register: Calling signUp with onboarding data...');
+      await signUp(email, password, onboardingData);
+      console.log('✅ Register: Firebase user created successfully');
       
-      // Clear onboarding data after successful account creation
-      clearOnboardingData();
-      
-      console.log('Register: Account created successfully');
+      // 2. Navigate to loading page to handle backend sync
+      console.log('⏳ Register: Waiting 1 second for auth state to update...');
+      setTimeout(() => {
+        console.log('🧭 Register: Navigating to loading page...');
+        router.push({
+          pathname: '/(auth)/loading',
+          params: { 
+            email: email,
+            onboardingData: JSON.stringify(onboardingData)
+          }
+        });
+      }, 1000);
       
     } catch (error: any) {
-      console.error('Error in registration flow:', error);
+      console.error('❌ Register: Error in registration flow:', error);
       const errorMessage = getFirebaseErrorMessage(error);
       Alert.alert('Erro no Cadastro', errorMessage);
     } finally {
+      console.log('🏁 Register: Registration process completed');
       setLoading("");
     }
   };
@@ -116,15 +145,19 @@ export default function Register() {
       setLoading("google");
       
       // Get onboarding data for new users
-      const onboardingData = getCurrentStepData();
+      const onboardingData = onboardingDataFromParams || getCurrentStepData();
       console.log('Register: Google sign in with onboarding data:', onboardingData);
       
+      if (!onboardingData || Object.keys(onboardingData).length === 0) {
+        Alert.alert('Erro', 'Dados de onboarding não encontrados. Por favor, complete o onboarding primeiro.');
+        return;
+      }
+      
+      // Start Google sign-in process
       await signInWithGoogle();
       
-      // Clear onboarding data after successful sign in
-      clearOnboardingData();
-      
-      console.log('Register: Google sign in successful');
+      // Note: The AuthContext will handle the rest of the flow
+      // We don't need to navigate here as the auth state change will handle it
       
     } catch (error: any) {
       console.error('Error during Google sign in:', error);
@@ -139,15 +172,19 @@ export default function Register() {
       setLoading("apple");
       
       // Get onboarding data for new users
-      const onboardingData = getCurrentStepData();
+      const onboardingData = onboardingDataFromParams || getCurrentStepData();
       console.log('Register: Apple sign in with onboarding data:', onboardingData);
       
+      if (!onboardingData || Object.keys(onboardingData).length === 0) {
+        Alert.alert('Erro', 'Dados de onboarding não encontrados. Por favor, complete o onboarding primeiro.');
+        return;
+      }
+      
+      // Start Apple sign-in process
       await signInWithApple();
       
-      // Clear onboarding data after successful sign in
-      clearOnboardingData();
-      
-      console.log('Register: Apple sign in successful');
+      // Note: The AuthContext will handle the rest of the flow
+      // We don't need to navigate here as the auth state change will handle it
       
     } catch (error: any) {
       console.error('Error during Apple sign in:', error);
@@ -181,6 +218,7 @@ export default function Register() {
           value={password}
           onChangeText={handlePasswordChange}
           secureTextEntry={!showPassword}
+          autoCapitalize="none"
         />
         <TouchableOpacity 
           style={styles.eyeButton} 
@@ -221,6 +259,7 @@ export default function Register() {
           value={confirmPassword}
           onChangeText={setConfirmPassword}
           secureTextEntry={!showConfirmPassword}
+          autoCapitalize="none"
         />
         <TouchableOpacity 
           style={styles.eyeButton} 
@@ -241,14 +280,13 @@ export default function Register() {
       )}
 
       <TouchableOpacity 
-        style={[
-          styles.button, 
-          { opacity: loading === "email" || passwordErrors.length > 0 || password !== confirmPassword ? 0.5 : 1 }
-        ]} 
-        onPress={handleRegister} 
-        disabled={loading === "email" || passwordErrors.length > 0 || password !== confirmPassword}
+        style={[styles.registerButton, loading === "email" && styles.registerButtonDisabled]} 
+        onPress={handleRegister}
+        disabled={loading === "email"}
       >
-        <Text style={styles.buttonText}>{loading === "email" ? "Cadastrando..." : "Criar Conta"}</Text>
+        <Text style={styles.registerButtonText}>
+          {loading === "email" ? 'Criando Conta...' : 'Criar Conta'}
+        </Text>
       </TouchableOpacity>
 
       <View style={styles.divider}>
@@ -395,5 +433,20 @@ const styles = StyleSheet.create({
     marginTop: -10,
     marginBottom: spacing.md,
     textAlign: 'center',
+  },
+  registerButton: {
+    backgroundColor: colors.primary,
+    padding: spacing.md,
+    borderRadius: borderRadius.sm,
+    marginBottom: spacing.md,
+  },
+  registerButtonText: {
+    color: colors.textInverse,
+    textAlign: 'center',
+    fontSize: typography.base,
+    fontWeight: typography.semibold,
+  },
+  registerButtonDisabled: {
+    opacity: 0.5,
   },
 });

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Alert, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import auth, {
   FirebaseAuthTypes,
   getAuth,
@@ -49,17 +50,17 @@ interface AppUser {
   createdAt?: Date;
 }
 
-interface AuthContextData {
+export interface AuthContextData {
   user: AppUser | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, onboardingData?: any) => Promise<void>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   syncUser: () => Promise<void>;
-  updateUserState: (updates: Partial<AppUser>) => void; // Temporary workaround for backend issues
+  updateUserState: (updates: Partial<AppUser>) => void;
 }
 
 interface AuthProviderProps {
@@ -74,28 +75,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Firebase auth state listener
   useEffect(() => {
-    console.log('AuthContext: Setting up auth state listener');
-    console.log('AuthContext: Initial loading state:', loading);
-    console.log('AuthContext: Initial user state:', user);
+    console.log('🔥 AuthContext: Setting up auth state listener');
+    console.log('🔧 Auth object:', getAuth());
+    console.log('📊 Initial loading state:', loading);
+    console.log('👤 Initial user state:', user);
     
     const unsubscribe = onAuthStateChanged(
       getAuth(),
       async (firebaseUser) => {
         try {
-          console.log('AuthContext: Auth state changed, firebaseUser:', firebaseUser ? firebaseUser.uid : 'null');
+          console.log('🔥 AUTH STATE CHANGED:', firebaseUser?.uid || 'NO USER');
+          console.log('📞 CALLING syncUserWithBackend...');
+          
           if (firebaseUser) {
             try {
-              console.log('AuthContext: Refreshing token...');
+              console.log('🔄 Refreshing token...');
               // Refresh the user's token to check if they are still valid
               await firebaseUser.getIdToken(true);
-              console.log('AuthContext: Token refreshed successfully');
+              console.log('✅ Token refreshed successfully');
 
               // Sync with backend and combine data
+              console.log('🚀 Starting backend sync for:', firebaseUser.uid);
               await syncUserWithBackend(firebaseUser);
+              console.log('✅ syncUserWithBackend COMPLETED');
             } catch (error) {
+              console.error('❌ syncUserWithBackend FAILED:', error);
               console.error('AuthContext: Error refreshing token or syncing user:', error);
               // If there's an error getting the token, the user is likely disabled/deleted
-              console.log('AuthContext: User is disabled or deleted, signing out...');
+              console.log('🚫 User is disabled or deleted, signing out...');
               try {
                 await firebaseSignOut(getAuth());
               } catch (signOutError) {
@@ -104,15 +111,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
               setUser(null);
             }
           } else {
-            console.log('AuthContext: No firebase user, setting user to null');
+            console.log('👤 No firebase user, setting user to null');
             setUser(null);
           }
         } catch (error) {
-          console.error('AuthContext: Unexpected error in auth state listener:', error);
+          console.error('💥 Unexpected error in auth state listener:', error);
           // Set user to null as a fallback
           setUser(null);
         } finally {
-          console.log('AuthContext: Setting loading to false');
+          console.log('🏁 Setting loading to false');
           setLoading(false);
         }
       }
@@ -123,42 +130,121 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const syncUserWithBackend = async (firebaseUser: FirebaseAuthTypes.User) => {
     try {
-      console.log('Syncing user with backend:', firebaseUser.uid);
+      console.log('🚀 Starting backend sync for:', firebaseUser.uid);
       
-      // First, sync the basic user with backend
-      const backendUser = await api.syncUser({
-        uid: firebaseUser.uid,
-        email: firebaseUser.email || undefined,
-        name: firebaseUser.displayName || undefined,
-        displayName: firebaseUser.displayName,
-        photoURL: firebaseUser.photoURL
-      });
-      console.log('User synced with backend:', backendUser);
-
-      // Combine Firebase user with backend data
-      const combinedUser: AppUser = {
-        ...backendUser,
-        uid: firebaseUser.uid,
-        email: firebaseUser.email || undefined,
-        displayName: firebaseUser.displayName,
-        photoURL: firebaseUser.photoURL,
-        activityLevel: backendUser.activityLevel as 'sedentary' | 'light' | 'moderate' | 'very_active' | undefined,
-        goal: backendUser.goal as 'lose_weight' | 'maintain' | 'gain_muscle' | undefined,
-      };
-
-      console.log('Combined user data:', combinedUser);
-      console.log('Name field from backend:', backendUser.name);
-      console.log('Name field in combined user:', combinedUser.name);
-      setUser(combinedUser);
+      // Check if we have pending onboarding data for this new user
+      console.log('📦 Checking AsyncStorage for onboarding data...');
+      const storedOnboardingData = await AsyncStorage.getItem('onboardingData');
+      console.log('📦 Stored onboarding data exists:', !!storedOnboardingData);
       
-      // If user is not onboarded, redirect to onboarding
-      if (!combinedUser.onboardingCompleted) {
-        console.log('User not onboarded, redirecting to onboarding');
-        // The root layout will handle this redirect
+      // If we have onboarding data, use the sequential approach
+      if (storedOnboardingData) {
+        console.log('📝 Using sequential approach with onboarding data from AsyncStorage');
+        const onboardingData = JSON.parse(storedOnboardingData);
+        console.log('📊 Onboarding data available:', Object.keys(onboardingData));
+        
+        // Step 1: Sync basic user with backend
+        console.log('📝 Step 1: Syncing basic user...');
+        const backendUser = await api.syncUser({
+          uid: firebaseUser.uid,
+          email: firebaseUser.email || '',
+          name: firebaseUser.email?.split('@')[0] || 'User',
+          displayName: firebaseUser.email?.split('@')[0] || 'User',
+          photoURL: firebaseUser.photoURL
+        });
+        console.log('✅ Step 1 complete:', backendUser);
+        
+        // Step 2: Update user with onboarding data
+        console.log('📝 Step 2: Adding onboarding data...');
+        const updatedUser = await api.updateUserProfile(firebaseUser.uid, {
+          ...onboardingData,
+          onboardingCompleted: true
+        }, await firebaseUser.getIdToken());
+        console.log('✅ Step 2 complete:', updatedUser);
+        
+        // Create a complete user object
+        const completeUser: AppUser = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email || undefined,
+          displayName: firebaseUser.displayName,
+          photoURL: firebaseUser.photoURL,
+          name: firebaseUser.email?.split('@')[0] || 'User',
+          onboardingCompleted: true,
+          // Add other profile data from onboarding
+          age: onboardingData.age,
+          gender: onboardingData.gender,
+          height: onboardingData.height,
+          weight: onboardingData.weight,
+          targetWeight: onboardingData.targetWeight,
+          goal: onboardingData.goal,
+          activityLevel: onboardingData.activityLevel,
+          calories: 0, // Will be calculated later
+          protein: 0,
+          carbs: 0,
+          fat: 0,
+        };
+        
+        console.log('👤 Setting complete user:', completeUser);
+        setUser(completeUser);
+        
+        // Clear the stored onboarding data since we've used it
+        console.log('🧹 Clearing onboarding data from AsyncStorage');
+        await AsyncStorage.removeItem('onboardingData');
+        console.log('✅ Onboarding data cleared from AsyncStorage');
+        
+        return;
+      }
+      
+      // For existing users without onboarding data, try to get their profile
+      console.log('📋 No onboarding data found in AsyncStorage, checking if user exists in backend');
+      
+      try {
+        // Try to get existing user profile
+        console.log('🔍 Fetching existing user profile...');
+        const existingUser = await api.getUserProfile(firebaseUser.uid, await firebaseUser.getIdToken());
+        console.log('✅ Existing user found:', existingUser);
+        
+        // Combine Firebase user with backend data
+        const combinedUser: AppUser = {
+          ...existingUser,
+          uid: firebaseUser.uid,
+          email: firebaseUser.email || undefined,
+          displayName: firebaseUser.displayName,
+          photoURL: firebaseUser.photoURL,
+          activityLevel: existingUser.activityLevel as 'sedentary' | 'light' | 'moderate' | 'very_active' | undefined,
+          goal: existingUser.goal as 'lose_weight' | 'maintain' | 'gain_muscle' | undefined,
+        };
+
+        console.log('🔗 Combined user data:', combinedUser);
+        setUser(combinedUser);
+        
+        // If user is not onboarded, redirect to onboarding
+        if (!combinedUser.onboardingCompleted) {
+          console.log('⚠️ User not onboarded, redirecting to onboarding');
+          // The root layout will handle this redirect
+        }
+        
+      } catch (profileError) {
+        console.log('📝 User profile not found, creating basic user object');
+        // Create basic user object for users without backend profile
+        const basicUser: AppUser = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email || undefined,
+          displayName: firebaseUser.displayName,
+          photoURL: firebaseUser.photoURL,
+          name: firebaseUser.displayName || undefined,
+          onboardingCompleted: false,
+          calories: 2000,
+          protein: 150,
+          carbs: 250,
+          fat: 65,
+        };
+        console.log('👤 Using basic user data:', basicUser);
+        setUser(basicUser);
       }
       
     } catch (backendError) {
-      console.error('Failed to sync with backend:', backendError);
+      console.error('💥 Backend sync failed:', backendError);
       // Still set the Firebase user even if backend fails
       const basicUser: AppUser = {
         uid: firebaseUser.uid,
@@ -172,7 +258,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         carbs: 250,
         fat: 65,
       };
-      console.log('Using basic user data:', basicUser);
+      console.log('👤 Using basic user data due to backend error:', basicUser);
       setUser(basicUser);
     }
   };
@@ -189,14 +275,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, onboardingData?: any) => {
     try {
-      console.log('Signing up with email:', email);
+      console.log('📝 Signing up with email:', email);
+      console.log('📦 Onboarding data provided:', onboardingData ? 'Yes' : 'No');
+      
+      // Store onboarding data for later use in syncUserWithBackend
+      if (onboardingData) {
+        console.log('💾 Storing onboarding data for new user:', onboardingData);
+        console.log('📊 Onboarding data keys:', Object.keys(onboardingData));
+        await AsyncStorage.setItem('onboardingData', JSON.stringify(onboardingData));
+        console.log('✅ Onboarding data stored in AsyncStorage');
+      } else {
+        console.log('⚠️ No onboarding data provided for new user');
+      }
+      
+      console.log('🔥 Creating Firebase user...');
       const userCredential = await createUserWithEmailAndPassword(getAuth(), email, password);
-      console.log('Email sign up successful:', userCredential.user.uid);
-      // User will be set through onAuthStateChanged listener
+      console.log('✅ Email sign up successful:', userCredential.user.uid);
+      console.log('📋 User will be set through onAuthStateChanged listener');
+      
     } catch (error: any) {
-      console.error('Email sign up error:', error);
+      console.error('❌ Email sign up error:', error);
       throw new Error(getFirebaseErrorMessage(error.code));
     }
   };
@@ -230,6 +330,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Sign-in the user with the credential
       const userCredential = await signInWithCredential(getAuth(), googleCredential);
       console.log('User signed in with Google:', userCredential.user.uid);
+
+      // Store onboarding data if available (for new users)
+      // Note: We'll need to get this from the registration context
+      // For now, the user will be handled through onAuthStateChanged
 
       // User will be set through onAuthStateChanged listener
     } catch (error: any) {
@@ -373,7 +477,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       signInWithApple,
       forgotPassword,
       syncUser,
-      updateUserState
+      updateUserState,
     }}>
       {children}
     </AuthContext.Provider>
