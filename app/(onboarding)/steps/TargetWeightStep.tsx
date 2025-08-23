@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useOnboarding } from '../OnboardingContext';
-
-const CORAL = '#FF725E';
-const OFF_WHITE = '#FDF6F3';
-const TEXT = '#1F2937';
+import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
 
 interface TargetWeightStepProps {
   onSetLoading: (loading: boolean) => void;
@@ -12,50 +9,113 @@ interface TargetWeightStepProps {
 
 export default function TargetWeightStep({ onSetLoading }: TargetWeightStepProps) {
   const { updateStepData, onboardingData } = useOnboarding();
-  const [targetWeight, setTargetWeight] = useState('');
+  const [targetWeight, setTargetWeight] = useState(onboardingData.targetWeight || onboardingData.weight || 70);
+  const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg');
 
   // Initialize with current weight if available
   useEffect(() => {
     if (onboardingData.weight) {
-      setTargetWeight(onboardingData.weight.toString());
+      setTargetWeight(onboardingData.weight);
     }
   }, [onboardingData.weight]);
 
-  // Auto-save when targetWeight changes
+  // Update target weight in context whenever it changes
   useEffect(() => {
-    if (targetWeight) {
-      handleContinue();
+    if (targetWeight && onboardingData.weight) {
+      updateStepData('targetWeight', { targetWeight });
+      console.log('Target weight updated in context:', targetWeight);
     }
   }, [targetWeight]);
 
-  const handleContinue = () => {
-    if (!targetWeight.trim()) {
-      return; // Don't save empty data
-    }
+  const renderWeightSlider = () => {
+    const currentWeight = onboardingData.weight || 70;
+    const minWeight = Math.max(40, currentWeight * 0.6); // 60% of current weight
+    const maxWeight = Math.min(150, currentWeight * 1.4); // 140% of current weight
+    const step = 1;
+    
+    const handleWeightChange = (value: number) => {
+      setTargetWeight(value);
+    };
 
-    const weight = parseFloat(targetWeight);
-    if (isNaN(weight) || weight <= 0) {
-      return; // Don't save invalid data
-    }
-
-    // Validate that target weight is reasonable compared to current weight
-    if (onboardingData.weight) {
-      const currentWeight = onboardingData.weight;
-      const weightDiff = Math.abs(weight - currentWeight);
-      const maxReasonableDiff = currentWeight * 0.5; // 50% of current weight
-
-      if (weightDiff > maxReasonableDiff) {
-        return; // Don't save unreasonable data
-      }
-    }
-
-    // Update onboarding data
-    updateStepData('targetWeight', { targetWeight: weight });
-  };
-
-  const handleSkip = () => {
-    // Skip this step - the parent component will handle navigation
-    // when the user clicks the "Continuar" button in the footer
+    return (
+      <View style={styles.sliderContainer}>
+        <View style={styles.sliderHeader}>
+          <Text style={styles.sliderLabel}>Peso Alvo:</Text>
+          <View style={styles.unitToggle}>
+            <TouchableOpacity
+              style={[styles.unitButton, weightUnit === 'lbs' && styles.unitButtonSelected]}
+              onPress={() => setWeightUnit('lbs')}
+            >
+              <Text style={[styles.unitButtonText, weightUnit === 'lbs' && styles.unitButtonTextSelected]}>
+                lbs
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.unitButton, weightUnit === 'kg' && styles.unitButtonSelected]}
+              onPress={() => setWeightUnit('kg')}
+            >
+              <Text style={[styles.unitButtonText, weightUnit === 'kg' && styles.unitButtonTextSelected]}>
+                kg
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        
+        <Text style={styles.valueDisplay}>{targetWeight}{weightUnit === 'kg' ? 'kg' : 'lbs'}</Text>
+        
+        <View style={styles.sliderContainer}>
+          <View style={styles.sliderTrack}>
+            {Array.from({ length: Math.floor((maxWeight - minWeight) / step) + 1 }, (_, i) => {
+              const value = minWeight + (i * step);
+              const isMajorTick = value % 10 === 0;
+              const isCurrentValue = value === targetWeight;
+              const isCurrentWeight = value === currentWeight;
+              
+              return (
+                <View key={value} style={styles.tickContainer}>
+                  <View style={[
+                    styles.tick,
+                    isMajorTick && styles.majorTick,
+                    isCurrentWeight && styles.currentWeightTick,
+                    isCurrentValue && styles.targetWeightTick
+                  ]} />
+                  {isMajorTick && (
+                    <Text style={styles.tickLabel}>{value}</Text>
+                  )}
+                  {isCurrentWeight && (
+                    <View style={styles.currentWeightMarker}>
+                      <Text style={styles.currentWeightLabel}>Atual</Text>
+                      <View style={styles.currentWeightLine} />
+                    </View>
+                  )}
+                  {isCurrentValue && (
+                    <View style={styles.targetWeightMarker}>
+                      <View style={styles.targetWeightTriangle} />
+                      <View style={styles.targetWeightLine} />
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+          
+          <View style={styles.sliderHandle}>
+            <View style={styles.handleCircle} />
+          </View>
+        </View>
+        
+        <View style={styles.weightInfo}>
+          <Text style={styles.weightInfoText}>
+            Peso atual: <Text style={styles.currentWeightValue}>{currentWeight}kg</Text>
+          </Text>
+          <Text style={styles.weightInfoText}>
+            Diferença: <Text style={styles.differenceValue}>
+              {Math.abs(targetWeight - currentWeight)}kg
+            </Text>
+          </Text>
+        </View>
+      </View>
+    );
   };
 
   return (
@@ -66,39 +126,11 @@ export default function TargetWeightStep({ onSetLoading }: TargetWeightStepProps
           Defina um objetivo realista para sua jornada de transformação
         </Text>
 
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Ex: 70"
-            value={targetWeight}
-            onChangeText={setTargetWeight}
-            keyboardType="numeric"
-            autoFocus
-          />
-          <Text style={styles.unit}>kg</Text>
-        </View>
+        {renderWeightSlider()}
 
-        {onboardingData.weight && (
-          <View style={styles.weightInfo}>
-            <Text style={styles.weightInfoText}>
-              Peso atual: <Text style={styles.weightValue}>{onboardingData.weight} kg</Text>
-            </Text>
-            {targetWeight && !isNaN(parseFloat(targetWeight)) && (
-              <Text style={styles.weightInfoText}>
-                Diferença: <Text style={styles.weightValue}>
-                  {Math.abs(parseFloat(targetWeight) - onboardingData.weight)} kg
-                </Text>
-              </Text>
-            )}
-          </View>
-        )}
-
-        {/* Navigation is handled by the parent component's footer */}
-        <View style={styles.infoContainer}>
-          <Text style={styles.infoText}>
-            Use o botão "Continuar" na parte inferior da tela para prosseguir
-          </Text>
-        </View>
+        <Text style={styles.disclaimer}>
+          * Suas informações serão excluídas após gerar o plano.
+        </Text>
       </View>
     </View>
   );
@@ -107,77 +139,192 @@ export default function TargetWeightStep({ onSetLoading }: TargetWeightStepProps
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: OFF_WHITE,
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 120,
-    justifyContent: 'center',
+    paddingHorizontal: spacing.screenPadding,
+    paddingTop: spacing.xxl,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: TEXT,
+    fontSize: typography['3xl'],
+    fontWeight: typography.bold,
+    color: colors.textPrimary,
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#64748b',
+    fontSize: typography.base,
+    color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 40,
-    paddingHorizontal: 20,
+    lineHeight: typography.base * 1.5,
+    marginBottom: spacing.xxl,
+    paddingHorizontal: spacing.md,
   },
-  inputContainer: {
-    flexDirection: 'row',
+  sliderContainer: {
+    width: '100%',
+    marginBottom: spacing.xxl,
     alignItems: 'center',
-    marginBottom: 30,
   },
-  input: {
-    width: 120,
+  sliderHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: spacing.md,
+  },
+  sliderLabel: {
+    fontSize: typography.lg,
+    fontWeight: typography.bold,
+    color: colors.textPrimary,
+  },
+  unitToggle: {
+    flexDirection: 'row',
+    backgroundColor: colors.backgroundTertiary,
+    borderRadius: borderRadius.sm,
+    padding: 2,
+  },
+  unitButton: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.sm,
+  },
+  unitButtonSelected: {
+    backgroundColor: colors.textPrimary,
+  },
+  unitButtonText: {
+    fontSize: typography.sm,
+    fontWeight: typography.medium,
+    color: colors.textSecondary,
+  },
+  unitButtonTextSelected: {
+    color: colors.textInverse,
+  },
+  valueDisplay: {
+    fontSize: typography['2xl'],
+    fontWeight: typography.bold,
+    color: colors.primary,
+    marginBottom: spacing.lg,
+  },
+  sliderTrack: {
+    width: '100%',
     height: 60,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: CORAL,
-    paddingHorizontal: 16,
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: TEXT,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    position: 'relative',
+    backgroundColor: colors.backgroundTertiary,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.md,
   },
-  unit: {
-    fontSize: 18,
-    color: '#64748b',
-    marginLeft: 12,
-    fontWeight: '600',
+  tickContainer: {
+    alignItems: 'center',
+    position: 'relative',
+    flex: 1,
+  },
+  tick: {
+    width: 1,
+    height: 8,
+    backgroundColor: colors.border,
+  },
+  majorTick: {
+    height: 16,
+    backgroundColor: colors.textSecondary,
+  },
+  currentWeightTick: {
+    backgroundColor: colors.textSecondary,
+  },
+  targetWeightTick: {
+    backgroundColor: colors.primary,
+  },
+  tickLabel: {
+    fontSize: typography.sm,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+  },
+  currentWeightMarker: {
+    position: 'absolute',
+    bottom: 0,
+    alignItems: 'center',
+  },
+  currentWeightLabel: {
+    fontSize: typography.xs,
+    color: colors.textSecondary,
+    marginBottom: spacing.xs,
+  },
+  currentWeightLine: {
+    width: 2,
+    height: 20,
+    backgroundColor: colors.textSecondary,
+  },
+  targetWeightMarker: {
+    position: 'absolute',
+    bottom: 0,
+    alignItems: 'center',
+  },
+  targetWeightTriangle: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderBottomWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: colors.primary,
+  },
+  targetWeightLine: {
+    width: 2,
+    height: 20,
+    backgroundColor: colors.primary,
+    marginTop: -1,
+  },
+  sliderHandle: {
+    position: 'absolute',
+    top: 0,
+    left: '50%',
+    transform: [{ translateX: -15 }],
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  handleCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: colors.primary,
+    borderWidth: 3,
+    borderColor: colors.background,
+    ...shadows.md,
   },
   weightInfo: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginTop: spacing.lg,
   },
   weightInfoText: {
-    fontSize: 16,
-    color: '#64748b',
-    marginBottom: 8,
-  },
-  weightValue: {
-    color: CORAL,
-    fontWeight: 'bold',
-  },
-  infoContainer: {
-    width: '100%',
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  infoText: {
-    color: '#64748b',
-    fontSize: 14,
+    fontSize: typography.base,
+    color: colors.textSecondary,
+    marginBottom: spacing.xs,
     textAlign: 'center',
-    lineHeight: 20,
+  },
+  currentWeightValue: {
+    color: colors.textSecondary,
+    fontWeight: typography.bold,
+  },
+  differenceValue: {
+    color: colors.primary,
+    fontWeight: typography.bold,
+  },
+  disclaimer: {
+    fontSize: typography.sm,
+    color: colors.textTertiary,
+    textAlign: 'center',
+    lineHeight: typography.sm * 1.4,
+    position: 'absolute',
+    bottom: spacing.xxl,
   },
 });

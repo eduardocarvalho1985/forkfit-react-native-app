@@ -5,16 +5,21 @@ import { useAuth } from '@/contexts/AuthContext';
 import { OnboardingProvider, useOnboarding } from './OnboardingContext';
 import OnboardingProgress from '@/components/OnboardingProgress';
 import IntroCarouselStep from './steps/IntroCarouselStep';
+import GenderStep from './steps/GenderStep';
+import AgeStep from './steps/AgeStep';
 import GoalStep from './steps/GoalStep';
 import VitalsSlidersStep from './steps/VitalsSlidersStep';
-import ActivityStep from './steps/ActivityStep';
+import ExerciseFrequencyStep from './steps/ExerciseFrequencyStep';
 import TargetWeightStep from './steps/TargetWeightStep';
-import EmotionalGoalStep from './steps/EmotionalGoalStep';
-import MotivationStep from './steps/MotivationStep';
-import EventDateStep from './steps/EventDateStep';
+import WeightLossInfoStep from './steps/WeightLossInfoStep';
 import PacingStep from './steps/PacingStep';
-import ProjectionStep from './steps/ProjectionStep';
+import MotivationStep from './steps/MotivationStep';
+import EventChoiceStep from './steps/EventChoiceStep';
+import EventDateStep from './steps/EventDateStep';
+import LossPlanInfoStep from './steps/LossPlanInfoStep';
+import MoreInfoStep from './steps/MoreInfoStep';
 import SocialProofStep from './steps/SocialProofStep';
+import NotificationsStep from './steps/NotificationsStep';
 import LoadingStep from './steps/LoadingStep';
 import PlanPreviewStep from './steps/PlanPreviewStep';
 import PaywallStep from './steps/PaywallStep';
@@ -26,32 +31,42 @@ import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
 
 type OnboardingStep = 
   | 'introCarousel'
-  | 'goal'
+  | 'gender'
+  | 'age'
   | 'vitalsSliders'
-  | 'activity'
+  | 'exerciseFrequency'
+  | 'goal'
   | 'targetWeight'
-  | 'emotionalGoal'
-  | 'motivation'
-  | 'eventDate'
+  | 'weightLossInfo'
   | 'pacing'
-  | 'projection'
+  | 'motivation'
+  | 'eventChoice'
+  | 'eventDate'
+  | 'lossPlanInfo'
+  | 'moreInfo'
   | 'socialProof'
+  | 'notifications'
   | 'loading'
   | 'planPreview'
   | 'paywall';
 
 const STEP_ORDER: OnboardingStep[] = [
   'introCarousel',
-  'goal',
+  'gender',
+  'age',
   'vitalsSliders',
-  'activity',
+  'exerciseFrequency',
+  'goal',
   'targetWeight',
-  'emotionalGoal',
-  'motivation',
-  'eventDate',
+  'weightLossInfo',
   'pacing',
-  'projection',
+  'motivation',
+  'eventChoice',
+  'eventDate',
+  'lossPlanInfo',
+  'moreInfo',
   'socialProof',
+  'notifications',
   'loading',
   'planPreview',
   'paywall'
@@ -167,26 +182,36 @@ function OnboardingContent() {
     switch (currentStep) {
       case 'introCarousel':
         return <IntroCarouselStep onSetLoading={setLoading} />;
-      case 'goal':
-        return <GoalStep onSetLoading={setLoading} />;
+      case 'gender':
+        return <GenderStep onSetLoading={setLoading} />;
+      case 'age':
+        return <AgeStep onSetLoading={setLoading} />;
       case 'vitalsSliders':
         return <VitalsSlidersStep onSetLoading={setLoading} />;
-      case 'activity':
-        return <ActivityStep onSetLoading={setLoading} />;
+      case 'exerciseFrequency':
+        return <ExerciseFrequencyStep onSetLoading={setLoading} />;
+      case 'goal':
+        return <GoalStep onSetLoading={setLoading} />;
       case 'targetWeight':
         return <TargetWeightStep onSetLoading={setLoading} />;
-      case 'emotionalGoal':
-        return <EmotionalGoalStep onSetLoading={setLoading} />;
-      case 'motivation':
-        return <MotivationStep onSetLoading={setLoading} />;
-      case 'eventDate':
-        return <EventDateStep onSetLoading={setLoading} />;
+      case 'weightLossInfo':
+        return <WeightLossInfoStep onSetLoading={setLoading} />;
       case 'pacing':
         return <PacingStep onSetLoading={setLoading} />;
-      case 'projection':
-        return <ProjectionStep onSetLoading={setLoading} />;
+      case 'motivation':
+        return <MotivationStep onSetLoading={setLoading} />;
+      case 'eventChoice':
+        return <EventChoiceStep onSetLoading={setLoading} />;
+      case 'eventDate':
+        return <EventDateStep onSetLoading={setLoading} />;
+      case 'lossPlanInfo':
+        return <LossPlanInfoStep onSetLoading={setLoading} />;
+      case 'moreInfo':
+        return <MoreInfoStep onSetLoading={setLoading} />;
       case 'socialProof':
         return <SocialProofStep onSetLoading={setLoading} />;
+      case 'notifications':
+        return <NotificationsStep onSetLoading={setLoading} />;
       case 'loading':
         return <LoadingStep onSetLoading={setLoading} />;
       case 'planPreview':

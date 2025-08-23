@@ -3,70 +3,86 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useOnboarding } from '../OnboardingContext';
 import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
 
-const GENDER_OPTIONS = [
+const EXERCISE_OPTIONS = [
   { 
-    label: 'Masculino', 
-    value: 'male' as const,
+    label: 'Sedentário', 
+    value: 'sedentary' as const,
+    description: 'Pouco ou nenhum exercício'
   },
   { 
-    label: 'Feminino', 
-    value: 'female' as const,
+    label: 'Levemente ativo', 
+    value: 'light' as const,
+    description: 'Exercício leve 1-3 dias/semana'
   },
   { 
-    label: 'Outro', 
-    value: 'other' as const,
+    label: 'Moderadamente ativo', 
+    value: 'moderate' as const,
+    description: 'Exercício moderado 3-5 dias/semana'
+  },
+  { 
+    label: 'Muito ativo', 
+    value: 'very_active' as const,
+    description: 'Exercício intenso 6-7 dias/semana'
   },
 ];
 
-interface GenderStepProps {
+interface ExerciseFrequencyStepProps {
   onSetLoading: (loading: boolean) => void;
 }
 
-export default function GenderStep({ onSetLoading }: GenderStepProps) {
+export default function ExerciseFrequencyStep({ onSetLoading }: ExerciseFrequencyStepProps) {
   const { getStepData, updateStepData } = useOnboarding();
-  const [gender, setGender] = useState<'male' | 'female' | 'other' | null>(getStepData('gender') || null);
+  const [activityLevel, setActivityLevel] = useState<'sedentary' | 'light' | 'moderate' | 'very_active' | null>(getStepData('activityLevel') || null);
 
   // Load existing data when component mounts
   useEffect(() => {
-    const existingGender = getStepData('gender');
-    if (existingGender) {
-      setGender(existingGender);
+    const existingActivityLevel = getStepData('activityLevel');
+    if (existingActivityLevel) {
+      setActivityLevel(existingActivityLevel);
     }
   }, []);
 
-  // Update gender in context whenever it changes
+  // Update activity level in context whenever it changes
   useEffect(() => {
-    if (gender) {
-      updateStepData('gender', { gender });
-      console.log('Gender updated in context:', gender);
+    if (activityLevel) {
+      updateStepData('exerciseFrequency', { activityLevel });
+      console.log('Activity level updated in context:', activityLevel);
     }
-  }, [gender]);
+  }, [activityLevel]);
 
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Qual é o seu gênero?</Text>
+        <Text style={styles.title}>Quantas vezes por semana você se exercita?</Text>
         <Text style={styles.subtitle}>
-          Isso nos ajuda a calcular suas necessidades nutricionais com precisão.
+          Isso nos ajuda a calcular suas necessidades calóricas diárias.
         </Text>
 
-        <View style={styles.genderContainer}>
-          {GENDER_OPTIONS.map((option) => (
+        <View style={styles.exerciseContainer}>
+          {EXERCISE_OPTIONS.map((option) => (
             <TouchableOpacity
               key={option.value}
               style={[
-                styles.genderButton,
-                gender === option.value && styles.genderButtonSelected
+                styles.exerciseButton,
+                activityLevel === option.value && styles.exerciseButtonSelected
               ]}
-              onPress={() => setGender(option.value)}
+              onPress={() => setActivityLevel(option.value)}
             >
               <Text
                 style={[
-                  styles.genderButtonText,
-                  gender === option.value && styles.genderButtonTextSelected
+                  styles.exerciseLabel,
+                  activityLevel === option.value && styles.exerciseLabelSelected
                 ]}
               >
                 {option.label}
+              </Text>
+              <Text
+                style={[
+                  styles.exerciseDescription,
+                  activityLevel === option.value && styles.exerciseDescriptionSelected
+                ]}
+              >
+                {option.description}
               </Text>
             </TouchableOpacity>
           ))}
@@ -107,11 +123,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xxl,
     paddingHorizontal: spacing.md,
   },
-  genderContainer: {
+  exerciseContainer: {
     width: '100%',
     marginBottom: spacing.xxl,
   },
-  genderButton: {
+  exerciseButton: {
     backgroundColor: colors.backgroundTertiary,
     borderRadius: borderRadius.md,
     paddingVertical: spacing.lg,
@@ -119,20 +135,31 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 60,
+    minHeight: 80,
     ...shadows.sm,
   },
-  genderButtonSelected: {
+  exerciseButtonSelected: {
     backgroundColor: colors.primary,
     ...shadows.md,
   },
-  genderButtonText: {
+  exerciseLabel: {
     fontSize: typography.lg,
     fontWeight: typography.semibold,
     color: colors.textPrimary,
+    marginBottom: spacing.xs,
+    textAlign: 'center',
   },
-  genderButtonTextSelected: {
+  exerciseLabelSelected: {
     color: colors.textInverse,
+  },
+  exerciseDescription: {
+    fontSize: typography.sm,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: typography.sm * 1.4,
+  },
+  exerciseDescriptionSelected: {
+    color: colors.textInverse + 'CC', // 80% opacity
   },
   disclaimer: {
     fontSize: typography.sm,
@@ -142,4 +169,4 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: spacing.xxl,
   },
-}); 
+});

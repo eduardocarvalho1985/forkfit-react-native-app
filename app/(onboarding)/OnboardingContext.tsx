@@ -91,9 +91,9 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   };
 
   const calculatePlan = (): CalculatedPlan | null => {
-    const { goal, gender, birthDate, height, weight, activityLevel, weeklyPacing } = onboardingData;
+    const { goal, height, weight, activityLevel, weeklyPacing } = onboardingData;
     
-    if (!goal || !gender || !birthDate || !height || !weight || !activityLevel) {
+    if (!goal || !height || !weight || !activityLevel) {
       return null;
     }
 
@@ -129,6 +129,10 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     switch (stepId) {
       case 'introCarousel':
         return true; // Always valid, just informational
+      case 'gender':
+        return !!onboardingData.gender;
+      case 'age':
+        return !!onboardingData.birthDate;
       case 'goal':
         console.log('Goal step validation - onboardingData.goal:', onboardingData.goal);
         const isValid = !!onboardingData.goal;
@@ -137,25 +141,28 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       case 'vitalsSliders':
         return !!(onboardingData.gender && onboardingData.birthDate && 
                  onboardingData.height && onboardingData.weight);
-      case 'activity':
+      case 'exerciseFrequency':
         return !!onboardingData.activityLevel;
       case 'targetWeight':
         return !!(onboardingData.targetWeight && onboardingData.targetWeight !== onboardingData.weight);
-      case 'emotionalGoal':
-        return !!onboardingData.emotionalGoal;
-      case 'motivation':
-        return !!onboardingData.motivatingEvent;
-      case 'eventDate':
-        return !!(onboardingData.eventDate && onboardingData.isEventDriven);
+      case 'weightLossInfo':
+        return true; // Always valid, just informational
       case 'pacing':
         return !!(onboardingData.weeklyPacing && !onboardingData.isEventDriven);
-      case 'projection':
-        // Allow projection step if we have either weeklyPacing or can calculate it
-        return !!(onboardingData.weeklyPacing || 
-                 (onboardingData.eventDate && onboardingData.weight && onboardingData.targetWeight) ||
-                 (onboardingData.weight && onboardingData.targetWeight));
+      case 'motivation':
+        return !!onboardingData.motivatingEvent;
+      case 'eventChoice':
+        return !!onboardingData.emotionalGoal;
+      case 'eventDate':
+        return !!(onboardingData.eventDate && onboardingData.isEventDriven);
+      case 'lossPlanInfo':
+        return true; // Always valid, just informational
+      case 'moreInfo':
+        return true; // Always valid, just informational
       case 'socialProof':
         return true; // Always valid, just informational
+      case 'notifications':
+        return true; // Always valid, user can choose
       case 'loading':
         return true; // Always valid, just loading state
       case 'planPreview':

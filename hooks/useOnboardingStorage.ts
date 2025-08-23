@@ -42,6 +42,11 @@ export interface OnboardingData {
   // Pacing logic
   weeklyPacing?: number; // e.g., 0.5 for 0.5kg/week loss
   
+  // New informational steps
+  weightLossCurveInfo?: boolean; // User has seen weight loss curve info
+  lossPlanInfo?: boolean; // User has seen loss plan info
+  moreInfo?: boolean; // User has seen additional info
+  
   // Calculated data
   calories?: number;
   protein?: number;

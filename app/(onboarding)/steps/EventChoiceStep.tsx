@@ -3,67 +3,85 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useOnboarding } from '../OnboardingContext';
 import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
 
-const GENDER_OPTIONS = [
+const EVENT_OPTIONS = [
   { 
-    label: 'Masculino', 
-    value: 'male' as const,
+    label: 'Casamento', 
+    value: 'wedding' as const,
+    emoji: '💒'
   },
   { 
-    label: 'Feminino', 
-    value: 'female' as const,
+    label: 'Férias', 
+    value: 'vacation' as const,
+    emoji: '🏖️'
   },
   { 
-    label: 'Outro', 
-    value: 'other' as const,
+    label: 'Reunião', 
+    value: 'reunion' as const,
+    emoji: '👥'
+  },
+  { 
+    label: 'Temporada de Praia', 
+    value: 'beach_season' as const,
+    emoji: '🏊‍♀️'
+  },
+  { 
+    label: 'Nenhum evento específico', 
+    value: 'none' as const,
+    emoji: '🎯'
   },
 ];
 
-interface GenderStepProps {
+interface EventChoiceStepProps {
   onSetLoading: (loading: boolean) => void;
 }
 
-export default function GenderStep({ onSetLoading }: GenderStepProps) {
+export default function EventChoiceStep({ onSetLoading }: EventChoiceStepProps) {
   const { getStepData, updateStepData } = useOnboarding();
-  const [gender, setGender] = useState<'male' | 'female' | 'other' | null>(getStepData('gender') || null);
+  const [motivatingEvent, setMotivatingEvent] = useState<'wedding' | 'vacation' | 'reunion' | 'beach_season' | 'none' | null>(getStepData('motivatingEvent') || null);
 
   // Load existing data when component mounts
   useEffect(() => {
-    const existingGender = getStepData('gender');
-    if (existingGender) {
-      setGender(existingGender);
+    const existingEvent = getStepData('motivatingEvent');
+    if (existingEvent) {
+      setMotivatingEvent(existingEvent);
     }
   }, []);
 
-  // Update gender in context whenever it changes
+  // Update event choice in context whenever it changes
   useEffect(() => {
-    if (gender) {
-      updateStepData('gender', { gender });
-      console.log('Gender updated in context:', gender);
+    if (motivatingEvent) {
+      const isEventDriven = motivatingEvent !== 'none';
+      updateStepData('eventChoice', { 
+        motivatingEvent, 
+        isEventDriven 
+      });
+      console.log('Event choice updated in context:', { motivatingEvent, isEventDriven });
     }
-  }, [gender]);
+  }, [motivatingEvent]);
 
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Qual é o seu gênero?</Text>
+        <Text style={styles.title}>Há algum evento específico?</Text>
         <Text style={styles.subtitle}>
-          Isso nos ajuda a calcular suas necessidades nutricionais com precisão.
+          Isso nos ajuda a criar um plano com prazo definido para maximizar seus resultados.
         </Text>
 
-        <View style={styles.genderContainer}>
-          {GENDER_OPTIONS.map((option) => (
+        <View style={styles.eventContainer}>
+          {EVENT_OPTIONS.map((option) => (
             <TouchableOpacity
               key={option.value}
               style={[
-                styles.genderButton,
-                gender === option.value && styles.genderButtonSelected
+                styles.eventButton,
+                motivatingEvent === option.value && styles.eventButtonSelected
               ]}
-              onPress={() => setGender(option.value)}
+              onPress={() => setMotivatingEvent(option.value)}
             >
+              <Text style={styles.eventEmoji}>{option.emoji}</Text>
               <Text
                 style={[
-                  styles.genderButtonText,
-                  gender === option.value && styles.genderButtonTextSelected
+                  styles.eventLabel,
+                  motivatingEvent === option.value && styles.eventLabelSelected
                 ]}
               >
                 {option.label}
@@ -107,11 +125,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xxl,
     paddingHorizontal: spacing.md,
   },
-  genderContainer: {
+  eventContainer: {
     width: '100%',
     marginBottom: spacing.xxl,
   },
-  genderButton: {
+  eventButton: {
     backgroundColor: colors.backgroundTertiary,
     borderRadius: borderRadius.md,
     paddingVertical: spacing.lg,
@@ -119,19 +137,26 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 60,
+    minHeight: 70,
+    flexDirection: 'row',
+    gap: spacing.md,
     ...shadows.sm,
   },
-  genderButtonSelected: {
+  eventButtonSelected: {
     backgroundColor: colors.primary,
     ...shadows.md,
   },
-  genderButtonText: {
+  eventEmoji: {
+    fontSize: typography.xl,
+  },
+  eventLabel: {
     fontSize: typography.lg,
     fontWeight: typography.semibold,
     color: colors.textPrimary,
+    textAlign: 'center',
+    flex: 1,
   },
-  genderButtonTextSelected: {
+  eventLabelSelected: {
     color: colors.textInverse,
   },
   disclaimer: {
@@ -142,4 +167,4 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: spacing.xxl,
   },
-}); 
+});

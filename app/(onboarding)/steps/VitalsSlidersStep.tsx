@@ -1,38 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { useOnboarding } from '../OnboardingContext';
-import { parseWeight } from '../../../utils/weightUtils';
-import DatePicker from '../../../components/DatePicker';
+import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
 
-// Helper function to calculate age from birth date
-const calculateAge = (birthDate: string): number => {
-  const today = new Date();
-
-  // Parse YYYY-MM-DD format directly to avoid timezone issues
-  const [year, month, day] = birthDate.split('-').map(Number);
-  if (!year || !month || !day) return 0;
-
-  const birth = new Date(year, month - 1, day); // month is 0-indexed
-  let age = today.getFullYear() - birth.getFullYear();
-  const monthDiff = today.getMonth() - birth.getMonth();
-
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-    age--;
-  }
-
-  return age;
-};
-
-const CORAL = '#FF725E';
-const OFF_WHITE = '#FDF6F3';
-const BORDER = '#FFA28F';
-const TEXT = '#1F2937';
-
-const GENDER_OPTIONS = [
-  { label: 'Masculino', value: 'male' as const },
-  { label: 'Feminino', value: 'female' as const },
-  { label: 'Outro', value: 'other' as const },
-];
+const { width: screenWidth } = Dimensions.get('window');
 
 interface VitalsStepProps {
   onSetLoading: (loading: boolean) => void;
@@ -40,226 +11,350 @@ interface VitalsStepProps {
 
 export default function VitalsStep({ onSetLoading }: VitalsStepProps) {
   const { getStepData, updateStepData } = useOnboarding();
-  const [gender, setGender] = useState<'male' | 'female' | 'other' | null>(getStepData('gender') || null);
-  const [birthDate, setBirthDate] = useState(getStepData('birthDate') || '');
-  const [height, setHeight] = useState(getStepData('height')?.toString() || '');
-  const [weight, setWeight] = useState(getStepData('weight')?.toString() || '');
+  const [height, setHeight] = useState(getStepData('height') || 170);
+  const [weight, setWeight] = useState(getStepData('weight') || 70);
+  const [heightUnit, setHeightUnit] = useState<'cm' | 'ft/in'>('cm');
+  const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg');
 
   // Load existing data when component mounts
   useEffect(() => {
-    const existingGender = getStepData('gender');
-    const existingBirthDate = getStepData('birthDate');
     const existingHeight = getStepData('height');
     const existingWeight = getStepData('weight');
-
-    if (existingGender) setGender(existingGender);
-    if (existingBirthDate) setBirthDate(existingBirthDate);
-    if (existingHeight) setHeight(existingHeight.toString());
-    if (existingWeight) setWeight(existingWeight.toString());
+    
+    if (existingHeight) setHeight(existingHeight);
+    if (existingWeight) setWeight(existingWeight);
   }, []);
 
-  // Update age when birth date changes
+  // Update vitals data in context whenever values change
   useEffect(() => {
-    if (birthDate) {
-      const calculatedAge = calculateAge(birthDate);
-      console.log('Age updated for birth date:', birthDate, '=', calculatedAge);
-      // Update age in context immediately when birth date changes
-      updateStepData('age', { age: calculatedAge });
+    if (height && weight) {
+      updateStepData('vitals', {
+        height,
+        weight
+      });
+      console.log('Vitals data updated in context:', { height, weight });
     }
-  }, [birthDate]);
+  }, [height, weight]);
 
-  const validateBirthDate = (date: string): boolean => {
-    const selectedDate = new Date(date);
-    const today = new Date();
-    const minDate = new Date('1900-01-01');
+  const renderHeightSlider = () => {
+    const minHeight = 140;
+    const maxHeight = 200;
+    const step = 1;
+    
+    const handleHeightChange = (value: number) => {
+      setHeight(value);
+    };
 
-    return selectedDate >= minDate && selectedDate <= today;
-  };
-
-  // Update vitals data in context whenever any field changes and is valid
-  useEffect(() => {
-    if (gender && birthDate && height && weight) {
-      const heightNumber = parseInt(height);
-      const weightNumber = parseWeight(weight);
-
-      // Only update if all validations pass
-      if (validateBirthDate(birthDate) &&
-        !isNaN(heightNumber) && heightNumber >= 100 && heightNumber <= 250 &&
-        !isNaN(weightNumber) && weightNumber >= 30 && weightNumber <= 300) {
-
-        const calculatedAge = calculateAge(birthDate);
-        updateStepData('vitals', {
-          gender,
-          birthDate,
-          age: calculatedAge,
-          height: heightNumber,
-          weight: weightNumber
-        });
-        console.log('Vitals data updated in context');
-      }
-    }
-  }, [gender, birthDate, height, weight]);
-
-  return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Height & Weight Sliders</Text>
-        <Text style={styles.subtitle}>
-          Collect height and weight using engaging sliders
-        </Text>
-
-        <View style={styles.formSection}>
-          <Text style={styles.sectionTitle}>Gênero</Text>
-          <View style={styles.genderContainer}>
-            {GENDER_OPTIONS.map((option) => (
-              <TouchableOpacity
-                key={option.value}
-                style={[
-                  styles.genderButton,
-                  gender === option.value && styles.genderButtonSelected
-                ]}
-                onPress={() => setGender(option.value)}
-              >
-                <Text
-                  style={[
-                    styles.genderButtonText,
-                    gender === option.value && styles.genderButtonTextSelected
-                  ]}
-                >
-                  {option.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+    return (
+      <View style={styles.sliderContainer}>
+        <View style={styles.sliderHeader}>
+          <Text style={styles.sliderLabel}>Altura:</Text>
+          <View style={styles.unitToggle}>
+            <TouchableOpacity
+              style={[styles.unitButton, heightUnit === 'ft/in' && styles.unitButtonSelected]}
+              onPress={() => setHeightUnit('ft/in')}
+            >
+              <Text style={[styles.unitButtonText, heightUnit === 'ft/in' && styles.unitButtonTextSelected]}>
+                ft/in
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.unitButton, heightUnit === 'cm' && styles.unitButtonSelected]}
+              onPress={() => setHeightUnit('cm')}
+            >
+              <Text style={[styles.unitButtonText, heightUnit === 'cm' && styles.unitButtonTextSelected]}>
+                cm
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
-
-        <View style={styles.formSection}>
-          <Text style={styles.sectionTitle}>Data de Nascimento</Text>
-          <DatePicker
-            value={birthDate}
-            onChange={setBirthDate}
-            placeholder="Selecione sua data de nascimento"
-          />
+        
+        <Text style={styles.valueDisplay}>{height}{heightUnit === 'cm' ? 'cm' : 'ft'}</Text>
+        
+        <View style={styles.sliderContainer}>
+          <View style={styles.sliderTrack}>
+            {Array.from({ length: Math.floor((maxHeight - minHeight) / step) + 1 }, (_, i) => {
+              const value = minHeight + (i * step);
+              const isMajorTick = value % 10 === 0;
+              const isCurrentValue = value === height;
+              
+              return (
+                <View key={value} style={styles.tickContainer}>
+                  <View style={[
+                    styles.tick,
+                    isMajorTick && styles.majorTick,
+                    isCurrentValue && styles.currentTick
+                  ]} />
+                  {isMajorTick && (
+                    <Text style={styles.tickLabel}>{value}</Text>
+                  )}
+                  {isCurrentValue && (
+                    <View style={styles.currentValueMarker}>
+                      <View style={styles.markerTriangle} />
+                      <View style={styles.markerLine} />
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+          
+          <View style={styles.sliderHandle}>
+            <View style={styles.handleCircle} />
+          </View>
         </View>
+      </View>
+    );
+  };
 
-        <View style={styles.formSection}>
-          <Text style={styles.sectionTitle}>Altura (cm)</Text>
-          <TextInput
-            style={styles.input}
-            value={height}
-            onChangeText={setHeight}
-            placeholder="Ex: 175"
-            placeholderTextColor="#9CA3AF"
-            keyboardType="numeric"
-            maxLength={3}
-          />
-          <Text style={styles.hint}>Digite sua altura em centímetros</Text>
+  const renderWeightSlider = () => {
+    const minWeight = 40;
+    const maxWeight = 150;
+    const step = 1;
+    
+    const handleWeightChange = (value: number) => {
+      setWeight(value);
+    };
+
+    return (
+      <View style={styles.sliderContainer}>
+        <View style={styles.sliderHeader}>
+          <Text style={styles.sliderLabel}>Peso:</Text>
+          <View style={styles.unitToggle}>
+            <TouchableOpacity
+              style={[styles.unitButton, weightUnit === 'lbs' && styles.unitButtonSelected]}
+              onPress={() => setWeightUnit('lbs')}
+            >
+              <Text style={[styles.unitButtonText, weightUnit === 'lbs' && styles.unitButtonTextSelected]}>
+                lbs
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.unitButton, weightUnit === 'kg' && styles.unitButtonSelected]}
+              onPress={() => setWeightUnit('kg')}
+            >
+              <Text style={[styles.unitButtonText, weightUnit === 'kg' && styles.unitButtonTextSelected]}>
+                kg
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
-
-        <View style={styles.formSection}>
-          <Text style={styles.sectionTitle}>Peso Atual (kg)</Text>
-          <TextInput
-            style={styles.input}
-            value={weight}
-            onChangeText={setWeight}
-            placeholder="Ex: 70.5"
-            placeholderTextColor="#9CA3AF"
-            keyboardType="numeric"
-            maxLength={5}
-          />
-          <Text style={styles.hint}>Digite seu peso em quilogramas</Text>
+        
+        <Text style={styles.valueDisplay}>{weight}{weightUnit === 'kg' ? 'kg' : 'lbs'}</Text>
+        
+        <View style={styles.sliderContainer}>
+          <View style={styles.sliderTrack}>
+            {Array.from({ length: Math.floor((maxWeight - minWeight) / step) + 1 }, (_, i) => {
+              const value = minWeight + (i * step);
+              const isMajorTick = value % 10 === 0;
+              const isCurrentValue = value === weight;
+              
+              return (
+                <View key={value} style={styles.tickContainer}>
+                  <View style={[
+                    styles.tick,
+                    isMajorTick && styles.majorTick,
+                    isCurrentValue && styles.currentTick
+                  ]} />
+                  {isMajorTick && (
+                    <Text style={styles.tickLabel}>{value}</Text>
+                  )}
+                  {isCurrentValue && (
+                    <View style={styles.currentValueMarker}>
+                      <View style={styles.markerTriangle} />
+                      <View style={styles.markerLine} />
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+          
+          <View style={styles.sliderHandle}>
+            <View style={styles.handleCircle} />
+          </View>
         </View>
+      </View>
+    );
+  };
 
-        <Text style={styles.note}>
-          Você poderá alterar essas informações no seu perfil a qualquer momento.
+  return (
+    <View style={styles.container}>
+      <View style={styles.content}>
+        <Text style={styles.title}>Peso e altura</Text>
+        <Text style={styles.subtitle}>
+          Isso nos ajuda a personalizar o seu plano de nutrição.
+        </Text>
+
+        {renderHeightSlider()}
+        {renderWeightSlider()}
+
+        <Text style={styles.disclaimer}>
+          * Suas informações serão excluídas após gerar o plano.
         </Text>
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: OFF_WHITE,
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 120, // Extra padding for fixed footer
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: TEXT,
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#64748b',
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 40,
-  },
-  formSection: {
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: TEXT,
-    marginBottom: 12,
-  },
-  genderContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  genderButton: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: BORDER,
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-    marginHorizontal: 4,
+    paddingHorizontal: spacing.screenPadding,
+    paddingTop: spacing.xxl,
     alignItems: 'center',
   },
-  genderButtonSelected: {
-    backgroundColor: CORAL,
-    borderColor: CORAL,
-  },
-  genderButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: TEXT,
-  },
-  genderButtonTextSelected: {
-    color: '#fff',
-  },
-  input: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: BORDER,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    fontSize: 16,
-    color: TEXT,
-  },
-  hint: {
-    fontSize: 14,
-    color: '#64748b',
-    marginTop: 8,
-    fontStyle: 'italic',
-  },
-
-  note: {
-    fontSize: 14,
-    color: '#64748b',
+  title: {
+    fontSize: typography['3xl'],
+    fontWeight: typography.bold,
+    color: colors.textPrimary,
     textAlign: 'center',
-    lineHeight: 20,
+    marginBottom: spacing.md,
+  },
+  subtitle: {
+    fontSize: typography.base,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: typography.base * 1.5,
+    marginBottom: spacing.xxl,
+    paddingHorizontal: spacing.md,
+  },
+  sliderContainer: {
+    width: '100%',
+    marginBottom: spacing.xxl,
+    alignItems: 'center',
+  },
+  sliderHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: spacing.md,
+  },
+  sliderLabel: {
+    fontSize: typography.lg,
+    fontWeight: typography.bold,
+    color: colors.textPrimary,
+  },
+  unitToggle: {
+    flexDirection: 'row',
+    backgroundColor: colors.backgroundTertiary,
+    borderRadius: borderRadius.sm,
+    padding: 2,
+  },
+  unitButton: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.sm,
+  },
+  unitButtonSelected: {
+    backgroundColor: colors.textPrimary,
+  },
+  unitButtonText: {
+    fontSize: typography.sm,
+    fontWeight: typography.medium,
+    color: colors.textSecondary,
+  },
+  unitButtonTextSelected: {
+    color: colors.textInverse,
+  },
+  valueDisplay: {
+    fontSize: typography['2xl'],
+    fontWeight: typography.bold,
+    color: colors.textPrimary,
+    marginBottom: spacing.lg,
+  },
+  sliderContainer: {
+    width: '100%',
+    height: 80,
+    position: 'relative',
+    marginBottom: spacing.md,
+  },
+  sliderTrack: {
+    width: '100%',
+    height: 60,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    position: 'relative',
+    backgroundColor: colors.backgroundTertiary,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.md,
+  },
+  tickContainer: {
+    alignItems: 'center',
+    position: 'relative',
+    flex: 1,
+  },
+  tick: {
+    width: 1,
+    height: 8,
+    backgroundColor: colors.border,
+  },
+  majorTick: {
+    height: 16,
+    backgroundColor: colors.textSecondary,
+  },
+  currentTick: {
+    backgroundColor: colors.primary,
+  },
+  tickLabel: {
+    fontSize: typography.sm,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+  },
+  currentValueMarker: {
+    position: 'absolute',
+    bottom: 0,
+    alignItems: 'center',
+  },
+  markerTriangle: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderBottomWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: colors.textPrimary,
+  },
+  markerLine: {
+    width: 2,
+    height: 20,
+    backgroundColor: colors.textPrimary,
+    marginTop: -1,
+  },
+  sliderHandle: {
+    position: 'absolute',
+    top: 0,
+    left: '50%',
+    transform: [{ translateX: -15 }],
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  handleCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: colors.primary,
+    borderWidth: 3,
+    borderColor: colors.background,
+    ...shadows.md,
+  },
+  disclaimer: {
+    fontSize: typography.sm,
+    color: colors.textTertiary,
+    textAlign: 'center',
+    lineHeight: typography.sm * 1.4,
+    position: 'absolute',
+    bottom: spacing.xxl,
   },
 }); 

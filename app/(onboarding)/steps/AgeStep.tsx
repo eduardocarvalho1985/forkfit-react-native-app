@@ -1,56 +1,51 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useOnboarding } from '../OnboardingContext';
-
-const CORAL = '#FF725E';
-const OFF_WHITE = '#FDF6F3';
-const BORDER = '#FFA28F';
-const TEXT = '#1F2937';
+import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
+import DatePicker from '@/components/DatePicker';
 
 interface AgeStepProps {
-  onNext: () => void;
+  onSetLoading: (loading: boolean) => void;
 }
 
-export default function AgeStep({ onNext }: AgeStepProps) {
+export default function AgeStep({ onSetLoading }: AgeStepProps) {
   const { getStepData, updateStepData } = useOnboarding();
-  const [age, setAge] = useState(getStepData('age')?.toString() || '');
-  const [loading, setLoading] = useState(false);
+  const [birthDate, setBirthDate] = useState(getStepData('birthDate') || '');
 
   // Load existing data when component mounts
   useEffect(() => {
-    const existingAge = getStepData('age');
-    if (existingAge) {
-      setAge(existingAge.toString());
+    const existingBirthDate = getStepData('birthDate');
+    if (existingBirthDate) {
+      setBirthDate(existingBirthDate);
     }
   }, []);
 
-  const handleNext = async () => {
-    const ageNumber = parseInt(age);
-    
-    if (!age.trim()) {
-      Alert.alert('Erro', 'Por favor, insira sua idade para continuar.');
-      return;
+  // Update birth date in context whenever it changes
+  useEffect(() => {
+    if (birthDate) {
+      // Calculate age from birth date
+      const today = new Date();
+      const [year, month, day] = birthDate.split('-').map(Number);
+      if (year && month && day) {
+        const birth = new Date(year, month - 1, day);
+        let age = today.getFullYear() - birth.getFullYear();
+        const monthDiff = today.getMonth() - birth.getMonth();
+        
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+          age--;
+        }
+        
+        updateStepData('age', { birthDate, age });
+        console.log('Age updated in context:', { birthDate, age });
+      }
     }
+  }, [birthDate]);
 
-    if (isNaN(ageNumber) || ageNumber < 13 || ageNumber > 120) {
-      Alert.alert('Erro', 'Por favor, insira uma idade válida entre 13 e 120 anos.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Update context with age data
-      updateStepData('age', { age: ageNumber });
-      console.log('Age step completed, moving to next step');
-      
-      // Call the onNext callback to move to next step
-      onNext();
-    } catch (error) {
-      console.error('Error in age step:', error);
-      Alert.alert('Erro', 'Não foi possível salvar a idade. Tente novamente.');
-    } finally {
-      setLoading(false);
-    }
+  const validateBirthDate = (date: string): boolean => {
+    const selectedDate = new Date(date);
+    const today = new Date();
+    const minDate = new Date('1900-01-01');
+    return selectedDate >= minDate && selectedDate <= today;
   };
 
   return (
@@ -58,35 +53,39 @@ export default function AgeStep({ onNext }: AgeStepProps) {
       <View style={styles.content}>
         <Text style={styles.title}>Qual é a sua idade?</Text>
         <Text style={styles.subtitle}>
-          Sua idade nos ajuda a calcular suas necessidades calóricas diárias.
+          Isso nos ajuda a calcular suas necessidades calóricas com precisão.
         </Text>
 
-        <View style={styles.formSection}>
-          <Text style={styles.label}>Idade</Text>
-          <TextInput
-            style={styles.input}
-            value={age}
-            onChangeText={setAge}
-            placeholder="Digite sua idade"
-            placeholderTextColor="#9CA3AF"
-            keyboardType="numeric"
-            autoFocus
-            maxLength={3}
+        <View style={styles.datePickerContainer}>
+          <Text style={styles.dateLabel}>Data de Nascimento:</Text>
+          <DatePicker
+            value={birthDate}
+            onChange={setBirthDate}
+            placeholder="Selecione sua data de nascimento"
+            validateDate={validateBirthDate}
           />
+          {birthDate && (
+            <Text style={styles.ageDisplay}>
+              Idade: {(() => {
+                const today = new Date();
+                const [year, month, day] = birthDate.split('-').map(Number);
+                if (year && month && day) {
+                  const birth = new Date(year, month - 1, day);
+                  let age = today.getFullYear() - birth.getFullYear();
+                  const monthDiff = today.getMonth() - birth.getMonth();
+                  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                    age--;
+                  }
+                  return `${age} anos`;
+                }
+                return '';
+              })()}
+            </Text>
+          )}
         </View>
 
-        <TouchableOpacity
-          style={[styles.button, (!age.trim() || loading) && styles.buttonDisabled]}
-          onPress={handleNext}
-          disabled={!age.trim() || loading}
-        >
-          <Text style={styles.buttonText}>
-            {loading ? 'Salvando...' : 'Continuar'}
-          </Text>
-        </TouchableOpacity>
-
-        <Text style={styles.note}>
-          Você poderá alterar essas informações no seu perfil a qualquer momento.
+        <Text style={styles.disclaimer}>
+          * Suas informações serão excluídas após gerar o plano.
         </Text>
       </View>
     </View>
@@ -96,66 +95,55 @@ export default function AgeStep({ onNext }: AgeStepProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: OFF_WHITE,
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 40,
+    paddingHorizontal: spacing.screenPadding,
+    paddingTop: spacing.xxl,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: TEXT,
+    fontSize: typography['3xl'],
+    fontWeight: typography.bold,
+    color: colors.textPrimary,
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#64748b',
+    fontSize: typography.base,
+    color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 40,
+    lineHeight: typography.base * 1.5,
+    marginBottom: spacing.xxl,
+    paddingHorizontal: spacing.md,
   },
-  formSection: {
-    marginBottom: 32,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: TEXT,
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: BORDER,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    fontSize: 16,
-    color: TEXT,
-  },
-  button: {
-    backgroundColor: CORAL,
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+  datePickerContainer: {
+    width: '100%',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.xxl,
   },
-  buttonDisabled: {
-    backgroundColor: '#ccc',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 18,
-  },
-  note: {
-    fontSize: 14,
-    color: '#64748b',
+  dateLabel: {
+    fontSize: typography.lg,
+    fontWeight: typography.bold,
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
     textAlign: 'center',
-    lineHeight: 20,
+  },
+  ageDisplay: {
+    fontSize: typography.lg,
+    fontWeight: typography.semibold,
+    color: colors.primary,
+    marginTop: spacing.md,
+    textAlign: 'center',
+  },
+  disclaimer: {
+    fontSize: typography.sm,
+    color: colors.textTertiary,
+    textAlign: 'center',
+    lineHeight: typography.sm * 1.4,
+    position: 'absolute',
+    bottom: spacing.xxl,
   },
 }); 
