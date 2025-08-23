@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
+import { colors, spacing, typography, borderRadius } from '@/theme';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -31,7 +32,7 @@ export default function ForgotPassword() {
         [
           {
             text: 'OK',
-            onPress: () => router.push('/auth/login'),
+            onPress: () => router.push('/(auth)/login'),
           },
         ]
       );
@@ -44,7 +45,6 @@ export default function ForgotPassword() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>ForkFit</Text>
       <Text style={styles.subtitle}>Recuperar Senha</Text>
       
       <Text style={styles.description}>
@@ -86,67 +86,58 @@ export default function ForgotPassword() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF8F6',
-    paddingHorizontal: 24,
-    paddingTop: 100,
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#FF725E',
-    marginBottom: 8,
+    justifyContent: 'center',
+    padding: spacing.md,
+    backgroundColor: colors.background,
   },
   subtitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#1e293b',
-    marginBottom: 16,
+    fontSize: typography['2xl'],
+    fontWeight: typography.bold,
+    textAlign: 'center',
+    marginBottom: spacing.xl,
+    color: colors.textPrimary,
   },
   description: {
-    fontSize: 16,
-    color: '#64748b',
+    fontSize: typography.sm,
     textAlign: 'center',
-    marginBottom: 32,
-    paddingHorizontal: 20,
-    lineHeight: 24,
+    marginBottom: spacing.xl,
+    color: colors.textSecondary,
+    lineHeight: typography.lineHeightNormal * typography.sm,
   },
   input: {
-    width: '100%',
-    height: 56,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#e2e8f0',
-    paddingHorizontal: 16,
-    fontSize: 16,
-    color: '#1e293b',
-    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    borderRadius: borderRadius.sm,
+    marginBottom: spacing.md,
+    fontSize: typography.base,
+    backgroundColor: colors.background,
   },
   button: {
-    width: '100%',
-    height: 56,
-    backgroundColor: '#FF725E',
-    borderRadius: 12,
-    justifyContent: 'center',
+    backgroundColor: colors.primary,
+    padding: spacing.md,
+    borderRadius: borderRadius.sm,
+    marginBottom: spacing.md,
     alignItems: 'center',
-    marginBottom: 16,
+    justifyContent: 'center',
   },
   buttonDisabled: {
-    backgroundColor: '#cbd5e1',
+    backgroundColor: colors.textTertiary,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: colors.textInverse,
+    textAlign: 'center',
+    fontSize: typography.base,
+    fontWeight: typography.semibold,
   },
   backButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    alignItems: 'center',
   },
   backButtonText: {
-    color: '#FF725E',
-    fontSize: 16,
-    fontWeight: '600',
+    color: colors.primary,
+    fontSize: typography.base,
+    fontWeight: typography.semibold,
   },
 }); 
