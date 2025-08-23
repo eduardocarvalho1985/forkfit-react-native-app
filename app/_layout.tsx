@@ -50,7 +50,7 @@ function RootLayoutContent() {
       // User is authenticated
       if (!inAppGroup) {
         console.log('RootLayout: User authenticated, redirecting to main app');
-        router.replace('/(app)/(tabs)/dashboard');
+        router.replace('/(app)');
       }
     } else {
       // User is not authenticated
@@ -94,13 +94,13 @@ function RootLayoutContent() {
         
         switch (screen) {
           case 'dashboard':
-            router.push('/(app)/(tabs)/dashboard');
+            router.push('/(app)');
             break;
           case 'progress':
-            router.push('/(app)/(tabs)/progress');
+            router.push('/(app)');
             break;
           default:
-            router.push('/(app)/(tabs)/dashboard');
+            router.push('/(app)');
         }
       }
     });

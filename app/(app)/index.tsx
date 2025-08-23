@@ -1,9 +1,16 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
 
-// This screen is now just a placeholder while the RootLayout determines
-// where to send the user.
+// This screen automatically redirects to the tabs
 export default function Index() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Redirect to tabs immediately
+    router.replace('/(app)/(tabs)');
+  }, [router]);
+
   return (
     <View style={styles.container}>
       <ActivityIndicator size="large" color="#FF725E" />

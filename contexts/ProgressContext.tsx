@@ -227,7 +227,12 @@ export const ProgressProvider: React.FC<ProgressProviderProps> = ({ children }) 
   // Initial data load when user is available
   useEffect(() => {
     if (user?.uid) {
-      refreshWeightHistory();
+      // Add small delay to prevent race condition with navigation
+      const timer = setTimeout(() => {
+        refreshWeightHistory();
+      }, 1000);
+      
+      return () => clearTimeout(timer);
     }
   }, [user?.uid]);
 

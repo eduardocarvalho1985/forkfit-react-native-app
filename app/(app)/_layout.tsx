@@ -10,7 +10,10 @@ export default function AppLayout() {
       />
       <Stack.Screen 
         name="index" 
-        options={{ headerShown: false }}
+        options={{ 
+          headerShown: false,
+          href: null // Disable this route to prevent conflicts
+        }}
       />
     </Stack>
   );
