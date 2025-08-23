@@ -1,10 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-
-const CORAL = '#FF725E';
-const OFF_WHITE = '#FDF6F3';
-const BORDER = '#FFA28F';
-const TEXT = '#1F2937';
+import { colors, spacing, typography, borderRadius } from '@/theme';
 
 interface OnboardingProgressProps {
   currentStep: number;
@@ -47,15 +43,15 @@ export default function OnboardingProgress({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    backgroundColor: OFF_WHITE,
+    paddingHorizontal: spacing.screenPadding,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.backgroundSecondary,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   progressContainer: {
     flexDirection: 'row',
@@ -65,25 +61,25 @@ const styles = StyleSheet.create({
   progressBar: {
     flex: 1,
     height: 6,
-    backgroundColor: BORDER,
+    backgroundColor: colors.primaryLight,
     borderRadius: 3,
-    marginRight: 12,
+    marginRight: spacing.sm,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: CORAL,
+    backgroundColor: colors.primary,
     borderRadius: 3,
   },
   percentageText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: CORAL,
+    fontSize: typography.sm,
+    fontWeight: typography.semibold,
+    color: colors.primary,
     minWidth: 35,
   },
   stepText: {
-    fontSize: 12,
-    color: '#64748b',
+    fontSize: typography.xs,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
 }); 

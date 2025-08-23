@@ -2,10 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useOnboarding } from '@/app/(onboarding)/OnboardingContext';
-
-const CORAL = '#FF725E';
-const OFF_WHITE = '#FDF6F3';
-const TEXT = '#1F2937';
+import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
 
 interface PaywallStepProps {
   onSetLoading: (loading: boolean) => void;
@@ -53,51 +50,47 @@ export default function PaywallStep({ onSetLoading }: PaywallStepProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: OFF_WHITE,
+    backgroundColor: colors.backgroundSecondary,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 120, // Extra padding for fixed footer
+    paddingHorizontal: spacing.screenPadding,
+    paddingTop: spacing.xxl,
+    paddingBottom: spacing.footerBottom,
     justifyContent: 'center',
     alignItems: 'center',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: TEXT,
+    fontSize: typography['3xl'],
+    fontWeight: typography.bold,
+    color: colors.textPrimary,
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.sm,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#64748b',
+    fontSize: typography.base,
+    color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 40,
+    lineHeight: typography.base * 1.5,
+    marginBottom: spacing.xxl,
   },
   description: {
-    fontSize: 14,
-    color: '#64748b',
+    fontSize: typography.sm,
+    color: colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 40,
+    marginBottom: spacing.xxl,
   },
   createAccountButton: {
-    backgroundColor: CORAL,
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    shadowColor: CORAL,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    ...shadows.primary,
   },
   createAccountText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+    color: colors.textInverse,
+    fontSize: typography.lg,
+    fontWeight: typography.bold,
     textAlign: 'center',
   },
 });

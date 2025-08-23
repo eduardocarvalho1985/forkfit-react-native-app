@@ -22,9 +22,7 @@ import { api } from '@/services/api';
 import { getAuth } from '@react-native-firebase/auth';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const OFF_WHITE = '#FDF6F3';
-const CORAL = '#FF725E';
-const TEXT = '#1F2937';
+import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
 
 type OnboardingStep = 
   | 'introCarousel'
@@ -230,7 +228,7 @@ function OnboardingContent() {
       </View>
 
       {/* Fixed Footer */}
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
+      <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.footerPadding }]}>
         {canGoBack() && (
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
             <Text style={styles.backButtonText}>← Voltar</Text>
@@ -261,50 +259,50 @@ export default function OnboardingManager() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: OFF_WHITE,
+    backgroundColor: colors.backgroundSecondary,
   },
   content: {
     flex: 1,
   },
   footer: {
-    backgroundColor: OFF_WHITE,
-    paddingHorizontal: 24,
-    paddingTop: 16,
+    backgroundColor: colors.backgroundSecondary,
+    paddingHorizontal: spacing.screenPadding,
+    paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 114, 94, 0.1)',
+    borderTopColor: colors.primaryLight + '20', // 20% opacity
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   backButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.sm,
+    backgroundColor: colors.background + 'E6', // 90% opacity
     borderWidth: 1,
-    borderColor: CORAL,
-    marginRight: 12,
+    borderColor: colors.primary,
+    marginRight: spacing.sm,
   },
   backButtonText: {
-    color: CORAL,
-    fontSize: 16,
-    fontWeight: '600',
+    color: colors.primary,
+    fontSize: typography.base,
+    fontWeight: typography.semibold,
   },
   continueButton: {
     flex: 1,
-    backgroundColor: CORAL,
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
     alignItems: 'center',
   },
   continueButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: colors.textTertiary,
   },
   continueButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 18,
+    color: colors.textInverse,
+    fontWeight: typography.bold,
+    fontSize: typography.lg,
   },
   debugModal: {
     margin: 0,

@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { useOnboarding } from '../OnboardingContext';
-
-const CORAL = '#FF725E';
-const OFF_WHITE = '#FDF6F3';
-const BORDER = '#FFA28F';
-const TEXT = '#1F2937';
+import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
 
 interface PlanStepProps {
   onSetLoading: (loading: boolean) => void;
@@ -95,85 +91,77 @@ export default function PlanStep({ onSetLoading }: PlanStepProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: OFF_WHITE,
+    backgroundColor: colors.backgroundSecondary,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 120, // Extra padding for fixed footer
+    paddingHorizontal: spacing.screenPadding,
+    paddingTop: spacing.xxl,
+    paddingBottom: spacing.footerBottom,
   },
   celebrationContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: spacing.xxl,
   },
   celebrationIcon: {
-    fontSize: 48,
-    marginBottom: 16,
+    fontSize: typography['5xl'],
+    marginBottom: spacing.md,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: TEXT,
+    fontSize: typography['3xl'],
+    fontWeight: typography.bold,
+    color: colors.textPrimary,
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.sm,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#64748b',
+    fontSize: typography.base,
+    color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: typography.base * 1.5,
   },
   planContainer: {
-    marginBottom: 32,
+    marginBottom: spacing.xl,
   },
   caloriesCard: {
-    backgroundColor: CORAL,
-    borderRadius: 20,
-    paddingVertical: 32,
-    paddingHorizontal: 24,
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.xl,
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.lg,
     alignItems: 'center',
-    marginBottom: 24,
-    shadowColor: CORAL,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
+    marginBottom: spacing.lg,
+    ...shadows.primary,
   },
   caloriesLabel: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: '600',
-    marginBottom: 8,
+    fontSize: typography.base,
+    color: colors.textInverse,
+    fontWeight: typography.semibold,
+    marginBottom: spacing.sm,
   },
   caloriesValue: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 4,
+    fontSize: typography['5xl'],
+    fontWeight: typography.bold,
+    color: colors.textInverse,
+    marginBottom: spacing.xs,
   },
   caloriesUnit: {
-    fontSize: 16,
-    color: '#fff',
+    fontSize: typography.base,
+    color: colors.textInverse,
     opacity: 0.9,
   },
   macrosContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    paddingVertical: 24,
-    paddingHorizontal: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.lg,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    ...shadows.md,
   },
   macrosTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: TEXT,
+    fontSize: typography.lg,
+    color: colors.textPrimary,
+    fontWeight: typography.semibold,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: spacing.lg,
   },
   macroRow: {
     flexDirection: 'row',
@@ -184,34 +172,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   macroLabel: {
-    fontSize: 14,
-    color: '#64748b',
-    marginBottom: 8,
+    fontSize: typography.sm,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
     textAlign: 'center',
   },
   macroValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: TEXT,
+    fontSize: typography['2xl'],
+    fontWeight: typography.bold,
+    color: colors.textPrimary,
   },
   infoContainer: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    marginBottom: 24,
+    backgroundColor: colors.backgroundTertiary,
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
   },
   infoText: {
-    fontSize: 14,
-    color: '#64748b',
+    fontSize: typography.sm,
+    color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: typography.sm * 1.4,
   },
-
   note: {
-    fontSize: 14,
-    color: '#64748b',
+    fontSize: typography.sm,
+    color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: typography.sm * 1.4,
   },
 }); 
