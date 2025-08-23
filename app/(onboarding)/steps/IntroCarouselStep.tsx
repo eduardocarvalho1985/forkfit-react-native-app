@@ -34,23 +34,23 @@ interface CarouselItem {
   description: string;
 }
 
-// Carousel data - placeholder images for now
+// Carousel data - using uploaded images
 const carouselData: CarouselItem[] = [
   {
     id: '1',
-    image: require('@/assets/images/react-logo.png'), // Placeholder - we'll replace with actual onboarding images
+    image: require('@/assets/images/1.png'),
     title: 'Contar calorias nunca foi tão fácil',
     description: 'Apenas tire uma foto ou descreva sua refeição e a nossa IA faz o resto'
   },
   {
     id: '2', 
-    image: require('@/assets/images/react-logo.png'), // Placeholder
+    image: require('@/assets/images/2.png'),
     title: 'Entenda sua comida no detalhe',
     description: 'Te mantemos informado sobre as macros de sua refeição (proteínas, carboidratos e gorduras)'
   },
   {
     id: '3',
-    image: require('@/assets/images/react-logo.png'), // Placeholder
+    image: require('@/assets/images/3.png'),
     title: 'Atinja seus objetivos',
     description: 'Seja para perder peso, ganhar músculo ou manter o seu corpo. O melhor dia para começar é agora.'
   }
@@ -128,14 +128,16 @@ export default function IntroCarouselStep({ onSetLoading }: IntroCarouselStepPro
         
         {/* Dot Indicators */}
         {renderDotIndicator()}
-      </View>
-
-      {/* Bottom Section */}
-      <View style={styles.bottomSection}>
-        {/* Sign In Button - Small, positioned on bottom right */}
-        <Pressable style={styles.signInButton} onPress={handleSignIn}>
-          <Text style={styles.signInText}>Sign in</Text>
-        </Pressable>
+        
+        {/* Sign In Section - Below dots */}
+        <View style={styles.signInSection}>
+          <Text style={styles.signInDisclaimer}>
+            Se você já tem uma conta, faça o{' '}
+            <Text style={styles.signInLink} onPress={handleSignIn}>
+              sign in
+            </Text>
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -166,6 +168,7 @@ const styles = StyleSheet.create({
   // Image Container - at the top (40% of screen)
   imageContainer: {
     height: '40%', // Exactly 40% of screen height
+    width: '100%', // Cover entire width
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.backgroundTertiary, // Light gray background for image area
@@ -183,10 +186,9 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   
   carouselImage: {
-    width: screenWidth * 0.7, // 70% of screen width
-    height: screenWidth * 0.7, // Square aspect ratio
-    borderRadius: borderRadius.xl,
-    ...shadows.lg,
+    width: '100%', // Cover entire container width
+    height: '100%', // Cover entire container height
+    borderRadius: 0, // No border radius to cover entire area
   } as ImageStyle,
   
   carouselTitle: {
@@ -209,7 +211,7 @@ const styles = StyleSheet.create({
   // Dot Indicators
   dotContainer: {
     position: 'absolute',
-    bottom: spacing.xxxl, // Position above the sign-in button
+    bottom: spacing.xxxl + spacing.xl, // Move up more to create space
     left: 0,
     right: 0,
     flexDirection: 'row',
@@ -222,6 +224,7 @@ const styles = StyleSheet.create({
     width: spacing.sm,
     height: spacing.sm,
     borderRadius: borderRadius.full,
+    ...shadows.sm, // Add shadow for better visibility
   } as ViewStyle,
   
   activeDot: {
@@ -230,30 +233,28 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   
   inactiveDot: {
-    backgroundColor: colors.textInverse,
-    opacity: 0.5,
+    backgroundColor: colors.textSecondary, // More visible grey color
+    opacity: 0.8, // Higher opacity for better visibility
   } as ViewStyle,
   
-  // Bottom Section
-  bottomSection: {
-    position: 'absolute',
-    bottom: spacing.lg,
-    right: spacing.screenPadding,
-    backgroundColor: 'transparent',
+  // Sign In Section
+  signInSection: {
+    alignItems: 'center',
+    marginTop: spacing.xl, // Increased spacing from dots
+    paddingHorizontal: spacing.screenPadding,
+    marginBottom: spacing.xxl, // Add bottom margin to push away from continue button
   } as ViewStyle,
   
-  signInButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
-    ...shadows.sm,
-  } as ViewStyle,
-  
-  signInText: {
+  signInDisclaimer: {
     fontSize: typography.sm,
-    fontWeight: typography.semibold,
-    color: colors.textInverse,
+    color: colors.textSecondary,
     textAlign: 'center',
+    lineHeight: typography.sm * 1.4,
+  } as TextStyle,
+  
+  signInLink: {
+    color: colors.primary,
+    fontWeight: typography.bold,
+    textDecorationLine: 'underline',
   } as TextStyle,
 });
