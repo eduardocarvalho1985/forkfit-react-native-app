@@ -53,7 +53,6 @@ export default function Login() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>ForkFit</Text>
       <Text style={styles.subtitle}>Entrar na sua conta</Text>
       <Text style={styles.description}>
         Acesse seu plano personalizado e continue sua jornada
@@ -97,19 +96,12 @@ export default function Login() {
         </TouchableOpacity>
       )}
 
-      {/* Debug info in development */}
-      {__DEV__ && (
-        <Text style={styles.debugText}>
-          Platform: {Platform.OS} | Apple Button: {Platform.OS === 'ios' ? 'Visible' : 'Hidden'}
-        </Text>
-      )}
-
       <TouchableOpacity onPress={() => router.push('/(auth)/forgot-password')}>
         <Text style={styles.linkText}>Esqueceu sua senha?</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => router.push('/(onboarding)')}>
-        <Text style={styles.linkText}>Não tem conta? Volte ao onboarding</Text>
+        <Text style={styles.linkText}>Não tem conta? Comece aqui</Text>
       </TouchableOpacity>
     </View>
   );
@@ -122,18 +114,12 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     backgroundColor: colors.background,
   },
-  title: {
-    fontSize: typography['4xl'],
+  subtitle: {
+    fontSize: typography['2xl'],
     fontWeight: typography.bold,
     textAlign: 'center',
-    marginBottom: spacing.sm,
-    color: colors.primary,
-  },
-  subtitle: {
-    fontSize: typography.base,
-    textAlign: 'center',
     marginBottom: spacing.xl,
-    color: colors.textSecondary,
+    color: colors.textPrimary,
   },
   description: {
     fontSize: typography.sm,
@@ -165,6 +151,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: colors.primary,
     fontSize: typography.base,
+    marginTop: spacing.md,
   },
   divider: {
     flexDirection: 'row',
@@ -198,20 +185,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: typography.base,
     fontWeight: typography.semibold,
-  },
-  forgotPasswordButton: {
-    alignSelf: 'center',
-    marginBottom: spacing.md,
-  },
-  forgotPasswordText: {
-    color: colors.primary,
-    fontSize: typography.sm,
-    fontWeight: typography.medium,
-  },
-  debugText: {
-    marginTop: spacing.lg,
-    textAlign: 'center',
-    color: colors.textPrimary,
-    fontSize: typography.xs,
   },
 });
