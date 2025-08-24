@@ -1,94 +1,115 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import CustomSlider from '@/components/CustomSlider';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import RulerSlider from '@/components/RulerSlider';
+import UnitToggle from '@/components/UnitToggle';
 import { useOnboarding } from '../OnboardingContext';
-import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
-
-const { width: screenWidth } = Dimensions.get('window');
+import { kgToLbs } from '@/utils/units';
+import { colors, spacing, typography } from '@/theme';
 
 interface TargetWeightStepProps {
   onSetLoading: (loading: boolean) => void;
 }
 
 export default function TargetWeightStep({ onSetLoading }: TargetWeightStepProps) {
-  const { updateStepData, onboardingData } = useOnboarding();
-  const [targetWeight, setTargetWeight] = useState(onboardingData.targetWeight || onboardingData.weight || 70);
+  const { updateStepData, onboardingData, getStepData } = useOnboarding();
+  const [targetWeightKg, setTargetWeightKg] = useState(onboardingData.targetWeight || onboardingData.weight || 70);
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg');
 
-  // Initialize with current weight if available
+  // Initialize with current weight if available (only once on mount)
   useEffect(() => {
-    if (onboardingData.weight) {
-      setTargetWeight(onboardingData.weight);
+    // Only set target weight if it hasn't been set yet
+    if (!onboardingData.targetWeight && onboardingData.weight) {
+      setTargetWeightKg(onboardingData.weight);
     }
-  }, [onboardingData.weight]);
+    
+    // Load unit preference if available
+    const unitPref = getStepData('prefs')?.units?.weight;
+    if (unitPref === 'kg' || unitPref === 'lbs') {
+      setWeightUnit(unitPref);
+    }
+  }, []); // Empty dependency array - only run once on mount
 
   // Update target weight in context whenever it changes
   useEffect(() => {
-    if (targetWeight && onboardingData.weight) {
-      updateStepData('targetWeight', { targetWeight });
-      console.log('Target weight updated in context:', targetWeight);
+    // Always save target weight to context, even if it's the same as current weight
+    // This allows users to continue with maintaining the same weight
+    if (targetWeightKg) {
+      updateStepData('targetWeight', { targetWeight: targetWeightKg });
+      console.log('🔍 TargetWeightStep: Updated target weight to:', targetWeightKg, 'kg');
     }
-  }, [targetWeight]);
+  }, [targetWeightKg]); // Removed onboardingData.weight dependency to always save
 
-  const renderWeightSlider = () => {
+  const handleWeightUnitChange = useCallback((newUnit: string) => {
+    const unit = newUnit as 'kg' | 'lbs';
+    console.log('🔍 TargetWeightStep: Changing unit from', weightUnit, 'to', unit);
+    setWeightUnit(unit);
+    
+    // Save unit preference
+    const currentPrefs = getStepData('prefs') || {};
+    updateStepData('prefs', {
+      ...currentPrefs,
+      units: { ...(currentPrefs.units || {}), weight: unit }
+    });
+  }, [getStepData, weightUnit]); // Added weightUnit to dependencies
+
+  const formatWeightLabel = useCallback((value: number) => {
+    if (weightUnit === 'kg') {
+      return `${value.toFixed(1)} kg`;
+    } else {
+      return `${kgToLbs(value).toFixed(1)} lbs`;
+    }
+  }, [weightUnit]);
+
+  const renderWeightSlider = useMemo(() => {
     const currentWeight = onboardingData.weight || 70;
-    const minWeight = Math.max(40, currentWeight * 0.6); // 60% of current weight
-    const maxWeight = Math.min(150, currentWeight * 1.4); // 140% of current weight
+    // Remove weight restrictions - allow any reasonable range for all goals
+    const minWeight = 40; // Absolute minimum
+    const maxWeight = 200; // Absolute maximum
+    
+    // Convert current weight to display unit for info section
+    const displayCurrentWeight = weightUnit === 'kg' ? currentWeight : kgToLbs(currentWeight);
+    const displayTargetWeight = weightUnit === 'kg' ? targetWeightKg : kgToLbs(targetWeightKg);
+    const displayDifference = Math.abs(displayTargetWeight - displayCurrentWeight);
+    const displayUnit = weightUnit === 'kg' ? 'kg' : 'lbs';
     
     return (
       <View style={styles.sliderContainer}>
         <View style={styles.sliderHeader}>
           <Text style={styles.sliderLabel}>Peso Alvo:</Text>
-          <View style={styles.unitToggle}>
-            <TouchableOpacity
-              style={[styles.unitButton, weightUnit === 'lbs' && styles.unitButtonSelected]}
-              onPress={() => setWeightUnit('lbs')}
-            >
-              <Text style={[styles.unitButtonText, weightUnit === 'lbs' && styles.unitButtonTextSelected]}>
-                lbs
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.unitButton, weightUnit === 'kg' && styles.unitButtonSelected]}
-              onPress={() => setWeightUnit('kg')}
-            >
-              <Text style={[styles.unitButtonText, weightUnit === 'kg' && styles.unitButtonTextSelected]}>
-                kg
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-        
-        <Text style={styles.valueDisplay}>{targetWeight}{weightUnit === 'kg' ? 'kg' : 'lbs'}</Text>
-        
-        <View style={styles.sliderWrapper}>
-          <CustomSlider
-            value={targetWeight}
-            onValueChange={setTargetWeight}
-            minimumValue={minWeight}
-            maximumValue={maxWeight}
-            step={1}
-            width={screenWidth - 80}
-            height={40}
-            thumbSize={24}
-            trackHeight={6}
-            showLabels={true}
+          <UnitToggle
+            options={['kg', 'lbs']}
+            value={weightUnit}
+            onChange={handleWeightUnitChange}
+            label="Unidade"
           />
         </View>
         
+        <RulerSlider
+          min={minWeight}
+          max={maxWeight}
+          step={0.5}
+          value={targetWeightKg}
+          onChange={setTargetWeightKg}
+          majorEvery={5}
+          labelEvery={5}
+          tickWidth={12}
+          formatCenterLabel={formatWeightLabel}
+          unit={weightUnit === 'kg' ? 'kg' : ''}
+        />
+        
         <View style={styles.weightInfo}>
           <Text style={styles.weightInfoText}>
-            Peso atual: <Text style={styles.currentWeightValue}>{currentWeight}kg</Text>
+            Peso atual: <Text style={styles.currentWeightValue}>{displayCurrentWeight.toFixed(1)}{displayUnit}</Text>
           </Text>
           <Text style={styles.weightInfoText}>
             Diferença: <Text style={styles.differenceValue}>
-              {Math.abs(targetWeight - currentWeight)}kg
+              {displayDifference.toFixed(1)}{displayUnit}
             </Text>
           </Text>
         </View>
       </View>
     );
-  };
+  }, [targetWeightKg, weightUnit, onboardingData.weight, handleWeightUnitChange, formatWeightLabel]);
 
   return (
     <View style={styles.container}>
@@ -98,7 +119,7 @@ export default function TargetWeightStep({ onSetLoading }: TargetWeightStepProps
           Defina um objetivo realista para sua jornada de transformação
         </Text>
 
-        {renderWeightSlider()}
+        {renderWeightSlider}
 
         <Text style={styles.disclaimer}>
           * Suas informações serão excluídas após gerar o plano.
@@ -151,38 +172,6 @@ const styles = StyleSheet.create({
     fontSize: typography.lg,
     fontWeight: typography.bold,
     color: colors.textPrimary,
-  },
-  unitToggle: {
-    flexDirection: 'row',
-    backgroundColor: colors.backgroundTertiary,
-    borderRadius: borderRadius.sm,
-    padding: 2,
-  },
-  unitButton: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.sm,
-  },
-  unitButtonSelected: {
-    backgroundColor: colors.textPrimary,
-  },
-  unitButtonText: {
-    fontSize: typography.sm,
-    fontWeight: typography.medium,
-    color: colors.textSecondary,
-  },
-  unitButtonTextSelected: {
-    color: colors.textInverse,
-  },
-  valueDisplay: {
-    fontSize: typography['2xl'],
-    fontWeight: typography.bold,
-    color: colors.primary,
-    marginBottom: spacing.lg,
-  },
-  sliderWrapper: {
-    width: '100%',
-    alignItems: 'center',
   },
   weightInfo: {
     alignItems: 'center',

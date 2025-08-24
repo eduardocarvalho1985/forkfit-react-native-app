@@ -144,7 +144,9 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       case 'exerciseFrequency':
         return !!onboardingData.activityLevel;
       case 'targetWeight':
-        return !!(onboardingData.targetWeight && onboardingData.targetWeight !== onboardingData.weight);
+        // Allow continuing if target weight is set, even if it's the same as current weight
+        // This supports users who want to maintain their current weight
+        return !!onboardingData.targetWeight;
       case 'weightLossInfo':
         return true; // Always valid, just informational
       case 'pacing':
