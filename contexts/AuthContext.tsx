@@ -85,38 +85,55 @@ export function AuthProvider({ children }: AuthProviderProps) {
       async (firebaseUser) => {
         try {
           console.log('🔥 AUTH STATE CHANGED:', firebaseUser?.uid || 'NO USER');
-          console.log('📞 CALLING syncUserWithBackend...');
           
           if (firebaseUser) {
+            // STEP 1: CHECK - Verify token availability
+            console.log('🔍 STEP 1: CHECKING token availability...');
+            let token: string | null = null;
+            
             try {
-              console.log('🔄 Refreshing token...');
-              // Refresh the user's token to check if they are still valid
-              await firebaseUser.getIdToken(true);
-              console.log('✅ Token refreshed successfully');
-
-              // Sync with backend and combine data
-              console.log('🚀 Starting backend sync for:', firebaseUser.uid);
-              await syncUserWithBackend(firebaseUser);
-              console.log('✅ syncUserWithBackend COMPLETED');
-            } catch (error) {
-              console.error('❌ syncUserWithBackend FAILED:', error);
-              console.error('AuthContext: Error refreshing token or syncing user:', error);
-              // If there's an error getting the token, the user is likely disabled/deleted
-              console.log('🚫 User is disabled or deleted, signing out...');
-              try {
-                await firebaseSignOut(getAuth());
-              } catch (signOutError) {
-                console.error('AuthContext: Error during sign out:', signOutError);
-              }
-              setUser(null);
+              token = await firebaseUser.getIdToken(false); // Try to get existing token first
+              console.log('✅ CHECK: Token already available, length:', token?.length || 0);
+            } catch (tokenError) {
+              console.log('⚠️ CHECK: No existing token available, will refresh');
+              token = null;
             }
+            
+            // STEP 2: WAIT - If no token, wait for refresh
+            if (!token) {
+              console.log('⏳ STEP 2: WAITING for token refresh...');
+              try {
+                console.log('🔄 Refreshing token...');
+                token = await firebaseUser.getIdToken(true); // Force refresh
+                console.log('✅ WAIT: Token refresh completed, length:', token?.length || 0);
+              } catch (refreshError) {
+                console.error('❌ WAIT: Token refresh failed:', refreshError);
+                throw refreshError;
+              }
+            } else {
+              console.log('✅ STEP 2: WAIT skipped - token already available');
+            }
+            
+            // STEP 3: THEN - Now start backend sync with guaranteed token
+            console.log('🚀 STEP 3: THEN - Starting backend sync with valid token...');
+            console.log('🔑 Token status: Available (length:', token?.length || 0, ')');
+            console.log('📞 CALLING syncUserWithBackend...');
+            
+            await syncUserWithBackend(firebaseUser);
+            console.log('✅ syncUserWithBackend COMPLETED');
           } else {
             console.log('👤 No firebase user, setting user to null');
             setUser(null);
           }
         } catch (error) {
           console.error('💥 Unexpected error in auth state listener:', error);
-          // Set user to null as a fallback
+          // If there's an error getting the token, the user is likely disabled/deleted
+          console.log('🚫 User is disabled or deleted, signing out...');
+          try {
+            await firebaseSignOut(getAuth());
+          } catch (signOutError) {
+            console.error('AuthContext: Error during sign out:', signOutError);
+          }
           setUser(null);
         } finally {
           console.log('🏁 Setting loading to false');
@@ -131,6 +148,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const syncUserWithBackend = async (firebaseUser: FirebaseAuthTypes.User) => {
     try {
       console.log('🚀 Starting backend sync for:', firebaseUser.uid);
+      
+      // Verify we have a valid token before proceeding
+      console.log('🔑 Verifying token before backend sync...');
+      const token = await firebaseUser.getIdToken(false);
+      console.log('✅ Token verification successful, length:', token?.length || 0);
+      console.log('🔒 Backend sync proceeding with valid token');
       
       // Check if we have pending onboarding data for this new user
       console.log('📦 Checking AsyncStorage for onboarding data...');
