@@ -1,46 +1,78 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useOnboarding } from '../OnboardingContext';
-
-const CORAL = '#FF725E';
-const OFF_WHITE = '#FDF6F3';
-const BORDER = '#FFA28F';
-const TEXT = '#1F2937';
+import RulerSlider from '../../../components/RulerSlider';
+import UnitToggle from '../../../components/UnitToggle';
+import { cmToFeetIn } from '../../../utils/units';
+import { colors, spacing, borderRadius, typography } from '../../../theme';
 
 interface HeightStepProps {
   onNext: () => void;
 }
 
 export default function HeightStep({ onNext }: HeightStepProps) {
+  console.log('🔍 HeightStep: Component rendering with new RulerSlider interface');
+  
   const { getStepData, updateStepData } = useOnboarding();
-  const [height, setHeight] = useState(getStepData('height')?.toString() || '');
+  const [heightCm, setHeightCm] = useState(175); // Default to 175cm
+  const [unit, setUnit] = useState<'cm' | 'ft/in'>('cm');
   const [loading, setLoading] = useState(false);
 
   // Load existing data when component mounts
   useEffect(() => {
+    console.log('🔍 HeightStep: Loading existing data...');
     const existingHeight = getStepData('height');
-    if (existingHeight) {
-      setHeight(existingHeight.toString());
+    console.log('🔍 HeightStep: Existing height data:', existingHeight);
+    
+    // Handle both number and object formats for backward compatibility
+    if (typeof existingHeight === 'number') {
+      setHeightCm(existingHeight);
+      console.log('🔍 HeightStep: Set height from number:', existingHeight);
+    } else if (existingHeight && typeof existingHeight.height === 'number') {
+      setHeightCm(existingHeight.height);
+      console.log('🔍 HeightStep: Set height from object:', existingHeight.height);
     }
-  }, []);
+    
+    // Load unit preference if available
+    const unitPref = getStepData('prefs')?.units?.height;
+    if (unitPref === 'cm' || unitPref === 'ft/in') {
+      setUnit(unitPref);
+      console.log('🔍 HeightStep: Set unit from prefs:', unitPref);
+    }
+  }, [getStepData]);
+
+  const handleHeightChange = (value: number) => {
+    setHeightCm(value);
+  };
+
+  const handleUnitChange = (newUnit: string) => {
+    setUnit(newUnit as 'cm' | 'ft/in');
+    // Save unit preference
+    const currentPrefs = getStepData('prefs') || {};
+    updateStepData('prefs', {
+      ...currentPrefs,
+      units: { ...currentPrefs.units, height: newUnit }
+    });
+  };
+
+  const formatCenterLabel = (value: number) => {
+    if (unit === 'cm') {
+      return `${value.toFixed(0)} cm`;
+    } else {
+      return cmToFeetIn(value);
+    }
+  };
 
   const handleNext = async () => {
-    const heightNumber = parseInt(height);
-    
-    if (!height.trim()) {
-      Alert.alert('Erro', 'Por favor, insira sua altura para continuar.');
-      return;
-    }
-
-    if (isNaN(heightNumber) || heightNumber < 100 || heightNumber > 250) {
-      Alert.alert('Erro', 'Por favor, insira uma altura válida entre 100 e 250 cm.');
+    if (heightCm < 140 || heightCm > 210) {
+      Alert.alert('Erro', 'Por favor, selecione uma altura válida entre 140 e 210 cm.');
       return;
     }
 
     setLoading(true);
     try {
-      // Update context with height data
-      updateStepData('height', { height: heightNumber });
+      // Update context with height data - store as number, not object
+      updateStepData('height', { height: heightCm });
       console.log('Height step completed, moving to next step');
       
       // Call the onNext callback to move to next step
@@ -53,6 +85,8 @@ export default function HeightStep({ onNext }: HeightStepProps) {
     }
   };
 
+  const isValidHeight = heightCm >= 140 && heightCm <= 210;
+
   return (
     <View style={styles.container}>
       <View style={styles.content}>
@@ -62,24 +96,35 @@ export default function HeightStep({ onNext }: HeightStepProps) {
         </Text>
 
         <View style={styles.formSection}>
-          <Text style={styles.label}>Altura (cm)</Text>
-          <TextInput
-            style={styles.input}
-            value={height}
-            onChangeText={setHeight}
-            placeholder="Ex: 175"
-            placeholderTextColor="#9CA3AF"
-            keyboardType="numeric"
-            autoFocus
-            maxLength={3}
+          <Text style={styles.label}>Unidade</Text>
+          <UnitToggle
+            options={['cm', 'ft/in']}
+            value={unit}
+            onChange={handleUnitChange}
           />
-          <Text style={styles.hint}>Digite sua altura em centímetros</Text>
+          
+          <Text style={styles.label}>Altura</Text>
+          <RulerSlider
+            min={140}
+            max={210}
+            step={1}
+            value={heightCm}
+            onChange={handleHeightChange}
+            majorEvery={10}
+            labelEvery={10}
+            tickWidth={12}
+            formatCenterLabel={formatCenterLabel}
+            unit={unit === 'cm' ? 'cm' : ''}
+          />
+          <Text style={styles.hint}>
+            Deslize para selecionar sua altura
+          </Text>
         </View>
 
         <TouchableOpacity
-          style={[styles.button, (!height.trim() || loading) && styles.buttonDisabled]}
+          style={[styles.button, (!isValidHeight || loading) && styles.buttonDisabled]}
           onPress={handleNext}
-          disabled={!height.trim() || loading}
+          disabled={!isValidHeight || loading}
         >
           <Text style={styles.buttonText}>
             {loading ? 'Salvando...' : 'Continuar'}
@@ -97,72 +142,64 @@ export default function HeightStep({ onNext }: HeightStepProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: OFF_WHITE,
+    backgroundColor: colors.backgroundSecondary,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 40,
+    paddingHorizontal: spacing.screenPadding,
+    paddingTop: spacing.xxl,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: TEXT,
+    fontSize: typography['3xl'],
+    fontWeight: typography.bold,
+    color: colors.textPrimary,
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.sm,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#64748b',
+    fontSize: typography.base,
+    color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 40,
+    lineHeight: typography.lineHeightNormal * typography.base,
+    marginBottom: spacing.xxl,
   },
   formSection: {
-    marginBottom: 32,
+    marginBottom: spacing.sectionSpacing,
   },
   label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: TEXT,
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: BORDER,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    fontSize: 16,
-    color: TEXT,
+    fontSize: typography.base,
+    fontWeight: typography.semibold,
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
+    marginTop: spacing.md,
   },
   hint: {
-    fontSize: 14,
-    color: '#64748b',
-    marginTop: 8,
+    fontSize: typography.sm,
+    color: colors.textSecondary,
+    marginTop: spacing.sm,
     fontStyle: 'italic',
+    textAlign: 'center',
   },
   button: {
-    backgroundColor: CORAL,
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.buttonPadding,
+    paddingHorizontal: spacing.lg,
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   buttonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: colors.border,
   },
   buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 18,
+    color: colors.textInverse,
+    fontWeight: typography.semibold,
+    fontSize: typography.lg,
   },
   note: {
-    fontSize: 14,
-    color: '#64748b',
+    fontSize: typography.sm,
+    color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: typography.lineHeightNormal * typography.sm,
   },
 }); 

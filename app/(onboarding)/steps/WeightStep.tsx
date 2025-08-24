@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useAuth } from '../../../contexts/AuthContext';
 import { api } from '../../../services/api';
 import { getAuth } from '@react-native-firebase/auth';
 import { useOnboarding } from '../OnboardingContext';
-import { parseWeight } from '../../../utils/weightUtils';
+import RulerSlider from '../../../components/RulerSlider';
+import UnitToggle from '../../../components/UnitToggle';
+import { kgToLbs } from '../../../utils/units';
 
 const CORAL = '#FF725E';
 const OFF_WHITE = '#FDF6F3';
-const BORDER = '#FFA28F';
 const TEXT = '#1F2937';
 
 interface WeightStepProps {
@@ -18,16 +19,45 @@ interface WeightStepProps {
 export default function WeightStep({ onComplete }: WeightStepProps) {
   const { user, syncUser } = useAuth();
   const { getStepData, updateStepData, getCurrentStepData, clearOnboardingData } = useOnboarding();
-  const [weight, setWeight] = useState(getStepData('weight')?.toString() || '');
+  const [weightKg, setWeightKg] = useState(70); // Default to 70kg
+  const [unit, setUnit] = useState<'kg' | 'lbs'>('kg');
   const [loading, setLoading] = useState(false);
 
   // Load existing data when component mounts
   useEffect(() => {
     const existingWeight = getStepData('weight');
     if (existingWeight) {
-      setWeight(existingWeight.toString());
+      setWeightKg(existingWeight);
+    }
+    
+    // Load unit preference if available
+    const unitPref = getStepData('prefs')?.units?.weight;
+    if (unitPref) {
+      setUnit(unitPref);
     }
   }, []);
+
+  const handleWeightChange = (value: number) => {
+    setWeightKg(value);
+  };
+
+  const handleUnitChange = (newUnit: string) => {
+    setUnit(newUnit as 'kg' | 'lbs');
+    // Save unit preference
+    const currentPrefs = getStepData('prefs') || {};
+    updateStepData('prefs', {
+      ...currentPrefs,
+      units: { ...currentPrefs.units, weight: newUnit }
+    });
+  };
+
+  const formatCenterLabel = (value: number) => {
+    if (unit === 'kg') {
+      return `${value.toFixed(1)} kg`;
+    } else {
+      return `${kgToLbs(value)} lbs`;
+    }
+  };
 
   const handleComplete = async () => {
     if (!user) {
@@ -35,22 +65,15 @@ export default function WeightStep({ onComplete }: WeightStepProps) {
       return;
     }
 
-    const weightNumber = parseWeight(weight);
-    
-    if (!weight.trim()) {
-      Alert.alert('Erro', 'Por favor, insira seu peso para continuar.');
-      return;
-    }
-
-    if (isNaN(weightNumber) || weightNumber < 30 || weightNumber > 300) {
-      Alert.alert('Erro', 'Por favor, insira um peso válido entre 30 e 300 kg.');
+    if (weightKg < 40 || weightKg > 150) {
+      Alert.alert('Erro', 'Por favor, selecione um peso válido entre 40 e 150 kg.');
       return;
     }
 
     setLoading(true);
     try {
       // Update context with weight data
-      updateStepData('weight', { weight: weightNumber });
+      updateStepData('weight', { weight: weightKg });
       
       // Get all onboarding data from context
       const completeOnboardingData = getCurrentStepData();
@@ -100,6 +123,8 @@ export default function WeightStep({ onComplete }: WeightStepProps) {
     }
   };
 
+  const isValidWeight = weightKg >= 40 && weightKg <= 150;
+
   return (
     <View style={styles.container}>
       <View style={styles.content}>
@@ -109,24 +134,35 @@ export default function WeightStep({ onComplete }: WeightStepProps) {
         </Text>
 
         <View style={styles.formSection}>
-          <Text style={styles.label}>Peso (kg)</Text>
-          <TextInput
-            style={styles.input}
-            value={weight}
-            onChangeText={setWeight}
-            placeholder="Ex: 70.5"
-            placeholderTextColor="#9CA3AF"
-            keyboardType="numeric"
-            autoFocus
-            maxLength={5}
+          <Text style={styles.label}>Unidade</Text>
+          <UnitToggle
+            options={['kg', 'lbs']}
+            value={unit}
+            onChange={handleUnitChange}
           />
-          <Text style={styles.hint}>Digite seu peso em quilogramas</Text>
+          
+          <Text style={styles.label}>Peso</Text>
+          <RulerSlider
+            min={40}
+            max={150}
+            step={0.5}
+            value={weightKg}
+            onChange={handleWeightChange}
+            majorEvery={5}
+            labelEvery={5}
+            tickWidth={12}
+            formatCenterLabel={formatCenterLabel}
+            unit="kg"
+          />
+          <Text style={styles.hint}>
+            Deslize para selecionar seu peso
+          </Text>
         </View>
 
         <TouchableOpacity
-          style={[styles.button, (!weight.trim() || loading) && styles.buttonDisabled]}
+          style={[styles.button, (!isValidWeight || loading) && styles.buttonDisabled]}
           onPress={handleComplete}
-          disabled={!weight.trim() || loading}
+          disabled={!isValidWeight || loading}
         >
           <Text style={styles.buttonText}>
             {loading ? 'Salvando...' : 'Completar Onboarding'}
@@ -173,22 +209,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: TEXT,
     marginBottom: 8,
-  },
-  input: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: BORDER,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    fontSize: 16,
-    color: TEXT,
+    marginTop: 16,
   },
   hint: {
     fontSize: 14,
     color: '#64748b',
     marginTop: 8,
     fontStyle: 'italic',
+    textAlign: 'center',
   },
   button: {
     backgroundColor: CORAL,

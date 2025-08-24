@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import CustomSlider from '@/components/CustomSlider';
+import RulerSlider from '@/components/RulerSlider';
+import UnitToggle from '@/components/UnitToggle';
 import { useOnboarding } from '../OnboardingContext';
+import { cmToFeetIn, kgToLbs } from '@/utils/units';
 import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -12,8 +14,8 @@ interface VitalsStepProps {
 
 export default function VitalsStep({ onSetLoading }: VitalsStepProps) {
   const { getStepData, updateStepData } = useOnboarding();
-  const [height, setHeight] = useState(getStepData('height') || 170);
-  const [weight, setWeight] = useState(getStepData('weight') || 70);
+  const [heightCm, setHeightCm] = useState(getStepData('height') || 170); // Default to 170cm
+  const [weightKg, setWeightKg] = useState(getStepData('weight') || 60); // Default to 60kg
   const [heightUnit, setHeightUnit] = useState<'cm' | 'ft/in'>('cm');
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg');
 
@@ -22,116 +24,138 @@ export default function VitalsStep({ onSetLoading }: VitalsStepProps) {
     const existingHeight = getStepData('height');
     const existingWeight = getStepData('weight');
     
-    if (existingHeight) setHeight(existingHeight);
-    if (existingWeight) setWeight(existingWeight);
-  }, []);
+    if (existingHeight) setHeightCm(existingHeight);
+    if (existingWeight) setWeightKg(existingWeight);
+    
+    // Load unit preferences if available
+    const unitPrefs = getStepData('prefs')?.units;
+    if (unitPrefs?.height) {
+      setHeightUnit(unitPrefs.height);
+    }
+    if (unitPrefs?.weight) {
+      setWeightUnit(unitPrefs.weight);
+    }
+  }, []); // Empty dependency array - only run once on mount
 
   // Update vitals data in context whenever values change
   useEffect(() => {
-    if (height && weight) {
+    if (heightCm && weightKg) {
       updateStepData('vitals', {
-        height,
-        weight
+        height: heightCm,
+        weight: weightKg
       });
-      console.log('Vitals data updated in context:', { height, weight });
     }
-  }, [height, weight]);
+  }, [heightCm, weightKg]); // Remove updateStepData from dependencies
 
-  const renderHeightSlider = () => {
-    const minHeight = 140;
-    const maxHeight = 200;
+  const handleHeightUnitChange = useCallback((newUnit: string) => {
     
+    // Prevent unnecessary state updates if clicking the same unit
+    if (newUnit === heightUnit) {
+      return;
+    }
+    
+    const unit = newUnit as 'cm' | 'ft/in';
+    setHeightUnit(unit);
+    
+    // Save unit preference
+    const currentPrefs = getStepData('prefs') || {};
+    updateStepData('prefs', {
+      ...currentPrefs,
+      units: { ...(currentPrefs.units || {}), height: unit }
+    });
+  }, [heightUnit, getStepData]); // Remove updateStepData from dependencies
+
+  const handleWeightUnitChange = useCallback((newUnit: string) => {
+    
+    // Prevent unnecessary state updates if clicking the same unit
+    if (newUnit === weightUnit) {
+      return;
+    }
+    
+    const unit = newUnit as 'kg' | 'lbs';
+    setWeightUnit(unit);
+    
+    // Save unit preference
+    const currentPrefs = getStepData('prefs') || {};
+    updateStepData('prefs', {
+      ...currentPrefs,
+      units: { ...(currentPrefs.units || {}), weight: unit }
+    });
+  }, [weightUnit, getStepData]); // Remove updateStepData from dependencies
+
+  const formatHeightLabel = useCallback((value: number) => {
+    if (heightUnit === 'cm') {
+      return `${value.toFixed(0)} cm`;
+    } else {
+      return cmToFeetIn(value);
+    }
+  }, [heightUnit]);
+
+  const formatWeightLabel = useCallback((value: number) => {
+    if (weightUnit === 'kg') {
+      return `${value.toFixed(1)} kg`;
+    } else {
+      return `${kgToLbs(value)} lbs`;
+    }
+  }, [weightUnit]);
+
+  const renderHeightSlider = useMemo(() => {
     return (
       <View style={styles.sliderContainer}>
         <View style={styles.sliderHeader}>
           <Text style={styles.sliderLabel}>Altura:</Text>
-          <View style={styles.unitToggle}>
-            <TouchableOpacity
-              style={[styles.unitButton, heightUnit === 'ft/in' && styles.unitButtonSelected]}
-              onPress={() => setHeightUnit('ft/in')}
-            >
-              <Text style={[styles.unitButtonText, heightUnit === 'ft/in' && styles.unitButtonTextSelected]}>
-                ft/in
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.unitButton, heightUnit === 'cm' && styles.unitButtonSelected]}
-              onPress={() => setHeightUnit('cm')}
-            >
-              <Text style={[styles.unitButtonText, heightUnit === 'cm' && styles.unitButtonTextSelected]}>
-                cm
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-        
-        <Text style={styles.valueDisplay}>{height}{heightUnit === 'cm' ? 'cm' : 'ft'}</Text>
-        
-        <View style={styles.sliderWrapper}>
-          <CustomSlider
-            value={height}
-            onValueChange={setHeight}
-            minimumValue={minHeight}
-            maximumValue={maxHeight}
-            step={1}
-            width={screenWidth - 80}
-            height={40}
-            thumbSize={24}
-            trackHeight={6}
-            showLabels={true}
+          <UnitToggle
+            options={['cm', 'ft/in']}
+            value={heightUnit}
+            onChange={handleHeightUnitChange}
+            label="Unidade"
           />
         </View>
+        
+        <RulerSlider
+          min={140}
+          max={200}
+          step={1}
+          value={heightCm}
+          onChange={setHeightCm}
+          majorEvery={10}
+          labelEvery={10}
+          tickWidth={12}
+          formatCenterLabel={formatHeightLabel}
+          unit={heightUnit === 'cm' ? 'cm' : ''}
+        />
       </View>
     );
-  };
+  }, [heightCm, heightUnit, handleHeightUnitChange, formatHeightLabel]);
 
-  const renderWeightSlider = () => {
-    const minWeight = 40;
-    const maxWeight = 150;
-    
+  const renderWeightSlider = useMemo(() => {
     return (
       <View style={styles.sliderContainer}>
         <View style={styles.sliderHeader}>
           <Text style={styles.sliderLabel}>Peso:</Text>
-          <View style={styles.unitToggle}>
-            <TouchableOpacity
-              style={[styles.unitButton, weightUnit === 'lbs' && styles.unitButtonSelected]}
-              onPress={() => setWeightUnit('lbs')}
-            >
-              <Text style={[styles.unitButtonText, weightUnit === 'lbs' && styles.unitButtonTextSelected]}>
-                lbs
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.unitButton, weightUnit === 'kg' && styles.unitButtonSelected]}
-              onPress={() => setWeightUnit('kg')}
-            >
-              <Text style={[styles.unitButtonText, weightUnit === 'kg' && styles.unitButtonTextSelected]}>
-                kg
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-        
-        <Text style={styles.valueDisplay}>{weight}{weightUnit === 'kg' ? 'kg' : 'lbs'}</Text>
-        
-        <View style={styles.sliderWrapper}>
-          <CustomSlider
-            value={weight}
-            onValueChange={setWeight}
-            minimumValue={minWeight}
-            maximumValue={maxWeight}
-            step={1}
-            width={screenWidth - 80}
-            height={40}
-            thumbSize={24}
-            trackHeight={6}
-            showLabels={true}
+          <UnitToggle
+            options={['kg', 'lbs']}
+            value={weightUnit}
+            onChange={handleWeightUnitChange}
+            label="Unidade"
           />
         </View>
+        
+        <RulerSlider
+          min={40}
+          max={150}
+          step={0.5}
+          value={weightKg}
+          onChange={setWeightKg}
+          majorEvery={5}
+          labelEvery={5}
+          tickWidth={12}
+          formatCenterLabel={formatWeightLabel}
+          unit={weightUnit === 'kg' ? 'kg' : ''}
+        />
       </View>
     );
-  };
+  }, [weightKg, weightUnit, handleWeightUnitChange, formatWeightLabel]);
 
   return (
     <View style={styles.container}>
@@ -141,8 +165,8 @@ export default function VitalsStep({ onSetLoading }: VitalsStepProps) {
           Isso nos ajuda a personalizar o seu plano de nutrição.
         </Text>
 
-        {renderHeightSlider()}
-        {renderWeightSlider()}
+        {renderHeightSlider}
+        {renderWeightSlider}
 
         <Text style={styles.disclaimer}>
           * Suas informações serão excluídas após gerar o plano.
