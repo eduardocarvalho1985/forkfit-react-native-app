@@ -1,14 +1,16 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useEffect, useRef, useMemo } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { useOnboarding } from '../OnboardingContext';
-import { colors, spacing, typography, borderRadius } from '@/theme';
+import CurvedLineChartWithGradient from '@/components/CurvedLineChartWithGradient';
+import { generateWeightProjections, getGoalDescription } from '@/utils/weightProjections';
+import { colors, spacing, typography } from '@/theme';
 
 interface WeightLossInfoStepProps {
   onSetLoading: (loading: boolean) => void;
 }
 
 export default function WeightLossInfoStep({ onSetLoading }: WeightLossInfoStepProps) {
-  const { updateStepData } = useOnboarding();
+  const { updateStepData, onboardingData } = useOnboarding();
   const hasMarkedCompleted = useRef(false);
 
   // Mark this step as completed when component mounts (only once)
@@ -20,55 +22,76 @@ export default function WeightLossInfoStep({ onSetLoading }: WeightLossInfoStepP
     }
   }, []);
 
+  // Generate chart data based on user's goal
+  const chartData = useMemo(() => {
+    const currentWeight = onboardingData.weight || 70;
+    const targetWeight = onboardingData.targetWeight || currentWeight;
+    
+    // Determine mode based on goal
+    let mode: 'lose' | 'gain' | 'maintain' = 'maintain';
+    let amountKg: number | null = null;
+    
+    if (targetWeight < currentWeight) {
+      mode = 'lose';
+      amountKg = currentWeight - targetWeight;
+    } else if (targetWeight > currentWeight) {
+      mode = 'gain';
+      amountKg = targetWeight - currentWeight;
+    }
+    
+    // Generate 12-week projection
+    const weeks = 12;
+    const projections = generateWeightProjections({
+      mode,
+      currentWeight,
+      targetWeight,
+      weeks
+    });
+    
+    return {
+      mode,
+      amountKg,
+      currentWeight,
+      targetWeight,
+      projections
+    };
+  }, [onboardingData.weight, onboardingData.targetWeight]);
+
+  // Generate dynamic headline
+  const headline = useMemo(() => {
+    const { mode, amountKg } = chartData;
+    const goalText = getGoalDescription(mode, amountKg || undefined);
+    
+    return (
+      <Text style={styles.headline}>
+        Pronto para{' '}
+        <Text style={styles.emphasis}>{goalText}</Text>
+        ? Comece hoje e celebre as pequenas vitórias!
+      </Text>
+    );
+  }, [chartData]);
+
   return (
     <View style={styles.container}>
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.content}>
-          <Text style={styles.title}>Entenda a Curva de Perda de Peso</Text>
-          
-          <View style={styles.infoSection}>
-            <Text style={styles.sectionTitle}>📊 Como Funciona a Perda de Peso</Text>
-            <Text style={styles.infoText}>
-              A perda de peso não é linear. Você pode perder mais peso no início e depois estabilizar. 
-              Isso é normal e saudável!
-            </Text>
-          </View>
+      <View style={styles.content}>
+        {headline}
+        
+        <Text style={styles.subheadline}>
+          Acompanhar a sua dieta ajuda a manter consistência e a conquistar os seus objetivos.
+        </Text>
 
-          <View style={styles.infoSection}>
-            <Text style={styles.sectionTitle}>🎯 Expectativas Realistas</Text>
-            <Text style={styles.infoText}>
-              • Primeiras semanas: 1-2kg por semana{'\n'}
-              • Meses seguintes: 0.5-1kg por semana{'\n'}
-              • Estabilização: 0.2-0.5kg por semana
-            </Text>
-          </View>
+        <CurvedLineChartWithGradient
+          withForkFit={chartData.projections.withForkFit}
+          withoutForkFit={chartData.projections.withoutForkFit}
+          currentWeight={chartData.currentWeight}
+          targetWeight={chartData.targetWeight}
+          mode={chartData.mode}
+        />
 
-          <View style={styles.infoSection}>
-            <Text style={styles.sectionTitle}>💡 Dicas Importantes</Text>
-            <Text style={styles.infoText}>
-              • Foque na consistência, não na velocidade{'\n'}
-              • Pequenas mudanças levam a grandes resultados{'\n'}
-              • O peso pode variar diariamente (água, hormônios)
-            </Text>
-          </View>
-
-          <View style={styles.infoSection}>
-            <Text style={styles.sectionTitle}>🌟 Sua Jornada</Text>
-            <Text style={styles.infoText}>
-              Cada pessoa é única. Seu plano será personalizado para maximizar 
-              seus resultados de forma segura e sustentável.
-            </Text>
-          </View>
-
-          <Text style={styles.disclaimer}>
-            * Suas informações serão excluídas após gerar o plano.
-          </Text>
-        </View>
-      </ScrollView>
+        <Text style={styles.disclaimer}>
+          * Suas informações serão excluídas após gerar o plano.
+        </Text>
+      </View>
     </View>
   );
 }
@@ -78,41 +101,32 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
   content: {
     flex: 1,
     paddingHorizontal: spacing.screenPadding,
     paddingTop: spacing.xxl,
     paddingBottom: spacing.xxl,
+    alignItems: 'center',
   },
-  title: {
+  headline: {
     fontSize: typography['3xl'],
     fontWeight: typography.bold,
     color: colors.textPrimary,
     textAlign: 'center',
-    marginBottom: spacing.xl,
-  },
-  infoSection: {
-    marginBottom: spacing.xl,
-    padding: spacing.lg,
-    backgroundColor: colors.backgroundTertiary,
-    borderRadius: borderRadius.lg,
-  },
-  sectionTitle: {
-    fontSize: typography.lg,
-    fontWeight: typography.bold,
-    color: colors.textPrimary,
     marginBottom: spacing.md,
+    lineHeight: typography['3xl'] * 1.2,
   },
-  infoText: {
+  emphasis: {
+    color: colors.info,
+    fontWeight: typography.bold,
+  },
+  subheadline: {
     fontSize: typography.base,
+    lineHeight: typography.base * 1.5,
     color: colors.textSecondary,
-    lineHeight: typography.base * 1.6,
+    textAlign: 'center',
+    marginBottom: spacing.xl,
+    paddingHorizontal: spacing.md,
   },
   disclaimer: {
     fontSize: typography.sm,
@@ -120,6 +134,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: typography.sm * 1.4,
     marginTop: spacing.xl,
-    marginBottom: spacing.lg,
   },
 });

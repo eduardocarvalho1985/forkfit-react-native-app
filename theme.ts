@@ -69,6 +69,7 @@ export const typography = {
   '3xl': 28,  // Large title
   '4xl': 32,  // Hero title
   '5xl': 48,  // Display text
+  display: 36, // Display text for headlines
   
   // Font weights
   normal: '400',
@@ -88,6 +89,7 @@ export const borderRadius = {
   md: 12,     // Medium radius
   lg: 16,     // Large radius
   xl: 20,     // Extra large radius
+  pill: 9999, // Pill radius for buttons/toggles
   full: 9999, // Full radius for circles
 } as const;
 
@@ -110,15 +112,8 @@ export const shadows = {
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.2,
-    shadowRadius: 12,
+    shadowRadius: 16,
     elevation: 8,
-  },
-  primary: {
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
   },
 } as const;
 
