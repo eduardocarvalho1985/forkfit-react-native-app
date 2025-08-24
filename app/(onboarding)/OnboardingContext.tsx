@@ -71,9 +71,11 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   } = storage;
 
   const updateStepData = (stepId: string, data: Partial<OnboardingData>) => {
-    console.log(`Updating step ${stepId} with data:`, data);
+    console.log(`🔍 updateStepData called with stepId: ${stepId}, data:`, data);
+    console.log(`🔍 Current onboardingData before update:`, onboardingData);
     // Use the storage hook's updateData method
     updateData(data);
+    console.log(`🔍 updateData called with:`, data);
   };
 
   const getStepData = (stepId: string) => {
@@ -150,7 +152,10 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       case 'weightLossInfo':
         return true; // Always valid, just informational
       case 'pacing':
-        return !!(onboardingData.weeklyPacing && (!onboardingData.motivatingEvent || onboardingData.motivatingEvent === 'none'));
+        // Only check if weekly pacing is set - motivating event is handled in other steps
+        console.log('🔍 Pacing validation - weeklyPacing:', onboardingData.weeklyPacing);
+        console.log('🔍 Pacing validation - isValid:', !!onboardingData.weeklyPacing);
+        return !!onboardingData.weeklyPacing;
       case 'motivation':
         return !!onboardingData.motivation;
       case 'eventChoice':

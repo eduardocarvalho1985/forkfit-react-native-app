@@ -28,13 +28,25 @@ export default function PacingStep({ onSetLoading }: PacingStepProps) {
   // Auto-save when pacing changes
   useEffect(() => {
     if (selectedPacing) {
+      console.log('🔍 PacingStep: Saving weeklyPacing immediately:', selectedPacing);
       updateStepData('pacing', { weeklyPacing: selectedPacing });
     }
-  }, [selectedPacing]);
+  }, [selectedPacing]); // Removed updateStepData from dependencies to prevent infinite loop
 
   const handlePacingSelect = (pacing: number) => {
-    setSelectedPacing(pacing);
+    if (pacing !== selectedPacing) {
+      console.log('🔍 PacingStep: User selected pacing:', pacing);
+      setSelectedPacing(pacing);
+    }
   };
+
+  // Debug: Log current state
+  useEffect(() => {
+    console.log('🔍 PacingStep: Current state:', {
+      selectedPacing,
+      onboardingData: onboardingData.weeklyPacing
+    });
+  }, [selectedPacing, onboardingData.weeklyPacing]);
 
   const getPacingDescription = () => {
     const option = PACING_OPTIONS.find(opt => opt.value === selectedPacing);
@@ -44,12 +56,64 @@ export default function PacingStep({ onSetLoading }: PacingStepProps) {
       const currentWeight = onboardingData.weight;
       const targetWeight = onboardingData.targetWeight;
       const weightDiff = Math.abs(targetWeight - currentWeight);
+      
+      // Prevent division by zero and handle very large weight differences
+      if (option.value <= 0) {
+        return option.detail;
+      }
+      
+      // Handle very large weight differences gracefully
+      if (weightDiff > 50) {
+        return `Para uma diferença de peso tão grande (${weightDiff.toFixed(1)}kg), considere um pace mais rápido para resultados mais rápidos.`;
+      }
+      
       const weeksToGoal = Math.ceil(weightDiff / option.value);
       
-      return `Com este pace, você atingirá seu objetivo em aproximadamente ${weeksToGoal} semanas.`;
+      // Always show weeks, even for very long timeframes
+      if (weeksToGoal > 100) {
+        return `Com este ritmo, você atingirá seu objetivo em aproximadamente 99+ semanas.`;
+      } else {
+        return `Com este ritmo, você atingirá seu objetivo em aproximadamente `;
+      }
     }
     
     return option.detail;
+  };
+
+  const getWeeksHighlight = () => {
+    if (!onboardingData.targetWeight || !onboardingData.weight) return null;
+    
+    const currentWeight = onboardingData.weight;
+    const targetWeight = onboardingData.targetWeight;
+    const weightDiff = Math.abs(targetWeight - currentWeight);
+    
+    if (selectedPacing <= 0) return null;
+    
+    // Handle very large weight differences gracefully
+    if (weightDiff > 50) {
+      return (
+        <Text style={styles.warningHighlight}>
+          muito tempo
+        </Text>
+      );
+    }
+    
+    const weeksToGoal = Math.ceil(weightDiff / selectedPacing);
+    
+    // Always show weeks, even for very long timeframes
+    if (weeksToGoal > 100) {
+      return (
+        <Text style={styles.weeksHighlight}>
+          99+ semanas
+        </Text>
+      );
+    } else {
+      return (
+        <Text style={styles.weeksHighlight}>
+          {weeksToGoal} semana{weeksToGoal > 1 ? 's' : ''}
+        </Text>
+      );
+    }
   };
 
   return (
@@ -98,6 +162,7 @@ export default function PacingStep({ onSetLoading }: PacingStepProps) {
           <View style={styles.infoContainer}>
             <Text style={styles.infoText}>
               {getPacingDescription()}
+              {getWeeksHighlight()}
             </Text>
           </View>
         )}
@@ -105,7 +170,7 @@ export default function PacingStep({ onSetLoading }: PacingStepProps) {
         {/* Navigation is handled by the parent component's footer */}
         <View style={styles.footerInfo}>
           <Text style={styles.footerInfoText}>
-            Use o botão "Continuar" na parte inferior da tela para prosseguir
+            
           </Text>
         </View>
       </View>
@@ -150,8 +215,8 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     borderWidth: 2,
     borderColor: colors.backgroundTertiary,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
+    padding: spacing.md, // Reduced from lg to md to make buttons thinner
+    marginBottom: spacing.sm, // Reduced from md to sm to make buttons more compact
     ...shadows.sm,
   },
   pacingOptionSelected: {
@@ -162,7 +227,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs, // Reduced from sm to xs to make buttons more compact
   },
   pacingLabel: {
     fontSize: typography.lg,
@@ -213,5 +278,15 @@ const styles = StyleSheet.create({
     fontSize: typography.sm,
     textAlign: 'center',
     lineHeight: typography.sm * 1.4,
+  },
+  weeksHighlight: {
+    color: colors.success,
+    fontWeight: typography.semibold,
+    fontSize: typography.sm,
+  },
+  warningHighlight: {
+    color: colors.warning,
+    fontWeight: typography.semibold,
+    fontSize: typography.sm,
   },
 });
