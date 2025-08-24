@@ -7,9 +7,9 @@ import OnboardingProgress from '@/components/OnboardingProgress';
 import IntroCarouselStep from './steps/IntroCarouselStep';
 import GenderStep from './steps/GenderStep';
 import AgeStep from './steps/AgeStep';
-import GoalStep from './steps/GoalStep';
 import VitalsSlidersStep from './steps/VitalsSlidersStep';
 import ExerciseFrequencyStep from './steps/ExerciseFrequencyStep';
+import GoalStep from './steps/GoalStep';
 import TargetWeightStep from './steps/TargetWeightStep';
 import WeightLossInfoStep from './steps/WeightLossInfoStep';
 import PacingStep from './steps/PacingStep';
@@ -17,7 +17,6 @@ import MotivationStep from './steps/MotivationStep';
 import EventChoiceStep from './steps/EventChoiceStep';
 import EventDateStep from './steps/EventDateStep';
 import LossPlanInfoStep from './steps/LossPlanInfoStep';
-import MoreInfoStep from './steps/MoreInfoStep';
 import SocialProofStep from './steps/SocialProofStep';
 import NotificationsStep from './steps/NotificationsStep';
 import LoadingStep from './steps/LoadingStep';
@@ -43,7 +42,6 @@ type OnboardingStep =
   | 'eventChoice'
   | 'eventDate'
   | 'lossPlanInfo'
-  | 'moreInfo'
   | 'socialProof'
   | 'notifications'
   | 'loading'
@@ -64,7 +62,6 @@ const STEP_ORDER: OnboardingStep[] = [
   'eventChoice',
   'eventDate',
   'lossPlanInfo',
-  'moreInfo',
   'socialProof',
   'notifications',
   'loading',
@@ -155,6 +152,10 @@ function OnboardingContent() {
       return 'lossPlanInfo'; // Go to loss plan info after setting event date
     }
 
+    if (currentStep === 'lossPlanInfo') {
+      return 'socialProof'; // Skip moreInfo, go directly to socialProof
+    }
+
     if (currentStep === 'loading') {
       // Auto-advance to plan preview after loading completes
       return 'planPreview';
@@ -232,8 +233,6 @@ function OnboardingContent() {
         return <EventDateStep onSetLoading={setLoading} />;
       case 'lossPlanInfo':
         return <LossPlanInfoStep onSetLoading={setLoading} />;
-      case 'moreInfo':
-        return <MoreInfoStep onSetLoading={setLoading} />;
       case 'socialProof':
         return <SocialProofStep onSetLoading={setLoading} />;
       case 'notifications':

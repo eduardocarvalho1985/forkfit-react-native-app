@@ -164,8 +164,6 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
         return !!(onboardingData.eventDate && onboardingData.motivatingEvent && onboardingData.motivatingEvent !== 'none');
       case 'lossPlanInfo':
         return true; // Always valid, just informational
-      case 'moreInfo':
-        return true; // Always valid, just informational
       case 'socialProof':
         return true; // Always valid, just informational
       case 'notifications':
