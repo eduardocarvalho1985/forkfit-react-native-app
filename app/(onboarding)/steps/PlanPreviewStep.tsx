@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { FontAwesome6 } from '@expo/vector-icons';
 import { useOnboarding } from '../OnboardingContext';
 import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
 
@@ -40,13 +41,26 @@ export default function PlanStep({ onSetLoading }: PlanStepProps) {
     }
   };
 
-  const getActivityReadable = () => {
+  const getWeeksToGoal = () => {
+    if (!onboardingData.weight || !onboardingData.targetWeight || !onboardingData.weeklyPacing) {
+      return 'algumas semanas';
+    }
+    
+    const weightDiff = Math.abs(onboardingData.weight - onboardingData.targetWeight);
+    const weeks = Math.ceil(weightDiff / Math.abs(onboardingData.weeklyPacing));
+    
+    if (weeks <= 1) return '1 semana';
+    if (weeks > 99) return '99+ semanas';
+    return `${weeks} semanas`;
+  };
+
+  const getExerciseFrequency = () => {
     switch (onboardingData.activityLevel) {
-      case 'sedentary': return 'Sedentário';
-      case 'light': return 'Leve';
-      case 'moderate': return 'Moderado';
-      case 'very_active': return 'Muito ativo';
-      default: return 'Moderado';
+      case 'sedentary': return '0-1 vez por semana';
+      case 'light': return '1-3 vezes por semana';
+      case 'moderate': return '3-5 vezes por semana';
+      case 'very_active': return '6-7 vezes por semana';
+      default: return '3-5 vezes por semana';
     }
   };
 
@@ -69,64 +83,69 @@ export default function PlanStep({ onSetLoading }: PlanStepProps) {
         {/* Header Section */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>
-            Seu Plano Personalizado está pronto
+            O seu plano personalizado está pronto! 🎉
           </Text>
           <Text style={styles.headerSubtitle}>
-            Baseado no seu objetivo de {getGoalLabel().toLowerCase()}
+            O ForkFit acredita que você consegue atingir os seus objetivos em {getWeeksToGoal()}
           </Text>
         </View>
 
-        {/* Summary Cards */}
-        <View style={styles.summaryContainer}>
+        {/* Summary Card */}
+        <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>Seu objetivo</Text>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryLabel}>Objetivo</Text>
               <Text style={styles.summaryValue}>{getGoalLabel()}</Text>
             </View>
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>Peso-alvo</Text>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryLabel}>Peso alvo</Text>
               <Text style={styles.summaryValue}>{onboardingData.targetWeight} kg</Text>
             </View>
-          </View>
-          <View style={styles.summaryRow}>
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>Calorias diárias</Text>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryLabel}>Total calorias</Text>
               <Text style={styles.summaryValue}>{plan.calories} kcal</Text>
             </View>
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>Nível de exercício</Text>
-              <Text style={styles.summaryValue}>{getActivityReadable()}</Text>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryLabel}>Exercício</Text>
+              <Text style={styles.summaryValue}>{getExerciseFrequency()}</Text>
             </View>
           </View>
         </View>
 
-        {/* Daily Recommendation Section */}
-        <View style={styles.dailyRecommendation}>
-          <Text style={styles.dailyTitle}>Recomendação diária</Text>
-          <Text style={styles.editableNote}>
-            Você pode ajustar isso a qualquer momento
-          </Text>
-          
-          <View style={styles.macroCards}>
-            <View style={styles.macroCard}>
-              <Text style={styles.macroIcon}>🔥</Text>
-              <Text style={styles.macroValue}>{plan.calories}</Text>
-              <Text style={styles.macroUnit}>Calorias</Text>
+        {/* Macro Card */}
+        <View style={styles.macroCard}>
+          {/* Calories on top */}
+          <View style={styles.caloriesSection}>
+            <View style={styles.caloriesIconContainer}>
+              <FontAwesome6 name="fire-flame-curved" size={32} color={colors.primary} />
             </View>
-            <View style={styles.macroCard}>
-              <Text style={styles.macroIcon}>🍗</Text>
+            <Text style={styles.caloriesValue}>{plan.calories}</Text>
+            <Text style={styles.caloriesUnit}>kcal</Text>
+            <Text style={styles.caloriesLabel}>Calorias</Text>
+          </View>
+          
+          {/* Macros below */}
+          <View style={styles.macrosRow}>
+            <View style={styles.macroItem}>
+              <View style={styles.macroIconContainer}>
+                <FontAwesome6 name="drumstick-bite" size={24} color={colors.info} />
+              </View>
               <Text style={styles.macroValue}>{plan.protein}</Text>
               <Text style={styles.macroUnit}>g</Text>
               <Text style={styles.macroLabel}>Proteína</Text>
             </View>
-            <View style={styles.macroCard}>
-              <Text style={styles.macroIcon}>🍞</Text>
+            <View style={styles.macroItem}>
+              <View style={styles.macroIconContainer}>
+                <FontAwesome6 name="wheat-awn" size={24} color={colors.warning} />
+              </View>
               <Text style={styles.macroValue}>{plan.carbs}</Text>
               <Text style={styles.macroUnit}>g</Text>
               <Text style={styles.macroLabel}>Carboidratos</Text>
             </View>
-            <View style={styles.macroCard}>
-              <Text style={styles.macroIcon}>🥜</Text>
+            <View style={styles.macroItem}>
+              <View style={styles.macroIconContainer}>
+                <FontAwesome6 name="bottle-droplet" size={24} color={colors.error} />
+              </View>
               <Text style={styles.macroValue}>{plan.fat}</Text>
               <Text style={styles.macroUnit}>g</Text>
               <Text style={styles.macroLabel}>Gorduras</Text>
@@ -134,35 +153,36 @@ export default function PlanStep({ onSetLoading }: PlanStepProps) {
           </View>
         </View>
 
-        {/* CTA Section */}
-        <View style={styles.ctaContainer}>
-          <TouchableOpacity style={styles.primaryButton}>
-            <Text style={styles.primaryButtonText}>Gerar meu plano</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Divider Line */}
+        <View style={styles.divider} />
 
-        {/* Learn More Section */}
-        <View style={styles.learnMore}>
-          <Text style={styles.learnMoreTitle}>Como calculamos</Text>
-          <View style={styles.learnMoreLinks}>
-            <Text style={styles.learnMoreLink}>BMR (Taxa Metabólica Basal)</Text>
-            <Text style={styles.learnMoreLink}>TDEE (Gasto diário total)</Text>
-            <Text style={styles.learnMoreLink}>Déficit/Superávit calórico</Text>
-            <Text style={styles.learnMoreLink}>Distribuição de macros</Text>
+        {/* Info Links */}
+        <View style={styles.infoSection}>
+          <Text style={styles.infoTitle}>Como calculamos</Text>
+          <View style={styles.infoLinks}>
+            <Text style={styles.infoLinkText}>Taxa Metabólica Basal (BMR)</Text>
+            <Text style={styles.infoLinkText}>Gasto diário total (TDEE)</Text>
+            <Text style={styles.infoLinkText}>Déficit/Superávit calórico</Text>
+            <Text style={styles.infoLinkText}>Distribuição de macros</Text>
           </View>
         </View>
 
-        {/* Disclaimers */}
-        <View style={styles.disclaimers}>
+        {/* Disclaimer */}
+        <View style={styles.disclaimerSection}>
+          <Text style={styles.disclaimerTitle}>Informações importantes</Text>
           <Text style={styles.disclaimerText}>
-            Recomendações destinadas a adultos (18+). Procure orientação médica para condições específicas.
+            Recomendações para maiores de 18 anos.
           </Text>
           <Text style={styles.disclaimerText}>
-            Mantemos suas calorias dentro de limites seguros (≥80% do BMR e ≤15% acima do TDEE).
+            Os valores são estimativas — ajuste conforme energia e progresso.
           </Text>
-          <Text style={styles.disclaimerText}>
-            Os valores são estimativas — ajuste conforme saciedade, energia e progresso.
-          </Text>
+        </View>
+
+        {/* CTA Button */}
+        <View style={styles.ctaSection}>
+          <TouchableOpacity style={styles.ctaButton}>
+            <Text style={styles.ctaButtonText}>Começar meu plano</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </ScrollView>
@@ -172,11 +192,11 @@ export default function PlanStep({ onSetLoading }: PlanStepProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#FFFFFF', // Plain white background
   },
   content: {
     flex: 1,
-    paddingHorizontal: spacing.screenPadding,
+    paddingHorizontal: spacing.screenPadding, // Use theme spacing instead of hardcoded 20px
     paddingTop: spacing.xxl,
     paddingBottom: spacing.footerBottom,
   },
@@ -195,14 +215,15 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.xl,
+    paddingTop: spacing.lg, // Add some top padding for better spacing
   },
   headerTitle: {
-    fontSize: typography['3xl'],
+    fontSize: typography['3xl'], // Same size as other steps
     fontWeight: typography.bold,
     color: colors.textPrimary,
     textAlign: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md, // Use theme spacing
   },
   headerSubtitle: {
     fontSize: typography.base,
@@ -210,65 +231,46 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: typography.base * 1.5,
   },
-  summaryContainer: {
+  summaryCard: {
+    backgroundColor: '#FFFFFF', // White background
+    borderRadius: 12,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
     marginBottom: spacing.xl,
+    minHeight: 100,
+    justifyContent: 'center',
+    ...shadows.md,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: spacing.lg,
+    gap: spacing.xs, // Smaller gap for 4 items
   },
-  summaryCard: {
-    backgroundColor: colors.backgroundTertiary,
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
+  summaryItem: {
+    alignItems: 'center',
     flex: 1,
-    marginHorizontal: spacing.xs,
-    ...shadows.md,
+    paddingVertical: spacing.xs, // Add some padding for better spacing
   },
   summaryLabel: {
-    fontSize: typography.sm,
+    fontSize: typography.xs, // Smaller text for 4 items
     color: colors.textSecondary,
     marginBottom: spacing.xs,
+    textAlign: 'center',
   },
   summaryValue: {
-    fontSize: typography['2xl'],
-    fontWeight: typography.bold,
-    color: colors.textPrimary,
-  },
-  dailyRecommendation: {
-    marginBottom: spacing.xl,
-  },
-  dailyTitle: {
-    fontSize: typography.lg,
+    fontSize: typography.sm, // Smaller text for 4 items
     fontWeight: typography.semibold,
     color: colors.textPrimary,
-    marginBottom: spacing.sm,
-  },
-  editableNote: {
-    fontSize: typography.sm,
-    color: colors.textSecondary,
-    marginBottom: spacing.lg,
-  },
-  macroCards: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    textAlign: 'center',
   },
   macroCard: {
-    backgroundColor: colors.backgroundTertiary,
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.md,
+    backgroundColor: '#FFFFFF', // White background
+    borderRadius: 12,
+    paddingVertical: spacing.lg,
     paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xl,
     alignItems: 'center',
-    marginBottom: spacing.sm,
-    width: '48%', // Two columns
     ...shadows.md,
-  },
-  macroIcon: {
-    fontSize: typography['2xl'],
-    marginBottom: spacing.xs,
   },
   macroValue: {
     fontSize: typography['2xl'],
@@ -279,55 +281,117 @@ const styles = StyleSheet.create({
   macroUnit: {
     fontSize: typography.sm,
     color: colors.textSecondary,
+    marginBottom: spacing.xs,
   },
   macroLabel: {
     fontSize: typography.sm,
     color: colors.textSecondary,
     textAlign: 'center',
   },
-  ctaContainer: {
+  infoSection: {
     marginBottom: spacing.xl,
+    marginTop: spacing.lg,
   },
-  primaryButton: {
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.lg,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    alignItems: 'center',
-    ...shadows.md,
-  },
-  primaryButtonText: {
-    color: colors.textInverse,
-    fontSize: typography.base,
-    fontWeight: typography.semibold,
-  },
-  learnMore: {
-    marginBottom: spacing.xl,
-  },
-  learnMoreTitle: {
+  infoTitle: {
     fontSize: typography.lg,
     fontWeight: typography.semibold,
     color: colors.textPrimary,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
+    textAlign: 'center',
   },
-  learnMoreLinks: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+  infoLinks: {
+    flexDirection: 'column',
+    gap: spacing.sm,
   },
-  learnMoreLink: {
+  infoLinkText: {
+    fontSize: typography.sm,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.backgroundTertiary,
+    borderRadius: borderRadius.md,
+    ...shadows.sm,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: spacing.lg,
+  },
+  disclaimerSection: {
+    marginTop: spacing.xl,
+    marginBottom: spacing.lg,
+    alignItems: 'center',
+  },
+  disclaimerTitle: {
+    fontSize: typography.lg,
+    fontWeight: typography.semibold,
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
+    textAlign: 'center',
+  },
+  disclaimerText: {
+    fontSize: 12, // As per spec
+    color: colors.textSecondary, // Use theme color instead of hardcoded
+    textAlign: 'center',
+    lineHeight: 16,
+    marginBottom: spacing.xs,
+  },
+  ctaSection: {
+    marginTop: spacing.xl,
+    marginBottom: spacing.xl,
+    alignItems: 'center',
+  },
+  ctaButton: {
+    backgroundColor: colors.primary, // Use theme color instead of hardcoded
+    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    minHeight: 48,
+    minWidth: 200, // Ensure button has good width
+    ...shadows.md,
+  },
+  ctaButtonText: {
+    color: colors.textInverse, // Use theme color instead of hardcoded
+    fontSize: typography.base,
+    fontWeight: typography.semibold,
+  },
+  caloriesSection: {
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+    paddingVertical: spacing.sm, // Add some padding for better spacing
+  },
+  caloriesValue: {
+    fontSize: typography['3xl'],
+    fontWeight: typography.bold,
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
+  },
+  caloriesUnit: {
     fontSize: typography.sm,
     color: colors.textSecondary,
     marginBottom: spacing.xs,
   },
-  disclaimers: {
-    marginTop: spacing.lg,
-  },
-  disclaimerText: {
+  caloriesLabel: {
     fontSize: typography.sm,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: typography.sm * 1.4,
+  },
+  macrosRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
+  macroItem: {
+    alignItems: 'center',
+    flex: 1,
+    marginHorizontal: spacing.xs,
+  },
+  caloriesIconContainer: {
+    marginBottom: spacing.xs,
+  },
+  macroIconContainer: {
     marginBottom: spacing.xs,
   },
 }); 
