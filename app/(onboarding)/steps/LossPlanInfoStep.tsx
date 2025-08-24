@@ -1,14 +1,16 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useOnboarding } from '../OnboardingContext';
-import { colors, spacing, typography, borderRadius } from '@/theme';
+import GoalProgressionChart from '@/components/GoalProgressionChart';
+import { generateGoalProgressionData } from '@/utils/goalProgressionData';
+import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
 
 interface LossPlanInfoStepProps {
   onSetLoading: (loading: boolean) => void;
 }
 
 export default function LossPlanInfoStep({ onSetLoading }: LossPlanInfoStepProps) {
-  const { updateStepData } = useOnboarding();
+  const { updateStepData, onboardingData } = useOnboarding();
   const hasMarkedCompleted = useRef(false);
 
   // Mark this step as completed when component mounts (only once)
@@ -20,55 +22,51 @@ export default function LossPlanInfoStep({ onSetLoading }: LossPlanInfoStepProps
     }
   }, []);
 
+  // Determine goal type and generate chart data
+  const chartData = useMemo(() => {
+    const goal = onboardingData.goal || 'maintain';
+    let goalType: 'lose' | 'gain' | 'maintain' = 'maintain';
+    
+    if (goal === 'lose_weight') {
+      goalType = 'lose';
+    } else if (goal === 'gain_muscle') {
+      goalType = 'gain';
+    } else {
+      goalType = 'maintain';
+    }
+    
+    const progressionData = generateGoalProgressionData({ goalType });
+    
+    return {
+      goalType,
+      progressionData
+    };
+  }, [onboardingData.goal]);
+
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Seu Plano de Perda de Peso</Text>
-        
-        <View style={styles.infoSection}>
-          <Text style={styles.sectionTitle}>🎯 O Que Esperar</Text>
-          <Text style={styles.infoText}>
-            Com base nas suas informações, criamos um plano personalizado que inclui:
-          </Text>
-          <Text style={styles.bulletPoints}>
-            • Calorias diárias recomendadas{'\n'}
-            • Distribuição de macronutrientes{'\n'}
-            • Cronograma de perda de peso{'\n'}
-            • Dicas personalizadas para seu estilo de vida
-          </Text>
-        </View>
-
-        <View style={styles.infoSection}>
-          <Text style={styles.sectionTitle}>📱 Como Usar o App</Text>
-          <Text style={styles.infoText}>
-            • Tire fotos das suas refeições{'\n'}
-            • Nossa IA analisa automaticamente{'\n'}
-            • Acompanhe seu progresso diário{'\n'}
-            • Ajuste o plano conforme necessário
-          </Text>
-        </View>
-
-        <View style={styles.infoSection}>
-          <Text style={styles.sectionTitle}>💪 Suporte Contínuo</Text>
-          <Text style={styles.infoText}>
-            • Lembretes personalizados{'\n'}
-            • Dicas semanais baseadas no seu progresso{'\n'}
-            • Ajustes automáticos do plano{'\n'}
-            • Comunidade de usuários para motivação
-          </Text>
-        </View>
-
-        <View style={styles.infoSection}>
-          <Text style={styles.sectionTitle}>🌟 Próximos Passos</Text>
-          <Text style={styles.infoText}>
-            Após gerar seu plano, você terá acesso completo ao app com todas as 
-            funcionalidades para alcançar seus objetivos de forma sustentável.
-          </Text>
-        </View>
-
-        <Text style={styles.disclaimer}>
-          * Suas informações serão excluídas após gerar o plano.
+        {/* Headline */}
+        <Text style={styles.headline}>
+          Você tem grande potencial para bater sua meta!
         </Text>
+        
+        {/* Subheadline */}
+        <Text style={styles.subheadline}>
+          Com base em nossos dados históricos, a mudança de peso costuma ser mais lenta nos primeiros dias, mas após 7 dias você ganha tração e alcança sua meta mais rápido.
+        </Text>
+
+        {/* Goal Progress Card */}
+        <View style={styles.goalProgressCard}>
+          <Text style={styles.cardTitle}>
+            Evolução da sua Meta
+          </Text>
+          
+          <GoalProgressionChart
+            data={chartData.progressionData}
+            goalType={chartData.goalType}
+          />
+        </View>
       </View>
     </View>
   );
@@ -77,51 +75,43 @@ export default function LossPlanInfoStep({ onSetLoading }: LossPlanInfoStepProps
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.bg.base,
   },
   content: {
     flex: 1,
-    paddingHorizontal: spacing.screenPadding,
-    paddingTop: spacing.xxl,
-    paddingBottom: spacing.xxl,
+    paddingHorizontal: spacing[6],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[8],
   },
-  title: {
-    fontSize: typography['3xl'],
+  headline: {
+    fontSize: typography.display,
     fontWeight: typography.bold,
     color: colors.textPrimary,
     textAlign: 'center',
-    marginBottom: spacing.xl,
-  },
-  infoSection: {
-    marginBottom: spacing.xl,
-    padding: spacing.lg,
-    backgroundColor: colors.backgroundTertiary,
-    borderRadius: borderRadius.lg,
-  },
-  sectionTitle: {
-    fontSize: typography.lg,
-    fontWeight: typography.bold,
-    color: colors.textPrimary,
+    marginTop: spacing[6],
     marginBottom: spacing.md,
   },
-  infoText: {
+  subheadline: {
     fontSize: typography.base,
     color: colors.textSecondary,
-    lineHeight: typography.base * 1.6,
-    marginBottom: spacing.sm,
-  },
-  bulletPoints: {
-    fontSize: typography.base,
-    color: colors.textSecondary,
-    lineHeight: typography.base * 1.6,
-    marginLeft: spacing.sm,
-  },
-  disclaimer: {
-    fontSize: typography.sm,
-    color: colors.textTertiary,
     textAlign: 'center',
-    lineHeight: typography.sm * 1.4,
-    position: 'absolute',
-    bottom: spacing.xxl,
+    lineHeight: typography.base * 1.5,
+    marginTop: spacing[3],
+    marginBottom: spacing.xl,
+    paddingHorizontal: spacing.md,
+  },
+  goalProgressCard: {
+    backgroundColor: colors.bg.raised,
+    borderRadius: borderRadius.lg,
+    padding: spacing[5],
+    marginTop: spacing[6],
+    marginHorizontal: spacing[4],
+    ...shadows.md,
+  },
+  cardTitle: {
+    fontSize: typography.lg,
+    fontWeight: typography.semibold,
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
   },
 });

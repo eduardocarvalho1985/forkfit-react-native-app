@@ -12,6 +12,13 @@ export const colors = {
   backgroundSecondary: '#FDF6F3', // Off-white background
   backgroundTertiary: '#F8FAFC',  // Light gray background
   
+  // Background aliases for component usage
+  bg: {
+    base: '#FFFFFF',         // Main background
+    raised: '#F8FAFC',       // Elevated surface background
+    soft: '#FDF6F3',         // Soft background
+  },
+  
   // Text Colors
   textPrimary: '#1F2937',    // Main text color
   textSecondary: '#64748B',  // Secondary text
@@ -43,6 +50,14 @@ export const spacing = {
   xl: 32,     // 32px
   xxl: 40,    // 40px
   xxxl: 48,   // 48px
+  
+  // Additional spacing values
+  3: 12,      // 12px (3 * 4px)
+  4: 16,      // 16px (4 * 4px)
+  5: 20,      // 20px (5 * 4px)
+  6: 24,      // 24px (6 * 4px)
+  8: 32,      // 32px (8 * 4px)
+  10: 40,     // 40px (10 * 4px)
   
   // Common component spacing
   screenPadding: 24,        // Standard screen padding
@@ -77,6 +92,26 @@ export const typography = {
   semibold: '600',
   bold: '700',
   
+  // Typography aliases for component usage
+  size: {
+    xs: 12,
+    sm: 14,
+    md: 16,
+    lg: 18,
+    xl: 20,
+    '2xl': 24,
+    '3xl': 28,
+    '4xl': 32,
+    '5xl': 48,
+    display: 36,
+  },
+  weight: {
+    normal: '400',
+    medium: '500',
+    semibold: '600',
+    bold: '700',
+  },
+  
   // Line heights
   tight: 1.2,      // Tight spacing for headings
   lineHeightNormal: 1.4,     // Normal spacing for body text
@@ -91,6 +126,16 @@ export const borderRadius = {
   xl: 20,     // Extra large radius
   pill: 9999, // Pill radius for buttons/toggles
   full: 9999, // Full radius for circles
+  
+  // Radius aliases for component usage
+  radius: {
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 20,
+    pill: 9999,
+    full: 9999,
+  },
 } as const;
 
 export const shadows = {
