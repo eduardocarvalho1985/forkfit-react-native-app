@@ -20,12 +20,12 @@ export default function LoadingStep({ onSetLoading }: LoadingStepProps) {
       const plan = calculatePlan();
       
       if (plan) {
-        // Plan calculated successfully, advance to next step
-        console.log('Plan calculated successfully, auto-advancing...');
+        // Plan calculated successfully, mark loading as complete
+        console.log('🔍 LoadingStep: Plan calculated successfully, marking loading complete...');
         updateStepData('loading', { loadingCompleted: true });
       } else {
-        // Fallback: advance after 3 seconds if plan calculation fails
-        console.log('Plan calculation failed, using fallback timer...');
+        // Fallback: mark loading complete after 3 seconds if plan calculation fails
+        console.log('🔍 LoadingStep: Plan calculation failed, using fallback timer...');
         setTimeout(() => {
           updateStepData('loading', { loadingCompleted: true });
         }, 2000);
@@ -33,7 +33,7 @@ export default function LoadingStep({ onSetLoading }: LoadingStepProps) {
     };
 
     checkPlanAndAdvance();
-  }, []);
+  }, [calculatePlan, updateStepData]);
 
   return (
     <View style={styles.container}>

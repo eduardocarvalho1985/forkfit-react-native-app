@@ -99,11 +99,20 @@ function OnboardingContent() {
   // Check if user is already onboarded
   useEffect(() => {
     if (user?.onboardingCompleted) {
-      console.log('User already onboarded, redirecting to dashboard');
-      router.replace('/(app)/(tabs)/dashboard');
-      return;
+      router.push('/(app)');
     }
-  }, [user?.onboardingCompleted]);
+  }, [user, router]);
+
+  // Auto-advance from loading to planPreview when loading is completed
+  useEffect(() => {
+    if (currentStep === 'loading') {
+      const currentData = getCurrentStepData();
+      if (currentData.loadingCompleted) {
+        console.log('🔍 Auto-advancing from loading to planPreview');
+        setCurrentStep('planPreview');
+      }
+    }
+  }, [currentStep, getCurrentStepData]);
 
   // Data validation on load - check for old onboarding data
   useEffect(() => {
@@ -157,8 +166,12 @@ function OnboardingContent() {
     }
 
     if (currentStep === 'loading') {
-      // Auto-advance to plan preview after loading completes
-      return 'planPreview';
+      // Only advance to plan preview if loading is completed
+      if (data.loadingCompleted) {
+        return 'planPreview';
+      }
+      // Stay on loading step if not completed
+      return 'loading';
     }
 
     // If no special conditions are met, return the next step in the array
@@ -168,6 +181,17 @@ function OnboardingContent() {
   const handleBack = () => {
     const currentIndex = STEP_ORDER.indexOf(currentStep);
     if (currentIndex > 0) {
+      // Special case: if we're at planPreview, skip loading and go to previous step
+      if (currentStep === 'planPreview') {
+        // Find the previous meaningful step (skip loading)
+        const previousStep = STEP_ORDER[currentIndex - 2]; // -2 to skip loading
+        console.log(`🔍 handleBack: At planPreview (index ${currentIndex}), going back to ${previousStep} (index ${currentIndex - 2})`);
+        if (previousStep) {
+          setCurrentStep(previousStep);
+          return;
+        }
+      }
+      
       // Special case: if we're at lossPlanInfo and user skipped eventDate
       if (currentStep === 'lossPlanInfo') {
         const currentData = getCurrentStepData();
@@ -179,6 +203,7 @@ function OnboardingContent() {
       }
       
       // Default back navigation
+      console.log(`🔍 handleBack: Default navigation from ${currentStep} (index ${currentIndex}) to ${STEP_ORDER[currentIndex - 1]} (index ${currentIndex - 1})`);
       setCurrentStep(STEP_ORDER[currentIndex - 1]);
     }
   };

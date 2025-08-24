@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useCallback, useMemo } from 'react';
 import { Alert } from 'react-native';
 import { api } from '@/services/api';
 import { getAuth } from '@react-native-firebase/auth';
@@ -70,32 +70,30 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     isDataComplete 
   } = storage;
 
-  const updateStepData = (stepId: string, data: Partial<OnboardingData>) => {
-    console.log(`🔍 updateStepData called with stepId: ${stepId}, data:`, data);
-    console.log(`🔍 Current onboardingData before update:`, onboardingData);
+  const updateStepData = useCallback((stepId: string, data: Partial<OnboardingData>) => {
     // Use the storage hook's updateData method
     updateData(data);
-    console.log(`🔍 updateData called with:`, data);
-  };
+  }, [updateData]);
 
-  const getStepData = (stepId: string) => {
+  const getStepData = useCallback((stepId: string) => {
     // Use the storage hook's getField method for type-safe access
     return getField(stepId as keyof OnboardingData);
-  };
+  }, [getField]);
 
-  const calculateWeeklyPacing = (): number | null => {
+  const calculateWeeklyPacing = useCallback((): number | null => {
     const { weight, targetWeight, eventDate, isEventDriven, weeklyPacing } = onboardingData;
     
     if (!weight || !targetWeight) return null;
     
     // Use the utility function from onboardingCalculations
     return calculateWeeklyPacingUtil(weight, targetWeight, eventDate, isEventDriven, weeklyPacing);
-  };
+  }, [onboardingData]);
 
-  const calculatePlan = (): CalculatedPlan | null => {
+  const calculatePlan = useCallback((): CalculatedPlan | null => {
     const { goal, height, weight, activityLevel, weeklyPacing, gender, age } = onboardingData;
     
     if (!goal || !height || !weight || !activityLevel) {
+      console.log('🔍 calculatePlan: Missing required fields');
       return null;
     }
 
@@ -112,22 +110,25 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       });
       
       if (plan) {
-        return {
+        const result = {
           calories: plan.calories,
           protein: plan.protein,
           carbs: plan.carbs,
           fat: plan.fat
         };
+        console.log('🔍 calculatePlan: Plan calculated successfully');
+        return result;
       }
       
+      console.log('🔍 calculatePlan: No plan returned from calculateNutritionPlan');
       return null;
     } catch (error) {
-      console.error('Error calculating plan:', error);
+      console.error('🔍 calculatePlan: Error calculating plan:', error);
       return null;
     }
-  };
+  }, [onboardingData]);
 
-  const isStepValid = (stepId: string): boolean => {
+  const isStepValid = useCallback((stepId: string): boolean => {
     switch (stepId) {
       case 'introCarousel':
         return true; // Always valid, just informational
@@ -177,17 +178,17 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       default:
         return true;
     }
-  };
+  }, [onboardingData]);
 
-  const getCurrentStepData = () => onboardingData;
+  const getCurrentStepData = useCallback(() => onboardingData, [onboardingData]);
 
-  const clearOnboardingData = async () => {
+  const clearOnboardingData = useCallback(async () => {
     console.log('Clearing onboarding data');
     // Use the storage hook's clearData method
     await clearData();
-  };
+  }, [clearData]);
 
-  const completeOnboarding = async (notificationsEnabled: boolean) => {
+  const completeOnboarding = useCallback(async (notificationsEnabled: boolean) => {
     try {
       console.log('Completing onboarding with notifications enabled:', notificationsEnabled);
       
@@ -224,20 +225,32 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       console.error('Error completing onboarding:', error);
       throw error;
     }
-  };
+  }, [onboardingData, updateData]);
+
+  const contextValue = useMemo(() => ({
+    onboardingData,
+    updateStepData,
+    getStepData,
+    clearOnboardingData,
+    isStepValid,
+    getCurrentStepData,
+    calculatePlan,
+    calculateWeeklyPacing,
+    completeOnboarding
+  }), [
+    onboardingData,
+    updateStepData,
+    getStepData,
+    clearOnboardingData,
+    isStepValid,
+    getCurrentStepData,
+    calculatePlan,
+    calculateWeeklyPacing,
+    completeOnboarding
+  ]);
 
   return (
-    <OnboardingContext.Provider value={{
-      onboardingData,
-      updateStepData,
-      getStepData,
-      clearOnboardingData,
-      isStepValid,
-      getCurrentStepData,
-      calculatePlan,
-      calculateWeeklyPacing,
-      completeOnboarding
-    }}>
+    <OnboardingContext.Provider value={contextValue}>
       {children}
     </OnboardingContext.Provider>
   );

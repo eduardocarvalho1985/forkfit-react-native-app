@@ -213,6 +213,7 @@ export const calculateNutritionPlan = (userData: {
   goal?: 'lose_weight' | 'maintain' | 'gain_muscle';
   gender?: 'male' | 'female' | 'other';
   birthDate?: string;
+  age?: number; // Add age as an alternative to birthDate
   height?: number;
   weight?: number;
   activityLevel?: string;
@@ -223,18 +224,25 @@ export const calculateNutritionPlan = (userData: {
   carbs: number;
   fat: number;
 } | null => {
-  const { goal, gender, birthDate, height, weight, activityLevel, weeklyPacing } = userData;
+  const { goal, gender, birthDate, age, height, weight, activityLevel, weeklyPacing } = userData;
   
-  if (!goal || !gender || !birthDate || !height || !weight || !activityLevel) {
+  if (!goal || !gender || (!birthDate && !age) || !height || !weight || !activityLevel) {
     return null;
   }
 
   try {
-    // Step 1: Calculate age
-    const age = calculateAge(birthDate);
+    // Step 1: Calculate age (either use provided age or calculate from birthDate)
+    let calculatedAge: number;
+    if (age !== undefined) {
+      calculatedAge = age;
+    } else if (birthDate) {
+      calculatedAge = calculateAge(birthDate);
+    } else {
+      return null; // This should never happen due to the check above
+    }
     
     // Step 2: Calculate BMR
-    const bmr = calculateBMR(weight, height, age, gender);
+    const bmr = calculateBMR(weight, height, calculatedAge, gender);
     
     // Step 3: Calculate TDEE
     const tdee = calculateTDEE(bmr, activityLevel);
@@ -248,14 +256,16 @@ export const calculateNutritionPlan = (userData: {
     // Step 5: Calculate macronutrients
     const macros = calculateMacros(adjustedCalories, goal);
     
-    return {
+    const result = {
       calories: Math.round(adjustedCalories),
       protein: macros.protein,
       carbs: macros.carbs,
       fat: macros.fat
     };
+    
+    return result;
   } catch (error) {
-    console.error('Error calculating nutrition plan:', error);
+    console.error('🔍 calculateNutritionPlan: Error calculating nutrition plan:', error);
     return null;
   }
 };
