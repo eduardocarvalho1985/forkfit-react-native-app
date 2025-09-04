@@ -223,3 +223,28 @@ If you encounter issues:
 **Version:** 1.0  
 **Maintained by:** Development Team  
 **Package Manager:** npm (required)
+
+
+## Development flow and branch naming conventions
+
+🌱 Branch Naming Convention
+Prefix	Use case	Example
+feat/	New features or functionality	feat/onboarding-survey
+fix/	Bug fixes, patches	fix/apple-sso-token
+chore/	Maintenance tasks (deps, CI, configs, docs)	chore/update-readme
+ref/	Refactors (no behavior change)	ref/onboarding-cleanup
+hotfix/	Urgent fix directly to main	hotfix/android-crash
+🔑 Rules of Thumb
+
+Lowercase, hyphen-separated:
+✅ feat/add-payment-api
+❌ Feature/AddPaymentAPI
+
+Keep scope clear but short (2–4 words max).
+✅ fix/ios-ui-sso
+❌ fix/ios-ui-sso-bug-when-clicking-button-in-settings
+
+Branch lifetime: open → PR → merge → delete (ideally < 1 week).
+
+Optional issue ID (if you use GitHub Issues or Jira):
+feat/123-add-profile-screen

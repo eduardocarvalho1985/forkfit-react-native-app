@@ -123,11 +123,10 @@ const SearchBottomSheet = forwardRef<SearchBottomSheetRef, SearchBottomSheetProp
                   <Text style={styles.loadingText}>Buscando alimentos...</Text>
                 </View>
               ) : filteredFoods.length > 0 ? (
-                <FlatList
-                  data={filteredFoods}
-                  keyExtractor={(item) => item.id.toString()}
-                  renderItem={({ item }) => (
+                <View>
+                  {filteredFoods.map((item) => (
                     <TouchableOpacity
+                      key={item.id.toString()}
                       style={styles.foodItem}
                       onPress={() => handleSelectFood(item)}
                       activeOpacity={0.7}
@@ -143,9 +142,8 @@ const SearchBottomSheet = forwardRef<SearchBottomSheetRef, SearchBottomSheetProp
                         <Text style={styles.macroText}>G: {formatNumber(item.fat, 1)}g</Text>
                       </View>
                     </TouchableOpacity>
-                  )}
-                  showsVerticalScrollIndicator={false}
-                />
+                  ))}
+                </View>
               ) : (
                 <View style={styles.emptyContainer}>
                   <FontAwesome6 name="search" size={48} color="#CBD5E0" />
