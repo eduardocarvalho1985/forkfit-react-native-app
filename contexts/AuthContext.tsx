@@ -408,7 +408,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
     } catch (error: any) {
-      console.error('Error during Apple Sign-In:', error);
       throw new Error(getFirebaseErrorMessage(error.code));
     }
   };
