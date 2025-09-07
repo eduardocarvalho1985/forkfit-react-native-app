@@ -87,10 +87,6 @@ export default function ExerciseFrequencyStep({ onSetLoading }: ExerciseFrequenc
             </TouchableOpacity>
           ))}
         </View>
-
-        <Text style={styles.disclaimer}>
-          * Suas informações serão excluídas após gerar o plano.
-        </Text>
       </View>
     </View>
   );
@@ -160,13 +156,5 @@ const styles = StyleSheet.create({
   },
   exerciseDescriptionSelected: {
     color: colors.textInverse + 'CC', // 80% opacity
-  },
-  disclaimer: {
-    fontSize: typography.sm,
-    color: colors.textTertiary,
-    textAlign: 'center',
-    lineHeight: typography.sm * 1.4,
-    position: 'absolute',
-    bottom: spacing.xxl,
   },
 });

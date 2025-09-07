@@ -88,9 +88,6 @@ export default function WeightLossInfoStep({ onSetLoading }: WeightLossInfoStepP
           mode={chartData.mode}
         />
 
-        <Text style={styles.disclaimer}>
-          * Suas informações serão excluídas após gerar o plano.
-        </Text>
       </View>
     </View>
   );
@@ -127,12 +124,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: spacing.xl,
     paddingHorizontal: spacing.md,
-  },
-  disclaimer: {
-    fontSize: typography.sm,
-    color: colors.textTertiary,
-    textAlign: 'center',
-    lineHeight: typography.sm * 1.4,
-    marginTop: spacing.xl,
   },
 });

@@ -139,10 +139,6 @@ export default function NotificationsStep({ onSetLoading }: NotificationsStepPro
             Você pode alterar essa configuração a qualquer momento nas configurações do app.
           </Text>
         </View>
-
-        <Text style={styles.disclaimer}>
-          * Suas informações serão excluídas após gerar o plano.
-        </Text>
       </View>
     </View>
   );
@@ -238,13 +234,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: typography.sm * 1.4,
     fontStyle: 'italic',
-  },
-  disclaimer: {
-    fontSize: typography.sm,
-    color: colors.textTertiary,
-    textAlign: 'center',
-    lineHeight: typography.sm * 1.4,
-    position: 'absolute',
-    bottom: spacing.xxl,
   },
 });

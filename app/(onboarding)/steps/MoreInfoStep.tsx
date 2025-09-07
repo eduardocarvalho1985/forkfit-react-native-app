@@ -64,10 +64,6 @@ export default function MoreInfoStep({ onSetLoading }: MoreInfoStepProps) {
             estilo de vida, tornando sua jornada mais fácil e agradável.
           </Text>
         </View>
-
-        <Text style={styles.disclaimer}>
-          * Suas informações serão excluídas após gerar o plano.
-        </Text>
       </View>
     </View>
   );
@@ -107,13 +103,5 @@ const styles = StyleSheet.create({
     fontSize: typography.base,
     color: colors.textSecondary,
     lineHeight: typography.base * 1.6,
-  },
-  disclaimer: {
-    fontSize: typography.sm,
-    color: colors.textTertiary,
-    textAlign: 'center',
-    lineHeight: typography.sm * 1.4,
-    position: 'absolute',
-    bottom: spacing.xxl,
   },
 });

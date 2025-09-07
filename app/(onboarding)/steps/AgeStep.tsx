@@ -88,10 +88,6 @@ export default function AgeStep({ onSetLoading }: AgeStepProps) {
             </View>
           )}
         </View>
-
-        <Text style={styles.disclaimer}>
-          * Suas informações serão excluídas após gerar o plano.
-        </Text>
       </View>
     </View>
   );
@@ -191,12 +187,5 @@ const styles = StyleSheet.create({
   ageItemTextSelected: {
     color: colors.background,
     fontWeight: typography.semibold,
-  },
-  disclaimer: {
-    fontSize: typography.sm,
-    color: colors.textTertiary,
-    textAlign: 'center',
-    lineHeight: typography.sm * 1.4,
-    marginTop: spacing.xl,
   },
 }); 
