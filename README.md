@@ -66,6 +66,9 @@ The app supports three build environments:
 eas build --profile development --platform android
 eas build --profile development --platform ios
 
+#dev build command (does not build a new app on Expo, uses a previous build to rebuild locally, only use if not building native code)
+eas build:dev --platform android --profile development
+
 # Preview build
 eas build --profile preview --platform android
 eas build --profile preview --platform ios

@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
-import { colors, spacing, borderRadius, typography } from '@/theme';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { colors, spacing, borderRadius } from '@/theme';
 
 interface OnboardingProgressProps {
   currentStep: number;
@@ -23,7 +24,11 @@ export default function OnboardingProgress({
         {/* Back Button */}
         {canGoBack && (
           <TouchableOpacity style={styles.backButton} onPress={onBack}>
-            <Text style={styles.backButtonText}>←</Text>
+            <Ionicons 
+              name="chevron-back" 
+              size={20} 
+              color={colors.textPrimary} 
+            />
           </TouchableOpacity>
         )}
         
@@ -65,11 +70,6 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  backButtonText: {
-    fontSize: typography.xl,
-    color: colors.textPrimary,
-    fontWeight: typography.bold,
   },
   progressBar: {
     flex: 1,
