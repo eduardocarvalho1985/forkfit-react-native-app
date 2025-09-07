@@ -293,7 +293,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log('Email sign in successful:', userCredential.user.uid);
       // User will be set through onAuthStateChanged listener
     } catch (error: any) {
-      console.error('Email sign in error:', error);
       throw new Error(getFirebaseErrorMessage(error.code));
     }
   };
