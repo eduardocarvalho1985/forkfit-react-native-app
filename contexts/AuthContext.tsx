@@ -339,7 +339,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       let idToken = signInResult.data?.idToken;
       if (!idToken) {
-        console.error('No ID token found during Google Sign-In');
         throw new Error('No ID token found');
       }
 
@@ -359,7 +358,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // User will be set through onAuthStateChanged listener
     } catch (error: any) {
-      console.error('Error during Google Sign-In:', error);
       throw new Error(getFirebaseErrorMessage(error.code));
     }
   };
