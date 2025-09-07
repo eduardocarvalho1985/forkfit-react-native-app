@@ -134,7 +134,7 @@ export default function IntroCarouselStep({ onSetLoading }: IntroCarouselStepPro
           <Text style={styles.signInDisclaimer}>
             Se você já tem uma conta, faça o{' '}
             <Text style={styles.signInLink} onPress={handleSignIn}>
-              sign in
+              login aqui
             </Text>
           </Text>
         </View>
