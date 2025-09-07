@@ -467,22 +467,32 @@ export async function updateNotificationPreferences(
   weeklyReports: boolean
 ): Promise<void> {
   try {
-    // Schedule meal reminders
-    await scheduleDailyReminders();
+    // Clear any existing notifications first to prevent duplicates
+    await Notifications.cancelAllScheduledNotificationsAsync();
+    console.log('🧹 Cleared existing notifications before scheduling new ones');
     
-    // Schedule weekly reports
-    await scheduleWeeklyReports(weeklyReports);
+    // Schedule meal reminders only if enabled
+    if (dailyReminders) {
+      await scheduleDailyReminders();
+      console.log('📅 Daily reminders scheduled');
+    }
     
-    // Store preferences locally
+    // Schedule weekly reports only if enabled
+    if (weeklyReports) {
+      await scheduleWeeklyReports(true);
+      console.log('📊 Weekly reports scheduled');
+    }
+    
+    // Store preferences locally for settings page
     await AsyncStorage.setItem('forkfit_notification_preferences', JSON.stringify({
       dailyReminders,
       weeklyReports,
       updatedAt: Date.now(),
     }));
     
-    console.log('Notification preferences updated successfully');
+    console.log('✅ Notification preferences updated successfully');
   } catch (error) {
-    console.error('Error updating notification preferences:', error);
+    console.error('❌ Error updating notification preferences:', error);
   }
 }
 
