@@ -20,9 +20,19 @@ export default function LoadingStep({ onSetLoading }: LoadingStepProps) {
       const plan = calculatePlan();
       
       if (plan) {
-        // Plan calculated successfully, mark loading as complete
-        console.log('🔍 LoadingStep: Plan calculated successfully, marking loading complete...');
-        updateStepData('loading', { loadingCompleted: true });
+        // Plan calculated successfully, save it to onboarding data
+        console.log('🔍 LoadingStep: Plan calculated successfully, saving nutrition data...');
+        console.log('✅ LoadingStep: Nutrition plan calculated:', plan);
+        
+        // Save the calculated nutrition plan and mark loading as complete in one call
+        updateStepData('loading', {
+          calories: plan.calories,
+          protein: plan.protein,
+          carbs: plan.carbs,
+          fat: plan.fat,
+          loadingCompleted: true
+        });
+        console.log('✅ LoadingStep: Nutrition data saved and loading marked complete');
       } else {
         // Fallback: mark loading complete after 3 seconds if plan calculation fails
         console.log('🔍 LoadingStep: Plan calculation failed, using fallback timer...');

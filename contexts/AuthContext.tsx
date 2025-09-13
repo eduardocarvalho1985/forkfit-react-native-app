@@ -201,13 +201,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
           targetWeight: onboardingData.targetWeight,
           goal: onboardingData.goal,
           activityLevel: onboardingData.activityLevel,
-          calories: 0, // Will be calculated later
-          protein: 0,
-          carbs: 0,
-          fat: 0,
+          // Use nutrition data from onboarding (calculated in LoadingStep)
+          calories: onboardingData.calories || 0,
+          protein: onboardingData.protein || 0,
+          carbs: onboardingData.carbs || 0,
+          fat: onboardingData.fat || 0,
         };
         
         console.log('👤 Setting complete user:', completeUser);
+        console.log('🔍 Nutrition data in completeUser:', {
+          calories: completeUser.calories,
+          protein: completeUser.protein,
+          carbs: completeUser.carbs,
+          fat: completeUser.fat
+        });
         setUser(completeUser);
         
         // Clear the stored onboarding data since we've used it
@@ -226,6 +233,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.log('🔍 Fetching existing user profile...');
         const existingUser = await api.getUserProfile(firebaseUser.uid, await firebaseUser.getIdToken());
         console.log('✅ Existing user found:', existingUser);
+        console.log('🔍 Nutrition data in existingUser:', {
+          calories: existingUser.calories,
+          protein: existingUser.protein,
+          carbs: existingUser.carbs,
+          fat: existingUser.fat
+        });
         
         // Combine Firebase user with backend data
         const combinedUser: AppUser = {
@@ -239,6 +252,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         };
 
         console.log('🔗 Combined user data:', combinedUser);
+        console.log('🔍 Nutrition data in combinedUser:', {
+          calories: combinedUser.calories,
+          protein: combinedUser.protein,
+          carbs: combinedUser.carbs,
+          fat: combinedUser.fat
+        });
         setUser(combinedUser);
         
         // If user is not onboarded, redirect to onboarding

@@ -180,7 +180,17 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     }
   }, [onboardingData]);
 
-  const getCurrentStepData = useCallback(() => onboardingData, [onboardingData]);
+  const getCurrentStepData = useCallback(() => {
+    console.log('🔍 getCurrentStepData: Returning data:', onboardingData);
+    console.log('🔍 getCurrentStepData: Data keys:', Object.keys(onboardingData));
+    console.log('🔍 getCurrentStepData: Nutrition data:', {
+      calories: onboardingData.calories,
+      protein: onboardingData.protein,
+      carbs: onboardingData.carbs,
+      fat: onboardingData.fat
+    });
+    return onboardingData;
+  }, [onboardingData]);
 
   const clearOnboardingData = useCallback(async () => {
     console.log('Clearing onboarding data');

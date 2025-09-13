@@ -8,6 +8,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { api } from '../../../services/api';
 import { parseWeight, formatWeightWithUnit } from '../../../utils/weightUtils';
 import { getAuth } from '@react-native-firebase/auth';
+import { calculateNutritionPlan } from '../../../utils/onboardingCalculations';
 
 const CORAL = '#FF725E';
 const TEXT_DARK = '#1F2937';
@@ -81,6 +82,38 @@ export default function ProfileScreen() {
   }, [user]);
 
 
+  const handleRecalculateNutrition = () => {
+    if (!goal || !height || !weight || !activity || !age || !gender) {
+      Alert.alert('Dados Incompletos', 'Por favor, preencha todos os campos básicos (objetivo, altura, peso, atividade, idade, gênero) antes de recalcular as metas nutricionais.');
+      return;
+    }
+
+    try {
+      const calculatedPlan = calculateNutritionPlan({
+        goal,
+        gender,
+        age: parseInt(age),
+        height: parseFloat(height),
+        weight: parseWeight(weight),
+        activityLevel: activity,
+        weeklyPacing: 0.5 // Default weekly pacing for recalculation
+      });
+
+      if (calculatedPlan) {
+        setCalories(calculatedPlan.calories.toString());
+        setProtein(calculatedPlan.protein.toString());
+        setCarbs(calculatedPlan.carbs.toString());
+        setFat(calculatedPlan.fat.toString());
+        Alert.alert('Sucesso', 'Metas nutricionais recalculadas com base nos seus dados atuais!');
+      } else {
+        Alert.alert('Erro', 'Não foi possível recalcular as metas nutricionais. Verifique se todos os dados estão corretos.');
+      }
+    } catch (error) {
+      console.error('Error recalculating nutrition:', error);
+      Alert.alert('Erro', 'Não foi possível recalcular as metas nutricionais.');
+    }
+  };
+
   const handleSaveProfile = async () => {
     if (!user) return;
 
@@ -106,10 +139,12 @@ export default function ProfileScreen() {
         fat: fat ? parseInt(fat) : undefined,
       };
 
-      await api.updateUserProfile(user.uid, userData, token);
+      const updatedUser = await api.updateUserProfile(user.uid, userData, token);
+      console.log('✅ Profile updated successfully:', updatedUser);
 
       // Sync user data to update the context
       await syncUser();
+      console.log('✅ User data synced after profile update');
 
       Alert.alert('Sucesso', 'Perfil atualizado com sucesso!');
     } catch (error: any) {
@@ -264,7 +299,15 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>🍓 Metas Nutricionais</Text>
           <View style={styles.sectionCard}>
-            <Text style={styles.label}>Calorias Diárias (kcal)</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <Text style={styles.label}>Calorias Diárias (kcal)</Text>
+              <TouchableOpacity
+                style={styles.recalculateButton}
+                onPress={handleRecalculateNutrition}
+              >
+                <Text style={styles.recalculateButtonText}>🔄 Recalcular</Text>
+              </TouchableOpacity>
+            </View>
             <TextInput style={styles.input} value={calories} onChangeText={setCalories} placeholder="Calorias" keyboardType="numeric" placeholderTextColor="#A0AEC0" />
             <View style={{ flexDirection: 'row', gap: 8, flex: 1 }}>
               <View style={{ flex: 0.3 }}>
@@ -443,5 +486,18 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  recalculateButton: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: BORDER_LIGHT,
+  },
+  recalculateButtonText: {
+    color: CORAL,
+    fontSize: 12,
+    fontWeight: '600',
   },
 });

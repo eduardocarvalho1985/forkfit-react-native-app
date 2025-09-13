@@ -10,19 +10,19 @@ interface MotivationStepProps {
 const MOTIVATION_OPTIONS = [
   {
     value: 'saude',
-    label: 'Saúde'
+    label: 'Melhorar minha Saúde.'
   },
   {
     value: 'energia',
-    label: 'Energia'
+    label: 'Ter mais Energia no dia a dia.'
   },
   {
     value: 'disciplina',
-    label: 'Disciplina'
+    label: 'Desenvolver mais Disciplina.'
   },
   {
     value: 'geral',
-    label: 'Geral'
+    label: 'Outro.'
   }
 ];
 

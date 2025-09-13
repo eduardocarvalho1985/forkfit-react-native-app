@@ -135,7 +135,13 @@ export default function DashboardScreen() {
   // User data from auth context
   const { user } = useAuth();
 
-  console.log('DashboardScreen: Component rendering, user:', !!user, 'user data:', user ? { uid: user.uid, calories: user.calories } : 'null');
+  console.log('DashboardScreen: Component rendering, user:', !!user, 'user data:', user ? { 
+    uid: user.uid, 
+    calories: user.calories, 
+    protein: user.protein, 
+    carbs: user.carbs, 
+    fat: user.fat 
+  } : 'null');
 
   // Add loading state for user data
   const isLoading = !user;
