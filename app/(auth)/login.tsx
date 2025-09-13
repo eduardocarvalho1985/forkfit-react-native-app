@@ -118,7 +118,10 @@ export default function Login() {
 
       <TouchableOpacity 
         style={styles.createAccountButton} 
-        onPress={() => router.push('/(onboarding)')}
+        onPress={() => router.push({
+          pathname: '/(onboarding)',
+          params: { resume: 'true' }
+        })}
       >
         <Text style={styles.createAccountButtonText}>Não tem conta? Comece aqui</Text>
       </TouchableOpacity>
