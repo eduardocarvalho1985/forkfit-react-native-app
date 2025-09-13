@@ -46,13 +46,13 @@ export default function PaywallStep({ onSetLoading }: PaywallStepProps) {
           Você completou o onboarding e agora pode criar sua conta
         </Text>
         <Text style={styles.description}>
-          Crie sua conta ForkFit para salvar seu plano personalizado e começar sua jornada
+          Crie sua conta ForkFit para salvar seu plano personalizado e começar sua jornada.
         </Text>
+        
+        <TouchableOpacity style={styles.createAccountButton} onPress={handleCreateAccount}>
+          <Text style={styles.createAccountText}>Criar Minha Conta</Text>
+        </TouchableOpacity>
       </View>
-      
-      <TouchableOpacity style={styles.createAccountButton} onPress={handleCreateAccount}>
-        <Text style={styles.createAccountText}>Criar Minha Conta</Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: spacing.screenPadding,
     paddingTop: spacing.xxl,
-    paddingBottom: spacing.footerBottom,
+    paddingBottom: spacing.lg,
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -344,10 +344,10 @@ function OnboardingContent() {
 
     if (currentStep === 'paywall') {
       return {
-        onPress: handleNext, // Use handleNext to complete onboarding
-        disabled: false, // Paywall step is always accessible
+        onPress: () => {}, // No action needed - PaywallStep handles its own button
+        disabled: true, // Hide the footer button for paywall
         loading: false,
-        buttonText: 'Completar Onboarding'
+        buttonText: ''
       };
     }
     return {
@@ -372,18 +372,20 @@ function OnboardingContent() {
         {renderCurrentStep()}
       </View>
 
-      {/* Fixed Footer - Only Continue Button */}
-      <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.footerPadding }]}>
-        <TouchableOpacity
-          style={[styles.continueButton, getStepProps().disabled && styles.continueButtonDisabled]}
-          onPress={getStepProps().onPress}
-          disabled={getStepProps().disabled}
-        >
-          <Text style={styles.continueButtonText}>
-            {getStepProps().loading ? 'Salvando...' : getStepProps().buttonText}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      {/* Fixed Footer - Only Continue Button (hidden for paywall) */}
+      {currentStep !== 'paywall' && (
+        <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.footerPadding }]}>
+          <TouchableOpacity
+            style={[styles.continueButton, getStepProps().disabled && styles.continueButtonDisabled]}
+            onPress={getStepProps().onPress}
+            disabled={getStepProps().disabled}
+          >
+            <Text style={styles.continueButtonText}>
+              {getStepProps().loading ? 'Salvando...' : getStepProps().buttonText}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
