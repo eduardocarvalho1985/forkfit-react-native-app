@@ -25,6 +25,13 @@ const TEXT_DARK = '#1F2937';
 const TEXT_LIGHT = '#64748b';
 const BORDER_LIGHT = '#e2e8f0';
 
+// Feature flags for MVP launch
+// Weekly reports and daily reminders features are temporarily disabled to simplify the MVP launch
+// This allows us to focus on core functionality while preserving the code for future releases
+// To re-enable: change the respective flags to true
+const ENABLE_WEEKLY_REPORTS = false; // Disabled for MVP - can be re-enabled in future releases
+const ENABLE_DAILY_REMINDERS = false; // Disabled for MVP - can be re-enabled in future releases
+
 export default function SettingsScreen() {
   const [dailyReminders, setDailyReminders] = useState(true);
   const [weeklyReports, setWeeklyReports] = useState(true);
@@ -60,8 +67,10 @@ export default function SettingsScreen() {
   const loadNotificationPreferences = async () => {
     try {
       const preferences = await getNotificationPreferences();
-      setDailyReminders(preferences.dailyReminders);
-      setWeeklyReports(preferences.weeklyReports);
+      // Daily reminders disabled for MVP - always set to false
+      setDailyReminders(ENABLE_DAILY_REMINDERS ? preferences.dailyReminders : false);
+      // Weekly reports disabled for MVP - always set to false
+      setWeeklyReports(ENABLE_WEEKLY_REPORTS ? preferences.weeklyReports : false);
     } catch (error) {
       console.error('Error loading notification preferences:', error);
     }
@@ -76,7 +85,11 @@ export default function SettingsScreen() {
           setNotificationsEnabled(true);
           setPermissionStatus('granted');
           // Update preferences when notifications are enabled
-          await updateNotificationPreferences(dailyReminders, weeklyReports);
+          // Daily reminders and weekly reports disabled for MVP - always pass false
+          await updateNotificationPreferences(
+            ENABLE_DAILY_REMINDERS ? dailyReminders : false, 
+            ENABLE_WEEKLY_REPORTS ? weeklyReports : false
+          );
           Alert.alert(
             'Notificações Ativadas!',
             'Agora você receberá lembretes e atualizações importantes.',
@@ -122,13 +135,20 @@ export default function SettingsScreen() {
   };
 
   const handleDailyRemindersToggle = async (enabled: boolean) => {
+    // Daily reminders disabled for MVP - this function is preserved for future use
+    if (!ENABLE_DAILY_REMINDERS) return;
+    
     setDailyReminders(enabled);
     if (notificationsEnabled) {
-      await updateNotificationPreferences(enabled, weeklyReports);
+      // Weekly reports disabled for MVP - always pass false
+      await updateNotificationPreferences(enabled, ENABLE_WEEKLY_REPORTS ? weeklyReports : false);
     }
   };
 
   const handleWeeklyReportsToggle = async (enabled: boolean) => {
+    // Weekly reports disabled for MVP - this function is preserved for future use
+    if (!ENABLE_WEEKLY_REPORTS) return;
+    
     setWeeklyReports(enabled);
     if (notificationsEnabled) {
       await updateNotificationPreferences(dailyReminders, enabled);
@@ -420,27 +440,31 @@ export default function SettingsScreen() {
                 </View>
               )}
 
-              {/* Daily Reminders Toggle */}
-              <View style={styles.settingRow}>
-                <View style={styles.settingInfo}>
-                  <FontAwesome6 name="clock" size={20} color={CORAL} style={styles.settingIcon} />
-                  <View style={styles.settingText}>
-                    <Text style={styles.settingLabel}>Lembretes diários</Text>
-                    <Text style={styles.settingSubtext}>Receba lembretes para registrar suas refeições</Text>
+              {/* Daily Reminders Toggle - HIDDEN FOR MVP */}
+              {/* TODO: Re-enable when daily reminders feature is ready for production */}
+              {ENABLE_DAILY_REMINDERS && (
+                <View style={styles.settingRow}>
+                  <View style={styles.settingInfo}>
+                    <FontAwesome6 name="clock" size={20} color={CORAL} style={styles.settingIcon} />
+                    <View style={styles.settingText}>
+                      <Text style={styles.settingLabel}>Lembretes diários</Text>
+                      <Text style={styles.settingSubtext}>Receba lembretes para registrar suas refeições</Text>
+                    </View>
                   </View>
+                  <Switch
+                    value={dailyReminders}
+                    onValueChange={handleDailyRemindersToggle}
+                    trackColor={{ false: '#f1f5f9', true: CORAL }}
+                    thumbColor={Platform.OS === 'android' ? '#fff' : ''}
+                    ios_backgroundColor="#f1f5f9"
+                    disabled={!notificationsEnabled}
+                  />
                 </View>
-                <Switch
-                  value={dailyReminders}
-                  onValueChange={handleDailyRemindersToggle}
-                  trackColor={{ false: '#f1f5f9', true: CORAL }}
-                  thumbColor={Platform.OS === 'android' ? '#fff' : ''}
-                  ios_backgroundColor="#f1f5f9"
-                  disabled={!notificationsEnabled}
-                />
-              </View>
+              )}
 
-              {/* Weekly Reports Toggle */}
-              {notificationsEnabled && (
+              {/* Weekly Reports Toggle - HIDDEN FOR MVP */}
+              {/* TODO: Re-enable when weekly reports feature is ready for production */}
+              {ENABLE_WEEKLY_REPORTS && notificationsEnabled && (
                 <View style={styles.settingRow}>
                   <View style={styles.settingInfo}>
                     <FontAwesome6 name="chart-line" size={20} color={CORAL} style={styles.settingIcon} />
