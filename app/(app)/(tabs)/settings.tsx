@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Platform, Alert, Linking } from 'react-native';
-import { FontAwesome6 } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { useFocusEffect } from '@react-navigation/native';
 import { PrivacyBottomSheet } from '../../../components/PrivacyBottomSheet';
@@ -25,12 +25,31 @@ const TEXT_DARK = '#1F2937';
 const TEXT_LIGHT = '#64748b';
 const BORDER_LIGHT = '#e2e8f0';
 
+// Design system constants
+const ICON_SIZE = 24;
+const ICON_COLOR_DEFAULT = '#1F2937';
+const ICON_COLOR_ACCENT = '#FF725E';
+const ROW_HEIGHT = 64;
+const CARD_RADIUS = 12;
+const CARD_PADDING = 16;
+const DIVIDER_INSET = 52;
+
 // Feature flags for MVP launch
 // Weekly reports and daily reminders features are temporarily disabled to simplify the MVP launch
 // This allows us to focus on core functionality while preserving the code for future releases
 // To re-enable: change the respective flags to true
 const ENABLE_WEEKLY_REPORTS = false; // Disabled for MVP - can be re-enabled in future releases
 const ENABLE_DAILY_REMINDERS = false; // Disabled for MVP - can be re-enabled in future releases
+
+// Unified Icon component with design system defaults
+const Icon = ({ name, size = ICON_SIZE, color = ICON_COLOR_DEFAULT, style }: {
+  name: keyof typeof Ionicons.glyphMap;
+  size?: number;
+  color?: string;
+  style?: any;
+}) => (
+  <Ionicons name={name} size={size} color={color} style={style} />
+);
 
 export default function SettingsScreen() {
   const [dailyReminders, setDailyReminders] = useState(true);
@@ -408,7 +427,7 @@ export default function SettingsScreen() {
               {/* Push Notifications Toggle */}
               <View style={styles.settingRow}>
                 <View style={styles.settingInfo}>
-                  <FontAwesome6 name="bell" size={20} color={CORAL} style={styles.settingIcon} />
+                  <Icon name="notifications-outline" style={styles.settingIcon} />
                   <View style={styles.settingText}>
                     <Text style={styles.settingLabel}>Notificações Push</Text>
                     <Text style={styles.settingSubtext}>
@@ -486,12 +505,12 @@ export default function SettingsScreen() {
               {/* Pause Notifications Action */}
               {notificationsEnabled && (
                 <TouchableOpacity style={[styles.settingRow, styles.lastRow]} onPress={handlePauseNotifications}>
-                  <FontAwesome6 name="pause" size={20} color={CORAL} style={styles.settingIcon} />
+                  <Icon name="pause-circle-outline" style={styles.settingIcon} />
                   <View style={styles.settingText}>
                     <Text style={styles.settingLabel}>Pausar Notificações</Text>
                     <Text style={styles.settingSubtext}>Pausar temporariamente</Text>
                   </View>
-                  <FontAwesome6 name="chevron-right" size={16} color={TEXT_LIGHT} />
+                  <Icon name="chevron-forward" size={16} color="rgba(31,41,55,0.35)" />
                 </TouchableOpacity>
               )}
             </View>
@@ -502,56 +521,58 @@ export default function SettingsScreen() {
             <Text style={styles.sectionTitle}>Geral</Text>
             <View style={styles.card}>
               <TouchableOpacity style={styles.actionRow}>
-                <FontAwesome6 name="globe" size={20} color={TEXT_DARK} style={styles.actionIcon} />
+                <Icon name="globe-outline" style={styles.actionIcon} />
                 <View style={styles.actionText}>
                   <Text style={styles.actionLabel}>Idioma</Text>
                   <Text style={styles.actionValue}>Português (BR)</Text>
                 </View>
-                <FontAwesome6 name="chevron-right" size={16} color={TEXT_LIGHT} />
+                <Icon name="chevron-forward" size={16} color="rgba(31,41,55,0.35)" />
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.actionRow}>
-                <FontAwesome6 name="credit-card" size={20} color={TEXT_DARK} style={styles.actionIcon} />
+                <Icon name="card-outline" style={styles.actionIcon} />
                 <View style={styles.actionText}>
                   <Text style={styles.actionLabel}>Gerenciar Assinatura</Text>
                   <Text style={styles.actionSubtext}>Configurar pagamentos e planos</Text>
                 </View>
-                <FontAwesome6 name="chevron-right" size={16} color={TEXT_LIGHT} />
+                <Icon name="chevron-forward" size={16} color="rgba(31,41,55,0.35)" />
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.actionRow} onPress={handlePrivacyPress}>
-                <FontAwesome6 name="shield-halved" size={20} color={TEXT_DARK} style={styles.actionIcon} />
+                <Icon name="shield-outline" style={styles.actionIcon} />
                 <View style={styles.actionText}>
                   <Text style={styles.actionLabel}>Privacidade</Text>
                   <Text style={styles.actionSubtext}>Configurações de privacidade e dados</Text>
                 </View>
-                <FontAwesome6 name="chevron-right" size={16} color={TEXT_LIGHT} />
+                <Icon name="chevron-forward" size={16} color="rgba(31,41,55,0.35)" />
               </TouchableOpacity>
 
-              <TouchableOpacity style={[styles.actionRow, styles.lastRow]} onPress={handleHelpPress}>
-                <FontAwesome6 name="circle-question" size={20} color={TEXT_DARK} style={styles.actionIcon} />
+              <TouchableOpacity style={styles.actionRow} onPress={handleHelpPress}>
+                <Icon name="help-circle-outline" style={styles.actionIcon} />
                 <View style={styles.actionText}>
                   <Text style={styles.actionLabel}>Ajuda</Text>
                   <Text style={styles.actionSubtext}>Suporte e documentação</Text>
                 </View>
-                <FontAwesome6 name="chevron-right" size={16} color={TEXT_LIGHT} />
+                <Icon name="chevron-forward" size={16} color="rgba(31,41,55,0.35)" />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={[styles.actionRow, styles.lastRow]} onPress={handleLogout}>
+                <Icon name="log-out-outline" style={styles.actionIcon} />
+                <View style={styles.actionText}>
+                  <Text style={[styles.actionLabel, styles.logoutText]}>Sair da conta</Text>
+                  <Text style={styles.actionSubtext}>Fazer logout da sua conta</Text>
+                </View>
+                <Icon name="chevron-forward" size={16} color="rgba(31,41,55,0.35)" />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Logout Section */}
+          {/* Delete Account Section */}
           <View style={styles.section}>
-            <View style={styles.logoutButtonsContainer}>
-              <TouchableOpacity style={[styles.logoutCard, styles.deleteAccountCard]} onPress={handleDeleteAccount}>
-                <FontAwesome6 name="user-xmark" size={20} color="#FF3B30" style={styles.logoutIcon} />
-                <Text style={[styles.logoutText, styles.deleteAccountText]}>Excluir conta</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.logoutCard} onPress={handleLogout}>
-                <FontAwesome6 name="arrow-right-from-bracket" size={20} color={CORAL} style={styles.logoutIcon} />
-                <Text style={styles.logoutText}>Sair da conta</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity style={styles.deleteAccountCard} onPress={handleDeleteAccount}>
+              <Icon name="trash-outline" color="#FF3B30" style={styles.deleteIcon} />
+              <Text style={styles.deleteAccountText}>Excluir conta</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Footer */}
@@ -602,10 +623,15 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#fff',
     marginHorizontal: 16,
-    borderRadius: 12,
+    borderRadius: CARD_RADIUS,
     borderWidth: 1,
     borderColor: BORDER_LIGHT,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
 
   // Plan Section Styles
@@ -644,9 +670,11 @@ const styles = StyleSheet.create({
   settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: CARD_PADDING,
+    minHeight: ROW_HEIGHT,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: 'rgba(31,41,55,0.08)',
+    marginLeft: 0,
   },
   settingInfo: {
     flex: 1,
@@ -655,7 +683,7 @@ const styles = StyleSheet.create({
   },
   settingIcon: {
     marginRight: 12,
-    width: 20,
+    width: ICON_SIZE,
   },
   settingText: {
     flex: 1,
@@ -676,13 +704,15 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: CARD_PADDING,
+    minHeight: ROW_HEIGHT,
     borderBottomWidth: 1,
-    borderBottomColor: '#f8fafc',
+    borderBottomColor: 'rgba(31,41,55,0.08)',
+    marginLeft: 0,
   },
   actionIcon: {
     marginRight: 12,
-    width: 20,
+    width: ICON_SIZE,
   },
   actionText: {
     flex: 1,
@@ -701,6 +731,9 @@ const styles = StyleSheet.create({
   actionSubtext: {
     fontSize: 13,
     color: TEXT_LIGHT,
+  },
+  logoutText: {
+    color: ICON_COLOR_ACCENT,
   },
 
   // Last row in sections
@@ -726,35 +759,30 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Logout Section
-  logoutCard: {
+  // Delete Account Section
+  deleteAccountCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
     marginHorizontal: 16,
-    padding: 16,
-    borderRadius: 12,
+    padding: CARD_PADDING,
+    minHeight: ROW_HEIGHT,
+    borderRadius: CARD_RADIUS,
     borderWidth: 1,
     borderColor: BORDER_LIGHT,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  logoutIcon: {
+  deleteIcon: {
     marginRight: 12,
-  },
-  logoutText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: CORAL,
-  },
-
-  // Adicione estes estilos ao objeto styles
-  logoutButtonsContainer: {
-    flexDirection: 'column',
-    gap: 12,
-  },
-  deleteAccountCard: {
-    borderColor: '#FFE0E0',
+    width: ICON_SIZE,
   },
   deleteAccountText: {
+    fontSize: 16,
+    fontWeight: '600',
     color: '#FF3B30',
   },
 
