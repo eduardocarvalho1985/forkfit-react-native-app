@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Image, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
-import { FontAwesome6 } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../../contexts/AuthContext';
 import { api } from '../../../services/api';
 import { parseWeight, formatWeightWithUnit } from '../../../utils/weightUtils';
@@ -14,6 +14,25 @@ const CORAL = '#FF725E';
 const TEXT_DARK = '#1F2937';
 const TEXT_LIGHT = '#64748b';
 const BORDER_LIGHT = '#e2e8f0';
+
+// Design system constants
+const ICON_SIZE = 24;
+const ICON_COLOR_DEFAULT = '#1F2937';
+const ICON_COLOR_ACCENT = '#FF725E';
+const ROW_HEIGHT = 64;
+const CARD_RADIUS = 12;
+const CARD_PADDING = 16;
+const DIVIDER_INSET = 52;
+
+// Unified Icon component with design system defaults
+const Icon = ({ name, size = ICON_SIZE, color = ICON_COLOR_DEFAULT, style }: {
+  name: keyof typeof Ionicons.glyphMap;
+  size?: number;
+  color?: string;
+  style?: any;
+}) => (
+  <Ionicons name={name} size={size} color={color} style={style} />
+);
 
 const GENDER_OPTIONS = [
   { label: 'Masculino', value: 'male' },
@@ -188,7 +207,10 @@ export default function ProfileScreen() {
         </View>
         {/* Edit Profile Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Editar Perfil</Text>
+          <View style={styles.sectionHeader}>
+            <Icon name="person-outline" style={styles.sectionIcon} />
+            <Text style={styles.sectionTitle}>Editar Perfil</Text>
+          </View>
           <View style={styles.sectionCard}>
             <Text style={styles.label}>Nome</Text>
             <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Seu nome" placeholderTextColor="#A0AEC0" />
@@ -239,7 +261,10 @@ export default function ProfileScreen() {
         </View>
         {/* Goals & Objectives Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>💪 Metas e Objetivos</Text>
+          <View style={styles.sectionHeader}>
+            <Icon name="trophy-outline" style={styles.sectionIcon} />
+            <Text style={styles.sectionTitle}>Metas e Objetivos</Text>
+          </View>
           <View style={[styles.sectionCard, { overflow: "visible" }]}>
             <Text style={styles.label}>Objetivo Principal</Text>
             <DropDownPicker
@@ -297,7 +322,10 @@ export default function ProfileScreen() {
         </View>
         {/* Nutritional Goals Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🍓 Metas Nutricionais</Text>
+          <View style={styles.sectionHeader}>
+            <Icon name="nutrition-outline" style={styles.sectionIcon} />
+            <Text style={styles.sectionTitle}>Metas Nutricionais</Text>
+          </View>
           <View style={styles.sectionCard}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <Text style={styles.label}>Calorias Diárias (kcal)</Text>
@@ -305,7 +333,8 @@ export default function ProfileScreen() {
                 style={styles.recalculateButton}
                 onPress={handleRecalculateNutrition}
               >
-                <Text style={styles.recalculateButtonText}>🔄 Recalcular</Text>
+                <Icon name="refresh-outline" size={16} color={ICON_COLOR_ACCENT} style={styles.recalculateIcon} />
+                <Text style={styles.recalculateButtonText}>Recalcular</Text>
               </TouchableOpacity>
             </View>
             <TextInput style={styles.input} value={calories} onChangeText={setCalories} placeholder="Calorias" keyboardType="numeric" placeholderTextColor="#A0AEC0" />
@@ -328,6 +357,7 @@ export default function ProfileScreen() {
               onPress={handleSaveProfile}
               disabled={loading}
             >
+              <Icon name="checkmark-outline" size={20} color="#fff" style={styles.saveIcon} />
               <Text style={styles.saveButtonText}>
                 {loading ? 'Salvando...' : 'Salvar Todas as Alterações'}
               </Text>
@@ -353,13 +383,18 @@ const styles = StyleSheet.create({
   },
   profileCard: {
     backgroundColor: '#fff',
-    borderRadius: 16,
-    borderWidth: 1.5,
+    borderRadius: CARD_RADIUS,
+    borderWidth: 1,
     borderColor: BORDER_LIGHT,
     marginHorizontal: 16,
     marginBottom: 18,
-    padding: 18,
+    padding: CARD_PADDING,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   avatar: {
     width: 72,
@@ -415,19 +450,32 @@ const styles = StyleSheet.create({
   },
   sectionCard: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: CARD_RADIUS,
     borderWidth: 1,
     borderColor: BORDER_LIGHT,
     marginHorizontal: 16,
-    padding: 18,
+    padding: CARD_PADDING,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 20,
+    marginBottom: 12,
+  },
+  sectionIcon: {
+    marginRight: 8,
+    width: ICON_SIZE,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: CORAL,
-    marginLeft: 20,
-    marginBottom: 12,
+    color: TEXT_DARK,
   },
   label: {
     fontSize: 14,
@@ -478,6 +526,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     marginTop: 18,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  saveIcon: {
+    marginRight: 8,
   },
   saveButtonDisabled: {
     backgroundColor: '#ccc',
@@ -494,6 +547,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderWidth: 1,
     borderColor: BORDER_LIGHT,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  recalculateIcon: {
+    marginRight: 4,
   },
   recalculateButtonText: {
     color: CORAL,
