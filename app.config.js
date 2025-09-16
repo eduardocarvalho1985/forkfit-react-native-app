@@ -69,7 +69,7 @@ export default {
       supportsTablet: true,
       googleServicesFile: './GoogleService-Info.plist',
       bundleIdentifier: validateBundleId(),  // ✅ Updated to use validation
-      buildNumber: '1',
+      // buildNumber: '1', // Remove this - will be managed remotely
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false
       },
@@ -81,7 +81,7 @@ export default {
     android: {
       googleServicesFile: './google-services.json',
       package: validatePackageName(),  // ✅ Updated to use validation
-      versionCode: 1,
+      // versionCode: 1, // Remove this - will be managed remotely
       adaptiveIcon: {
         foregroundImage: './assets/images/adaptive-icon.png',
         backgroundColor: '#ff725e'

@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Platform, Alert, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { FontAwesome6 } from '@expo/vector-icons';
 import { BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { useFocusEffect } from '@react-navigation/native';
+import * as Application from 'expo-application';
 import { PrivacyBottomSheet } from '../../../components/PrivacyBottomSheet';
 import { HelpBottomSheet } from '../../../components/HelpBottomSheet';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -59,6 +61,40 @@ export default function SettingsScreen() {
   const privacyBottomSheetRef = useRef<BottomSheetModal>(null);
   const helpBottomSheetRef = useRef<BottomSheetModal>(null);
   const { signOut } = useAuth();
+
+  // Version display logic
+  const getVersionInfo = () => {
+    const appVersion = Application.nativeApplicationVersion || '1.0.0';
+    const buildVersion = Application.nativeBuildVersion || '1';
+    
+    // Determine build environment based on app name or bundle identifier
+    const appName = Application.applicationName || '';
+    const bundleId = Application.applicationId || '';
+    
+    let buildTag = '';
+    let buildType = 'production';
+    
+    // Check for development builds
+    if (appName.includes('Dev') || bundleId.includes('dev')) {
+      buildTag = 'DEV';
+      buildType = 'development';
+    }
+    // Check for preview builds  
+    else if (appName.includes('Preview') || bundleId.includes('preview')) {
+      buildTag = 'PREVIEW';
+      buildType = 'preview';
+    }
+    
+    return {
+      appVersion,
+      buildVersion,
+      buildTag,
+      buildType,
+      displayVersion: buildTag ? `${buildTag} v${appVersion}` : `v${appVersion}`
+    };
+  };
+
+  const versionInfo = getVersionInfo();
 
   // Check notification permission status and preferences on mount
   useEffect(() => {
@@ -578,7 +614,18 @@ export default function SettingsScreen() {
           {/* Footer */}
           <View style={styles.footer}>
             <Text style={styles.footerTitle}>ForkFit</Text>
-            <Text style={styles.footerVersion}>v0.1.0</Text>
+            <View style={styles.versionContainer}>
+              {versionInfo.buildTag && (
+                <View style={[
+                  styles.buildTag,
+                  versionInfo.buildType === 'development' ? styles.devTag : styles.previewTag
+                ]}>
+                  <Text style={styles.buildTagText}>{versionInfo.buildTag}</Text>
+                </View>
+              )}
+              <Text style={styles.footerVersion}>{versionInfo.displayVersion}</Text>
+            </View>
+            <Text style={styles.footerBuildNumber}>Build: {versionInfo.buildVersion}</Text>
             <Text style={styles.footerCopyright}>© 2025 ForkFit. Todos os direitos reservados.</Text>
           </View>
         </ScrollView>
@@ -798,8 +845,35 @@ const styles = StyleSheet.create({
     color: CORAL,
     marginBottom: 4,
   },
+  versionContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  buildTag: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  devTag: {
+    backgroundColor: '#FF6B6B', // Red for dev
+  },
+  previewTag: {
+    backgroundColor: '#4ECDC4', // Teal for preview
+  },
+  buildTagText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+  },
   footerVersion: {
     fontSize: 14,
+    color: TEXT_LIGHT,
+  },
+  footerBuildNumber: {
+    fontSize: 12,
     color: TEXT_LIGHT,
     marginBottom: 8,
   },

@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 7.6.0"
+    "version": ">= 7.6.0",
+    "appVersionSource": "remote"
   },
   "build": {
     // Profile for creating a development client.
@@ -42,6 +43,7 @@
     // Profile for creating the final app for the public stores.
     "production": {
       "distribution": "store",
+      "autoIncrement": true,
       "ios": {
         "distribution": "store",
         "buildConfiguration": "Release"
