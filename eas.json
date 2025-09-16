@@ -8,6 +8,7 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "autoIncrement": true,
       "ios": {
         "distribution": "internal",
         "buildConfiguration": "Debug"
@@ -26,6 +27,7 @@
     // Profile for creating builds for testers.
     "preview": {
       "distribution": "internal",
+      "autoIncrement": true,
       "ios": {
         "distribution": "internal",
         "buildConfiguration": "Release"
