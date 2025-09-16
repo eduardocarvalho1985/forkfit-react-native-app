@@ -147,7 +147,7 @@ export default function DashboardScreen() {
   const isLoading = !user;
 
   // Format date for display
-  const formattedDate = format(currentDate, 'dd MMM');
+  const formattedDate = format(currentDate, 'dd MMM', { locale: ptBR });
   const isToday = format(currentDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
   const dateKey = format(currentDate, 'yyyy-MM-dd');
 
@@ -754,7 +754,7 @@ export default function DashboardScreen() {
               <Icon name="chevron-back" size={22} color="#FF725E" />
             </TouchableOpacity>
             <View style={styles.dateInfo}>
-              <Text style={styles.dayText}>{isToday ? 'Hoje' : format(currentDate, 'EEEE')}</Text>
+              <Text style={styles.dayText}>{isToday ? 'Hoje' : format(currentDate, 'EEEE', { locale: ptBR })}</Text>
               <Text style={styles.dateText}>{formattedDate}</Text>
             </View>
             <TouchableOpacity onPress={handleNextDay} style={[styles.dateButton, isToday && styles.disabledButton]} disabled={isToday}>
@@ -828,7 +828,7 @@ export default function DashboardScreen() {
 
           {/* Meals Section */}
           <View style={styles.mealsContainer}>
-            <Text style={styles.mealsTitle}>Refeições de {isToday ? 'Hoje' : format(currentDate, "dd 'de' MMMM")}</Text>
+            <Text style={styles.mealsTitle}>Refeições de {isToday ? 'Hoje' : format(currentDate, "dd 'de' MMMM", { locale: ptBR })}</Text>
             {MEAL_TYPES.map((mealType, idx) => (
               <React.Fragment key={mealType}>
                 <MealSection
