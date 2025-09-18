@@ -50,6 +50,36 @@ const validatePackageName = () => {
   return packageName;
 };
 
+// ✅ ADD: Dynamic Firebase configuration functions
+const getFirebaseConfig = () => {
+  const profile = process.env.EAS_BUILD_PROFILE;
+  let config;
+  
+  if (profile === 'development') {
+    config = {
+      ios: './firebase-ios-config/dev/GoogleService-Info.plist',
+      android: './android/app/src/development/google-services.json'
+    };
+  } else if (profile === 'preview') {
+    config = {
+      ios: './firebase-ios-config/preview/GoogleService-Info.plist',
+      android: './android/app/src/preview/google-services.json'
+    };
+  } else {
+    // Default to production
+    config = {
+      ios: './firebase-ios-config/prod/GoogleService-Info.plist',
+      android: './android/app/src/production/google-services.json'
+    };
+  }
+  
+  console.log(`🔥 Firebase config for ${profile || 'default'} profile:`);
+  console.log(`   iOS: ${config.ios}`);
+  console.log(`   Android: ${config.android}`);
+  
+  return config;
+};
+
 export default {
   expo: {
     name: process.env.APP_NAME || 'ForkFit',
@@ -67,7 +97,7 @@ export default {
     },
     ios: {
       supportsTablet: true,
-      googleServicesFile: './GoogleService-Info.plist',
+      googleServicesFile: getFirebaseConfig().ios,
       bundleIdentifier: validateBundleId(),  // ✅ Updated to use validation
       // buildNumber: '1', // Remove this - will be managed remotely
       infoPlist: {
@@ -79,7 +109,7 @@ export default {
       }
     },
     android: {
-      googleServicesFile: './google-services.json',
+      googleServicesFile: getFirebaseConfig().android,
       package: validatePackageName(),  // ✅ Updated to use validation
       // versionCode: 1, // Remove this - will be managed remotely
       adaptiveIcon: {
