@@ -598,7 +598,9 @@ export default function SettingsScreen() {
                 <Icon name="chevron-forward" size={16} color="rgba(31,41,55,0.35)" />
               </TouchableOpacity>
 
-              {/* Debug Screen - Available for testing backend connectivity */}
+              {/* 
+              TODO: Re-enable with Firebase Remote Config feature flag after launch
+              Debug Screen - Available for testing backend connectivity 
               <TouchableOpacity style={styles.actionRow} onPress={handleDebugPress}>
                 <Icon name="bug-outline" style={styles.actionIcon} />
                 <View style={styles.actionText}>
@@ -607,6 +609,7 @@ export default function SettingsScreen() {
                 </View>
                 <Icon name="chevron-forward" size={16} color="rgba(31,41,55,0.35)" />
               </TouchableOpacity>
+              */}
 
               <TouchableOpacity style={[styles.actionRow, styles.lastRow]} onPress={handleLogout}>
                 <Icon name="log-out-outline" style={styles.actionIcon} />
