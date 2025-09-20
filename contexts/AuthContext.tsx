@@ -20,9 +20,26 @@ import { appleAuth } from '../services/appleAuth';
 import jwt_decode from 'jwt-decode';
 import Constants from 'expo-constants';
 
-// Configure Google Sign-In
+// Configure Google Sign-In with environment-specific client ID
+const getGoogleWebClientId = () => {
+  const buildProfile = Constants.expoConfig?.extra?.BUILD_PROFILE;
+  
+  if (buildProfile === 'production') {
+    // Production Firebase project client ID
+    return '879388993252-121oi05vdvslfqq5tqffrmrl998k60ip.apps.googleusercontent.com';
+  } else {
+    // Development/Preview Firebase project client ID
+    return '740196834740-29etdgq3tcedr9drn10iaf3qb98pkogd.apps.googleusercontent.com';
+  }
+};
+
+const webClientId = getGoogleWebClientId();
+console.log('🔧 Google Sign-In Configuration:');
+console.log('  - Build Profile:', Constants.expoConfig?.extra?.BUILD_PROFILE);
+console.log('  - Web Client ID:', webClientId);
+
 GoogleSignin.configure({
-  webClientId: '740196834740-29etdgq3tcedr9drn10iaf3qb98pkogd.apps.googleusercontent.com' // Make sure to use your actual web client ID
+  webClientId: webClientId
 });
 
 // Enhanced user interface combining Firebase user with backend data
