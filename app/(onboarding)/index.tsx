@@ -143,6 +143,13 @@ function OnboardingContent() {
     const checkForExistingOnboardingData = async () => {
       console.log('🔍 Checking for existing onboarding data:', storageData);
       
+      // If user is already onboarded, clear any residual onboarding data and don't resume
+      if (user?.onboardingCompleted) {
+        console.log('🧹 User already onboarded, clearing residual onboarding data');
+        await clearOnboardingData();
+        return;
+      }
+      
       // Check if we have substantial onboarding data (more than just basic fields)
       const hasSubstantialData = storageData && (
         storageData.gender && 
