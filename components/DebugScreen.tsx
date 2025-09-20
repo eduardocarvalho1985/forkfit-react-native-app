@@ -84,8 +84,8 @@ export default function DebugScreen() {
         baseUrl = `${baseUrl}/api`;
       }
       
-      // For health check, we need the base URL + /health
-      const healthUrl = `${baseUrl.replace('/api', '')}/health`;
+      // For health check, we need the API URL + /health
+      const healthUrl = `${baseUrl}/health`;
       
       console.log('🏥 Health check URL:', healthUrl);
       
