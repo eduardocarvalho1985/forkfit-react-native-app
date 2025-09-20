@@ -131,8 +131,45 @@ The app will automatically connect to the correct backend based on the build pro
 
 If EAS secrets are not configured, the system will fall back to:
 
-- **Development/Preview**: `https://forkfit-api-dev.replit.app/api`
-- **Production**: `https://forkfit.app/api`
+- **Development/Preview**: `https://nutri-snapp.replit.app/api`
+- **Production**: `https://forkfit-api-prod.replit.app/api`
+
+## ⚠️ Important Fix: EAS Environment Variables
+
+**CRITICAL**: The environment variables must be explicitly defined in `eas.json` for each build profile:
+
+```json
+{
+  "build": {
+    "development": {
+      "env": {
+        "APP_NAME": "ForkFit Dev",
+        "EAS_BUILD_PROFILE": "development",
+        "API_URL_DEV": "https://nutri-snapp.replit.app/api"
+      }
+    },
+    "preview": {
+      "env": {
+        "APP_NAME": "ForkFit Preview", 
+        "EAS_BUILD_PROFILE": "preview",
+        "API_URL_DEV": "https://nutri-snapp.replit.app/api"
+      }
+    },
+    "production": {
+      "env": {
+        "APP_NAME": "ForkFit",
+        "EAS_BUILD_PROFILE": "production", 
+        "API_URL_PROD": "https://forkfit-api-prod.replit.app/api"
+      }
+    }
+  }
+}
+```
+
+Without this configuration, the build logs will show:
+```
+No environment variables with visibility "Plain text" and "Sensitive" found for the "development" environment on EAS.
+```
 
 ## 📝 Important Notes
 
