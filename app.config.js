@@ -57,13 +57,13 @@ const getApiUrl = () => {
   
   if (profile === 'development') {
     // Use dev API URL from EAS secret
-    apiUrl = process.env.API_URL_DEV || 'https://nutri-snapp.replit.app/api';
+    apiUrl = process.env.API_URL_DEV || 'https://api.dev.forkfit.app/api';
   } else if (profile === 'preview') {
     // Preview uses dev environment for testing
-    apiUrl = process.env.API_URL_DEV || 'https://nutri-snapp.replit.app/api';
+    apiUrl = process.env.API_URL_DEV || 'https://api.dev.forkfit.app/api';
   } else {
     // Production uses prod API URL from EAS secret
-    apiUrl = process.env.API_URL_PROD || 'https://forkfit-api-prod.replit.app/api';
+    apiUrl = process.env.API_URL_PROD || 'https://api.forkfit.app/api';
   }
   
   console.log(`🌐 API URL for ${profile || 'default'} profile: ${apiUrl}`);

@@ -22,7 +22,7 @@
       "env": {
         "APP_NAME": "ForkFit Dev",
         "EAS_BUILD_PROFILE": "development",
-        "API_URL_DEV": "https://nutri-snapp.replit.app/api"
+        "API_URL_DEV": "https://api.dev.forkfit.app/api"
       }
     },
     // Profile for creating builds for testers.
@@ -41,7 +41,7 @@
       "env": {
         "APP_NAME": "ForkFit Preview",
         "EAS_BUILD_PROFILE": "preview",
-        "API_URL_DEV": "https://nutri-snapp.replit.app/api"
+        "API_URL_DEV": "https://api.dev.forkfit.app/api"
       }
     },
     // Profile for creating the final app for the public stores.
@@ -60,7 +60,7 @@
       "env": {
         "APP_NAME": "ForkFit",
         "EAS_BUILD_PROFILE": "production",
-        "API_URL_PROD": "https://forkfit-api-prod.replit.app/api"
+        "API_URL_PROD": "https://api.forkfit.app/api"
       }
     }
   },
