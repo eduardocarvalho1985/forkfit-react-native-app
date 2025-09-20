@@ -52,7 +52,7 @@ export default function DebugScreen() {
     setDebugInfo(prev => ({
       ...prev,
       apiUrl: Constants.expoConfig?.extra?.API_URL,
-      buildProfile: process.env.EAS_BUILD_PROFILE,
+      buildProfile: Constants.expoConfig?.extra?.BUILD_PROFILE || process.env.EAS_BUILD_PROFILE,
       firebaseUser: firebaseUser ? {
         uid: firebaseUser.uid,
         email: firebaseUser.email,
@@ -61,9 +61,10 @@ export default function DebugScreen() {
       } : null,
     }));
 
-    console.log('🌐 Current API URL:', Constants.expoConfig?.extra?.API_URL);
-    console.log('🔧 Build Profile:', process.env.EAS_BUILD_PROFILE);
-    console.log('📱 All expo config:', Constants.expoConfig?.extra);
+    console.log('🌐 Current API URL from Constants:', Constants.expoConfig?.extra?.API_URL);
+    console.log('🔧 Build Profile from Constants:', Constants.expoConfig?.extra?.BUILD_PROFILE);
+    console.log('🔧 Build Profile from env:', process.env.EAS_BUILD_PROFILE);
+    console.log('📱 All expo config extra:', Constants.expoConfig?.extra);
   };
 
   const testAPIConnectivity = async () => {
@@ -71,7 +72,20 @@ export default function DebugScreen() {
     try {
       console.log('🏥 Testing API connectivity...');
       const apiUrl = Constants.expoConfig?.extra?.API_URL || 'https://api.forkfit.app/api';
-      const healthUrl = `${apiUrl.replace('/api', '')}/health`; // Remove /api and add /health
+      console.log('🔍 Raw API URL from Constants:', apiUrl);
+      console.log('🔍 All Constants.expoConfig?.extra:', Constants.expoConfig?.extra);
+      
+      // Ensure API URL has proper format
+      let baseUrl = apiUrl;
+      if (!baseUrl.startsWith('http')) {
+        baseUrl = `https://${baseUrl}`;
+      }
+      if (!baseUrl.includes('/api')) {
+        baseUrl = `${baseUrl}/api`;
+      }
+      
+      // For health check, we need the base URL + /health
+      const healthUrl = `${baseUrl.replace('/api', '')}/health`;
       
       console.log('🏥 Health check URL:', healthUrl);
       
@@ -171,7 +185,15 @@ export default function DebugScreen() {
     
     try {
       const token = await firebaseUser.getIdToken();
-      const apiUrl = Constants.expoConfig?.extra?.API_URL || 'https://api.forkfit.app/api';
+      let apiUrl = Constants.expoConfig?.extra?.API_URL || 'https://api.forkfit.app/api';
+      
+      // Ensure API URL has proper format
+      if (!apiUrl.startsWith('http')) {
+        apiUrl = `https://${apiUrl}`;
+      }
+      if (!apiUrl.includes('/api')) {
+        apiUrl = `${apiUrl}/api`;
+      }
       
       console.log('🧪 Testing API call manually:');
       console.log('  - URL:', `${apiUrl}/users/sync`);

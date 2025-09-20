@@ -195,8 +195,9 @@ export default {
       eas: {
         projectId: 'b02a1a41-6a08-4170-aaf0-e48a411490b9'
       },
-      // ✅ ADD: Dynamic API URL for runtime access
-      API_URL: getApiUrl()
+      // ✅ ADD: Dynamic API URL and build profile for runtime access
+      API_URL: getApiUrl(),
+      BUILD_PROFILE: process.env.EAS_BUILD_PROFILE || 'unknown'
     },
     owner: 'forkfit-app'
   }

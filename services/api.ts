@@ -138,7 +138,7 @@ export class ForkFitAPI {
     try {
       // Import Constants dynamically to avoid build-time issues
       const Constants = require('expo-constants').default;
-      const apiUrl = Constants.expoConfig?.extra?.API_URL;
+      let apiUrl = Constants.expoConfig?.extra?.API_URL;
       
       if (apiUrl) {
         console.log(`🌐 Using dynamic API URL: ${apiUrl}`);
@@ -147,10 +147,10 @@ export class ForkFitAPI {
       
       // Fallback to hardcoded URL if dynamic URL is not available
       console.warn('⚠️ Dynamic API URL not found, using fallback');
-      return "https://forkfit.app/api";
+      return "https://api.forkfit.app/api";
     } catch (error) {
       console.warn('⚠️ Failed to get dynamic API URL, using fallback:', error);
-      return "https://forkfit.app/api";
+      return "https://api.forkfit.app/api";
     }
   }
 
