@@ -7,28 +7,12 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:740196834740:android:5f7c8f042f3c596706a6e1",
+        "mobilesdk_app_id": "1:740196834740:android:3aede379624519c706a6e1",
         "android_client_info": {
-          "package_name": "forkfit.app.forkfitdev"
+          "package_name": "forkfit.app.forkfitpreview"
         }
       },
       "oauth_client": [
-        {
-          "client_id": "740196834740-afkko6qus8kote1mbg5ccbb6762shia1.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "forkfit.app.forkfitdev",
-            "certificate_hash": "40df8d7974e3c4a30e2cdf6169300d42daaaee47"
-          }
-        },
-        {
-          "client_id": "740196834740-v0pik8gkfoqrmn02shiqrqdrrn09cmae.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "forkfit.app.forkfitdev",
-            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
-          }
-        },
         {
           "client_id": "740196834740-29etdgq3tcedr9drn10iaf3qb98pkogd.apps.googleusercontent.com",
           "client_type": 3
@@ -47,10 +31,10 @@
               "client_type": 3
             },
             {
-              "client_id": "740196834740-3qgrbf0kacjodv4art0hmcrkqgfu8g8g.apps.googleusercontent.com",
+              "client_id": "740196834740-vv70es2lcfgmdd3jn0inbosdgmvkkk2t.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "forkfit.app.forkfitpreview"
+                "bundle_id": "forkfit.app.forkfitprod"
               }
             }
           ]
@@ -59,26 +43,18 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:740196834740:android:3aede379624519c706a6e1",
+        "mobilesdk_app_id": "1:740196834740:android:d4e1f19767ca7d1306a6e1",
         "android_client_info": {
-          "package_name": "forkfit.app.forkfitpreview"
+          "package_name": "forkfit.app.forkfitprod"
         }
       },
       "oauth_client": [
         {
-          "client_id": "740196834740-g1hoksflreruask0busf33vvke9sb9dn.apps.googleusercontent.com",
+          "client_id": "740196834740-i4v1acqir645ce0dul65uisv94vnouvh.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "forkfit.app.forkfitpreview",
-            "certificate_hash": "278e2ab0c696c1c6284f54a3d2f895ca191b9518"
-          }
-        },
-        {
-          "client_id": "740196834740-ugtf3jafr9808h69l9carn8ddvgf08od.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "forkfit.app.forkfitpreview",
-            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+            "package_name": "forkfit.app.forkfitprod",
+            "certificate_hash": "ff3ab36fd86e2c5139f34f1f8fc9274c9b2dff5e"
           }
         },
         {
@@ -99,10 +75,10 @@
               "client_type": 3
             },
             {
-              "client_id": "740196834740-3qgrbf0kacjodv4art0hmcrkqgfu8g8g.apps.googleusercontent.com",
+              "client_id": "740196834740-vv70es2lcfgmdd3jn0inbosdgmvkkk2t.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "forkfit.app.forkfitpreview"
+                "bundle_id": "forkfit.app.forkfitprod"
               }
             }
           ]
