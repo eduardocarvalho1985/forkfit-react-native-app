@@ -8,6 +8,7 @@ import * as Application from 'expo-application';
 import { PrivacyBottomSheet } from '../../../components/PrivacyBottomSheet';
 import { HelpBottomSheet } from '../../../components/HelpBottomSheet';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useRouter } from 'expo-router';
 import {
   getNotificationPermissionStatus,
   requestNotificationPermissions,
@@ -61,6 +62,7 @@ export default function SettingsScreen() {
   const privacyBottomSheetRef = useRef<BottomSheetModal>(null);
   const helpBottomSheetRef = useRef<BottomSheetModal>(null);
   const { signOut } = useAuth();
+  const router = useRouter();
 
   // Version display logic
   const getVersionInfo = () => {
@@ -240,6 +242,10 @@ export default function SettingsScreen() {
 
   const handleHelpPress = () => {
     helpBottomSheetRef.current?.present();
+  };
+
+  const handleDebugPress = () => {
+    router.push('/(app)/debug');
   };
 
   const handleLogout = async () => {
@@ -588,6 +594,16 @@ export default function SettingsScreen() {
                 <View style={styles.actionText}>
                   <Text style={styles.actionLabel}>Ajuda</Text>
                   <Text style={styles.actionSubtext}>Suporte e documentação</Text>
+                </View>
+                <Icon name="chevron-forward" size={16} color="rgba(31,41,55,0.35)" />
+              </TouchableOpacity>
+
+              {/* Debug Screen - Available for testing backend connectivity */}
+              <TouchableOpacity style={styles.actionRow} onPress={handleDebugPress}>
+                <Icon name="bug-outline" style={styles.actionIcon} />
+                <View style={styles.actionText}>
+                  <Text style={styles.actionLabel}>Debug Backend</Text>
+                  <Text style={styles.actionSubtext}>Diagnosticar problemas de conectividade</Text>
                 </View>
                 <Icon name="chevron-forward" size={16} color="rgba(31,41,55,0.35)" />
               </TouchableOpacity>

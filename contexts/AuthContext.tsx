@@ -18,6 +18,7 @@ import { api, BackendUser } from '../services/api';
 import { getFirebaseErrorMessage } from '../utils/firebaseErrors';
 import { appleAuth } from '../services/appleAuth';
 import jwt_decode from 'jwt-decode';
+import Constants from 'expo-constants';
 
 // Configure Google Sign-In
 GoogleSignin.configure({
@@ -79,6 +80,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     console.log('🔧 Auth object:', getAuth());
     console.log('📊 Initial loading state:', loading);
     console.log('👤 Initial user state:', user);
+    
+    // 🚨 DEBUG: Log environment configuration
+    console.log('🌐 DEBUG: Current API URL from Constants:', Constants.expoConfig?.extra?.API_URL);
+    console.log('🔧 DEBUG: Build Profile from env:', process.env.EAS_BUILD_PROFILE);
+    console.log('📱 DEBUG: All expo config extra:', Constants.expoConfig?.extra);
     
     const unsubscribe = onAuthStateChanged(
       getAuth(),
@@ -149,9 +155,32 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       console.log('🚀 Starting backend sync for:', firebaseUser.uid);
       
+      // 🚨 DEBUG: Enhanced token debugging
+      const debugToken = async (firebaseUser: FirebaseAuthTypes.User) => {
+        const token = await firebaseUser.getIdToken(false);
+        console.log('🔍 Token Debug Info:');
+        console.log('  - Length:', token?.length);
+        console.log('  - First 50 chars:', token?.substring(0, 50));
+        
+        // Decode token to check claims
+        try {
+          const decoded = jwt_decode(token) as any;
+          console.log('🔍 Token Claims:');
+          console.log('  - aud (audience):', decoded.aud);
+          console.log('  - iss (issuer):', decoded.iss);
+          console.log('  - exp (expires):', new Date(decoded.exp * 1000));
+          console.log('  - uid:', decoded.uid);
+          console.log('  - email:', decoded.email);
+          console.log('  - firebase project:', decoded.firebase?.project_id);
+        } catch (e) {
+          console.error('❌ Token decode failed:', e);
+        }
+        return token;
+      };
+      
       // Verify we have a valid token before proceeding
       console.log('🔑 Verifying token before backend sync...');
-      const token = await firebaseUser.getIdToken(false);
+      const token = await debugToken(firebaseUser);
       console.log('✅ Token verification successful, length:', token?.length || 0);
       console.log('🔒 Backend sync proceeding with valid token');
       
@@ -168,13 +197,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
         
         // Step 1: Sync basic user with backend
         console.log('📝 Step 1: Syncing basic user...');
-        const backendUser = await api.syncUser({
+        
+        // 🚨 DEBUG: Log the API call details
+        const syncData = {
           uid: firebaseUser.uid,
           email: firebaseUser.email || '',
           name: firebaseUser.email?.split('@')[0] || 'User',
           displayName: firebaseUser.email?.split('@')[0] || 'User',
           photoURL: firebaseUser.photoURL
-        });
+        };
+        console.log('📤 DEBUG: Sync API call data:', syncData);
+        console.log('🌐 DEBUG: API URL being used:', Constants.expoConfig?.extra?.API_URL);
+        
+        const backendUser = await api.syncUser(syncData);
         console.log('✅ Step 1 complete:', backendUser);
         
         // Step 2: Update user with onboarding data
@@ -231,6 +266,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         // Try to get existing user profile
         console.log('🔍 Fetching existing user profile...');
+        console.log('🌐 DEBUG: API URL for profile fetch:', Constants.expoConfig?.extra?.API_URL);
+        console.log('👤 DEBUG: Fetching profile for UID:', firebaseUser.uid);
+        
         const existingUser = await api.getUserProfile(firebaseUser.uid, await firebaseUser.getIdToken());
         console.log('✅ Existing user found:', existingUser);
         console.log('🔍 Nutrition data in existingUser:', {
