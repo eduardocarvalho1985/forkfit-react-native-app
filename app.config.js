@@ -50,6 +50,26 @@ const validatePackageName = () => {
   return packageName;
 };
 
+// ✅ ADD: Dynamic API URL configuration function
+const getApiUrl = () => {
+  const profile = process.env.EAS_BUILD_PROFILE;
+  let apiUrl;
+  
+  if (profile === 'development') {
+    // Use dev API URL from EAS secret
+    apiUrl = process.env.API_URL_DEV || 'https://nutri-snapp.replit.app/api';
+  } else if (profile === 'preview') {
+    // Preview uses dev environment for testing
+    apiUrl = process.env.API_URL_DEV || 'https://nutri-snapp.replit.app/api';
+  } else {
+    // Production uses prod API URL from EAS secret
+    apiUrl = process.env.API_URL_PROD || 'https://forkfit-api-prod.replit.app/api';
+  }
+  
+  console.log(`🌐 API URL for ${profile || 'default'} profile: ${apiUrl}`);
+  return apiUrl;
+};
+
 // ✅ ADD: Dynamic Firebase configuration functions
 const getFirebaseConfig = () => {
   const profile = process.env.EAS_BUILD_PROFILE;
@@ -174,7 +194,9 @@ export default {
       router: {},
       eas: {
         projectId: 'b02a1a41-6a08-4170-aaf0-e48a411490b9'
-      }
+      },
+      // ✅ ADD: Dynamic API URL for runtime access
+      API_URL: getApiUrl()
     },
     owner: 'forkfit-app'
   }

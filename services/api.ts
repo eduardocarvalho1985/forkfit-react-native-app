@@ -133,8 +133,26 @@ export interface OnboardingCompleteRequest {
 }
 
 export class ForkFitAPI {
-  // Updated with working backend URL
-  private baseUrl = "https://forkfit.app/api";
+  // ✅ UPDATED: Dynamic API URL from environment configuration
+  private getBaseUrl(): string {
+    try {
+      // Import Constants dynamically to avoid build-time issues
+      const Constants = require('expo-constants').default;
+      const apiUrl = Constants.expoConfig?.extra?.API_URL;
+      
+      if (apiUrl) {
+        console.log(`🌐 Using dynamic API URL: ${apiUrl}`);
+        return apiUrl;
+      }
+      
+      // Fallback to hardcoded URL if dynamic URL is not available
+      console.warn('⚠️ Dynamic API URL not found, using fallback');
+      return "https://forkfit.app/api";
+    } catch (error) {
+      console.warn('⚠️ Failed to get dynamic API URL, using fallback:', error);
+      return "https://forkfit.app/api";
+    }
+  }
 
   async request<T>(
     endpoint: string,
@@ -164,7 +182,7 @@ export class ForkFitAPI {
       config.body = JSON.stringify(body);
     }
 
-    const fullUrl = `${this.baseUrl}${endpoint}`;
+    const fullUrl = `${this.getBaseUrl()}${endpoint}`;
     console.log(`🌐 API ${method} ${fullUrl}`);
     console.log(`📤 Request body:`, body ? JSON.stringify(body, null, 2) : 'No body');
     console.log(`🔑 Has token:`, !!token);
