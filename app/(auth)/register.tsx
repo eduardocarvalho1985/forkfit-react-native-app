@@ -158,8 +158,8 @@ export default function Register() {
         return;
       }
       
-      // Start Google sign-in process
-      await signInWithGoogle();
+      // Start Google sign-in process with onboarding data
+      await signInWithGoogle(onboardingData);
       
       // Note: The AuthContext will handle the rest of the flow
       // We don't need to navigate here as the auth state change will handle it
@@ -185,8 +185,8 @@ export default function Register() {
         return;
       }
       
-      // Start Apple sign-in process
-      await signInWithApple();
+      // Start Apple sign-in process with onboarding data
+      await signInWithApple(onboardingData);
       
       // Note: The AuthContext will handle the rest of the flow
       // We don't need to navigate here as the auth state change will handle it

@@ -74,8 +74,8 @@ export interface AuthContextData {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, onboardingData?: any) => Promise<void>;
   signOut: () => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
-  signInWithApple: () => Promise<void>;
+  signInWithGoogle: (onboardingData?: any) => Promise<void>;
+  signInWithApple: (onboardingData?: any) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   syncUser: () => Promise<void>;
   updateUserState: (updates: Partial<AppUser>) => void;
@@ -437,9 +437,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (onboardingData?: any) => {
     try {
       console.log('Starting Google Sign-In process...');
+      console.log('📦 Onboarding data provided:', onboardingData ? 'Yes' : 'No');
+
+      // Store onboarding data for later use in syncUserWithBackend (same as signUp)
+      if (onboardingData) {
+        console.log('💾 Storing onboarding data for new Google user:', onboardingData);
+        console.log('📊 Onboarding data keys:', Object.keys(onboardingData));
+        await AsyncStorage.setItem('onboardingData', JSON.stringify(onboardingData));
+        console.log('✅ Onboarding data stored in AsyncStorage');
+      } else {
+        console.log('⚠️ No onboarding data provided for Google sign-in');
+      }
 
       // Check if your device supports Google Play
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
@@ -466,18 +477,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const userCredential = await signInWithCredential(getAuth(), googleCredential);
       console.log('User signed in with Google:', userCredential.user.uid);
 
-      // Store onboarding data if available (for new users)
-      // Note: We'll need to get this from the registration context
-      // For now, the user will be handled through onAuthStateChanged
-
-      // User will be set through onAuthStateChanged listener
+      // User will be set through onAuthStateChanged listener with stored onboarding data
     } catch (error: any) {
       throw new Error(getFirebaseErrorMessage(error.code));
     }
   };
 
-  const signInWithApple = async () => {
+  const signInWithApple = async (onboardingData?: any) => {
     try {
+      console.log('Starting Apple Sign-In process...');
+      console.log('📦 Onboarding data provided:', onboardingData ? 'Yes' : 'No');
+
+      // Store onboarding data for later use in syncUserWithBackend (same as signUp)
+      if (onboardingData) {
+        console.log('💾 Storing onboarding data for new Apple user:', onboardingData);
+        console.log('📊 Onboarding data keys:', Object.keys(onboardingData));
+        await AsyncStorage.setItem('onboardingData', JSON.stringify(onboardingData));
+        console.log('✅ Onboarding data stored in AsyncStorage');
+      } else {
+        console.log('⚠️ No onboarding data provided for Apple sign-in');
+      }
+
       // Check if Apple authentication is available (iOS only)
       if (Platform.OS !== 'ios' || !appleAuth) {
         throw new Error('Apple Sign-In is only available on iOS devices');
