@@ -1,11 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Platform, Alert, Linking } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { useFocusEffect } from '@react-navigation/native';
+import * as Application from 'expo-application';
 import { PrivacyBottomSheet } from '../../../components/PrivacyBottomSheet';
 import { HelpBottomSheet } from '../../../components/HelpBottomSheet';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useRouter } from 'expo-router';
 import {
   getNotificationPermissionStatus,
   requestNotificationPermissions,
@@ -25,6 +28,32 @@ const TEXT_DARK = '#1F2937';
 const TEXT_LIGHT = '#64748b';
 const BORDER_LIGHT = '#e2e8f0';
 
+// Design system constants
+const ICON_SIZE = 24;
+const ICON_COLOR_DEFAULT = '#1F2937';
+const ICON_COLOR_ACCENT = '#FF725E';
+const ROW_HEIGHT = 64;
+const CARD_RADIUS = 12;
+const CARD_PADDING = 16;
+const DIVIDER_INSET = 52;
+
+// Feature flags for MVP launch
+// Weekly reports and daily reminders features are temporarily disabled to simplify the MVP launch
+// This allows us to focus on core functionality while preserving the code for future releases
+// To re-enable: change the respective flags to true
+const ENABLE_WEEKLY_REPORTS = false; // Disabled for MVP - can be re-enabled in future releases
+const ENABLE_DAILY_REMINDERS = false; // Disabled for MVP - can be re-enabled in future releases
+
+// Unified Icon component with design system defaults
+const Icon = ({ name, size = ICON_SIZE, color = ICON_COLOR_DEFAULT, style }: {
+  name: keyof typeof Ionicons.glyphMap;
+  size?: number;
+  color?: string;
+  style?: any;
+}) => (
+  <Ionicons name={name} size={size} color={color} style={style} />
+);
+
 export default function SettingsScreen() {
   const [dailyReminders, setDailyReminders] = useState(true);
   const [weeklyReports, setWeeklyReports] = useState(true);
@@ -33,6 +62,41 @@ export default function SettingsScreen() {
   const privacyBottomSheetRef = useRef<BottomSheetModal>(null);
   const helpBottomSheetRef = useRef<BottomSheetModal>(null);
   const { signOut } = useAuth();
+  const router = useRouter();
+
+  // Version display logic
+  const getVersionInfo = () => {
+    const appVersion = Application.nativeApplicationVersion || '1.0.0';
+    const buildVersion = Application.nativeBuildVersion || '1';
+    
+    // Determine build environment based on app name or bundle identifier
+    const appName = Application.applicationName || '';
+    const bundleId = Application.applicationId || '';
+    
+    let buildTag = '';
+    let buildType = 'production';
+    
+    // Check for development builds
+    if (appName.includes('Dev') || bundleId.includes('dev')) {
+      buildTag = 'DEV';
+      buildType = 'development';
+    }
+    // Check for preview builds  
+    else if (appName.includes('Preview') || bundleId.includes('preview')) {
+      buildTag = 'PREVIEW';
+      buildType = 'preview';
+    }
+    
+    return {
+      appVersion,
+      buildVersion,
+      buildTag,
+      buildType,
+      displayVersion: buildTag ? `${buildTag} v${appVersion}` : `v${appVersion}`
+    };
+  };
+
+  const versionInfo = getVersionInfo();
 
   // Check notification permission status and preferences on mount
   useEffect(() => {
@@ -60,8 +124,10 @@ export default function SettingsScreen() {
   const loadNotificationPreferences = async () => {
     try {
       const preferences = await getNotificationPreferences();
-      setDailyReminders(preferences.dailyReminders);
-      setWeeklyReports(preferences.weeklyReports);
+      // Daily reminders disabled for MVP - always set to false
+      setDailyReminders(ENABLE_DAILY_REMINDERS ? preferences.dailyReminders : false);
+      // Weekly reports disabled for MVP - always set to false
+      setWeeklyReports(ENABLE_WEEKLY_REPORTS ? preferences.weeklyReports : false);
     } catch (error) {
       console.error('Error loading notification preferences:', error);
     }
@@ -76,7 +142,11 @@ export default function SettingsScreen() {
           setNotificationsEnabled(true);
           setPermissionStatus('granted');
           // Update preferences when notifications are enabled
-          await updateNotificationPreferences(dailyReminders, weeklyReports);
+          // Daily reminders and weekly reports disabled for MVP - always pass false
+          await updateNotificationPreferences(
+            ENABLE_DAILY_REMINDERS ? dailyReminders : false, 
+            ENABLE_WEEKLY_REPORTS ? weeklyReports : false
+          );
           Alert.alert(
             'Notificações Ativadas!',
             'Agora você receberá lembretes e atualizações importantes.',
@@ -122,13 +192,20 @@ export default function SettingsScreen() {
   };
 
   const handleDailyRemindersToggle = async (enabled: boolean) => {
+    // Daily reminders disabled for MVP - this function is preserved for future use
+    if (!ENABLE_DAILY_REMINDERS) return;
+    
     setDailyReminders(enabled);
     if (notificationsEnabled) {
-      await updateNotificationPreferences(enabled, weeklyReports);
+      // Weekly reports disabled for MVP - always pass false
+      await updateNotificationPreferences(enabled, ENABLE_WEEKLY_REPORTS ? weeklyReports : false);
     }
   };
 
   const handleWeeklyReportsToggle = async (enabled: boolean) => {
+    // Weekly reports disabled for MVP - this function is preserved for future use
+    if (!ENABLE_WEEKLY_REPORTS) return;
+    
     setWeeklyReports(enabled);
     if (notificationsEnabled) {
       await updateNotificationPreferences(dailyReminders, enabled);
@@ -165,6 +242,10 @@ export default function SettingsScreen() {
 
   const handleHelpPress = () => {
     helpBottomSheetRef.current?.present();
+  };
+
+  const handleDebugPress = () => {
+    router.push('/(app)/debug');
   };
 
   const handleLogout = async () => {
@@ -388,7 +469,7 @@ export default function SettingsScreen() {
               {/* Push Notifications Toggle */}
               <View style={styles.settingRow}>
                 <View style={styles.settingInfo}>
-                  <FontAwesome6 name="bell" size={20} color={CORAL} style={styles.settingIcon} />
+                  <Icon name="notifications-outline" style={styles.settingIcon} />
                   <View style={styles.settingText}>
                     <Text style={styles.settingLabel}>Notificações Push</Text>
                     <Text style={styles.settingSubtext}>
@@ -420,27 +501,31 @@ export default function SettingsScreen() {
                 </View>
               )}
 
-              {/* Daily Reminders Toggle */}
-              <View style={styles.settingRow}>
-                <View style={styles.settingInfo}>
-                  <FontAwesome6 name="clock" size={20} color={CORAL} style={styles.settingIcon} />
-                  <View style={styles.settingText}>
-                    <Text style={styles.settingLabel}>Lembretes diários</Text>
-                    <Text style={styles.settingSubtext}>Receba lembretes para registrar suas refeições</Text>
+              {/* Daily Reminders Toggle - HIDDEN FOR MVP */}
+              {/* TODO: Re-enable when daily reminders feature is ready for production */}
+              {ENABLE_DAILY_REMINDERS && (
+                <View style={styles.settingRow}>
+                  <View style={styles.settingInfo}>
+                    <FontAwesome6 name="clock" size={20} color={CORAL} style={styles.settingIcon} />
+                    <View style={styles.settingText}>
+                      <Text style={styles.settingLabel}>Lembretes diários</Text>
+                      <Text style={styles.settingSubtext}>Receba lembretes para registrar suas refeições</Text>
+                    </View>
                   </View>
+                  <Switch
+                    value={dailyReminders}
+                    onValueChange={handleDailyRemindersToggle}
+                    trackColor={{ false: '#f1f5f9', true: CORAL }}
+                    thumbColor={Platform.OS === 'android' ? '#fff' : ''}
+                    ios_backgroundColor="#f1f5f9"
+                    disabled={!notificationsEnabled}
+                  />
                 </View>
-                <Switch
-                  value={dailyReminders}
-                  onValueChange={handleDailyRemindersToggle}
-                  trackColor={{ false: '#f1f5f9', true: CORAL }}
-                  thumbColor={Platform.OS === 'android' ? '#fff' : ''}
-                  ios_backgroundColor="#f1f5f9"
-                  disabled={!notificationsEnabled}
-                />
-              </View>
+              )}
 
-              {/* Weekly Reports Toggle */}
-              {notificationsEnabled && (
+              {/* Weekly Reports Toggle - HIDDEN FOR MVP */}
+              {/* TODO: Re-enable when weekly reports feature is ready for production */}
+              {ENABLE_WEEKLY_REPORTS && notificationsEnabled && (
                 <View style={styles.settingRow}>
                   <View style={styles.settingInfo}>
                     <FontAwesome6 name="chart-line" size={20} color={CORAL} style={styles.settingIcon} />
@@ -462,12 +547,12 @@ export default function SettingsScreen() {
               {/* Pause Notifications Action */}
               {notificationsEnabled && (
                 <TouchableOpacity style={[styles.settingRow, styles.lastRow]} onPress={handlePauseNotifications}>
-                  <FontAwesome6 name="pause" size={20} color={CORAL} style={styles.settingIcon} />
+                  <Icon name="pause-circle-outline" style={styles.settingIcon} />
                   <View style={styles.settingText}>
                     <Text style={styles.settingLabel}>Pausar Notificações</Text>
                     <Text style={styles.settingSubtext}>Pausar temporariamente</Text>
                   </View>
-                  <FontAwesome6 name="chevron-right" size={16} color={TEXT_LIGHT} />
+                  <Icon name="chevron-forward" size={16} color="rgba(31,41,55,0.35)" />
                 </TouchableOpacity>
               )}
             </View>
@@ -478,62 +563,88 @@ export default function SettingsScreen() {
             <Text style={styles.sectionTitle}>Geral</Text>
             <View style={styles.card}>
               <TouchableOpacity style={styles.actionRow}>
-                <FontAwesome6 name="globe" size={20} color={TEXT_DARK} style={styles.actionIcon} />
+                <Icon name="globe-outline" style={styles.actionIcon} />
                 <View style={styles.actionText}>
                   <Text style={styles.actionLabel}>Idioma</Text>
                   <Text style={styles.actionValue}>Português (BR)</Text>
                 </View>
-                <FontAwesome6 name="chevron-right" size={16} color={TEXT_LIGHT} />
+                <Icon name="chevron-forward" size={16} color="rgba(31,41,55,0.35)" />
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.actionRow}>
-                <FontAwesome6 name="credit-card" size={20} color={TEXT_DARK} style={styles.actionIcon} />
+                <Icon name="card-outline" style={styles.actionIcon} />
                 <View style={styles.actionText}>
                   <Text style={styles.actionLabel}>Gerenciar Assinatura</Text>
                   <Text style={styles.actionSubtext}>Configurar pagamentos e planos</Text>
                 </View>
-                <FontAwesome6 name="chevron-right" size={16} color={TEXT_LIGHT} />
+                <Icon name="chevron-forward" size={16} color="rgba(31,41,55,0.35)" />
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.actionRow} onPress={handlePrivacyPress}>
-                <FontAwesome6 name="shield-halved" size={20} color={TEXT_DARK} style={styles.actionIcon} />
+                <Icon name="shield-outline" style={styles.actionIcon} />
                 <View style={styles.actionText}>
                   <Text style={styles.actionLabel}>Privacidade</Text>
                   <Text style={styles.actionSubtext}>Configurações de privacidade e dados</Text>
                 </View>
-                <FontAwesome6 name="chevron-right" size={16} color={TEXT_LIGHT} />
+                <Icon name="chevron-forward" size={16} color="rgba(31,41,55,0.35)" />
               </TouchableOpacity>
 
-              <TouchableOpacity style={[styles.actionRow, styles.lastRow]} onPress={handleHelpPress}>
-                <FontAwesome6 name="circle-question" size={20} color={TEXT_DARK} style={styles.actionIcon} />
+              <TouchableOpacity style={styles.actionRow} onPress={handleHelpPress}>
+                <Icon name="help-circle-outline" style={styles.actionIcon} />
                 <View style={styles.actionText}>
                   <Text style={styles.actionLabel}>Ajuda</Text>
                   <Text style={styles.actionSubtext}>Suporte e documentação</Text>
                 </View>
-                <FontAwesome6 name="chevron-right" size={16} color={TEXT_LIGHT} />
+                <Icon name="chevron-forward" size={16} color="rgba(31,41,55,0.35)" />
+              </TouchableOpacity>
+
+              {/* 
+              TODO: Re-enable with Firebase Remote Config feature flag after launch
+              Debug Screen - Available for testing backend connectivity 
+              <TouchableOpacity style={styles.actionRow} onPress={handleDebugPress}>
+                <Icon name="bug-outline" style={styles.actionIcon} />
+                <View style={styles.actionText}>
+                  <Text style={styles.actionLabel}>Debug Backend</Text>
+                  <Text style={styles.actionSubtext}>Diagnosticar problemas de conectividade</Text>
+                </View>
+                <Icon name="chevron-forward" size={16} color="rgba(31,41,55,0.35)" />
+              </TouchableOpacity>
+              */}
+
+              <TouchableOpacity style={[styles.actionRow, styles.lastRow]} onPress={handleLogout}>
+                <Icon name="log-out-outline" style={styles.actionIcon} />
+                <View style={styles.actionText}>
+                  <Text style={[styles.actionLabel, styles.logoutText]}>Sair da conta</Text>
+                  <Text style={styles.actionSubtext}>Fazer logout da sua conta</Text>
+                </View>
+                <Icon name="chevron-forward" size={16} color="rgba(31,41,55,0.35)" />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Logout Section */}
+          {/* Delete Account Section */}
           <View style={styles.section}>
-            <View style={styles.logoutButtonsContainer}>
-              <TouchableOpacity style={[styles.logoutCard, styles.deleteAccountCard]} onPress={handleDeleteAccount}>
-                <FontAwesome6 name="user-xmark" size={20} color="#FF3B30" style={styles.logoutIcon} />
-                <Text style={[styles.logoutText, styles.deleteAccountText]}>Excluir conta</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.logoutCard} onPress={handleLogout}>
-                <FontAwesome6 name="arrow-right-from-bracket" size={20} color={CORAL} style={styles.logoutIcon} />
-                <Text style={styles.logoutText}>Sair da conta</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity style={styles.deleteAccountCard} onPress={handleDeleteAccount}>
+              <Icon name="trash-outline" color="#FF3B30" style={styles.deleteIcon} />
+              <Text style={styles.deleteAccountText}>Excluir conta</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Footer */}
           <View style={styles.footer}>
             <Text style={styles.footerTitle}>ForkFit</Text>
-            <Text style={styles.footerVersion}>v0.1.0</Text>
+            <View style={styles.versionContainer}>
+              {versionInfo.buildTag && (
+                <View style={[
+                  styles.buildTag,
+                  versionInfo.buildType === 'development' ? styles.devTag : styles.previewTag
+                ]}>
+                  <Text style={styles.buildTagText}>{versionInfo.buildTag}</Text>
+                </View>
+              )}
+              <Text style={styles.footerVersion}>{versionInfo.displayVersion}</Text>
+            </View>
+            <Text style={styles.footerBuildNumber}>Build: {versionInfo.buildVersion}</Text>
             <Text style={styles.footerCopyright}>© 2025 ForkFit. Todos os direitos reservados.</Text>
           </View>
         </ScrollView>
@@ -578,10 +689,15 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#fff',
     marginHorizontal: 16,
-    borderRadius: 12,
+    borderRadius: CARD_RADIUS,
     borderWidth: 1,
     borderColor: BORDER_LIGHT,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
 
   // Plan Section Styles
@@ -620,9 +736,11 @@ const styles = StyleSheet.create({
   settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: CARD_PADDING,
+    minHeight: ROW_HEIGHT,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: 'rgba(31,41,55,0.08)',
+    marginLeft: 0,
   },
   settingInfo: {
     flex: 1,
@@ -631,7 +749,7 @@ const styles = StyleSheet.create({
   },
   settingIcon: {
     marginRight: 12,
-    width: 20,
+    width: ICON_SIZE,
   },
   settingText: {
     flex: 1,
@@ -652,13 +770,15 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: CARD_PADDING,
+    minHeight: ROW_HEIGHT,
     borderBottomWidth: 1,
-    borderBottomColor: '#f8fafc',
+    borderBottomColor: 'rgba(31,41,55,0.08)',
+    marginLeft: 0,
   },
   actionIcon: {
     marginRight: 12,
-    width: 20,
+    width: ICON_SIZE,
   },
   actionText: {
     flex: 1,
@@ -677,6 +797,9 @@ const styles = StyleSheet.create({
   actionSubtext: {
     fontSize: 13,
     color: TEXT_LIGHT,
+  },
+  logoutText: {
+    color: ICON_COLOR_ACCENT,
   },
 
   // Last row in sections
@@ -702,35 +825,30 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Logout Section
-  logoutCard: {
+  // Delete Account Section
+  deleteAccountCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
     marginHorizontal: 16,
-    padding: 16,
-    borderRadius: 12,
+    padding: CARD_PADDING,
+    minHeight: ROW_HEIGHT,
+    borderRadius: CARD_RADIUS,
     borderWidth: 1,
     borderColor: BORDER_LIGHT,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  logoutIcon: {
+  deleteIcon: {
     marginRight: 12,
-  },
-  logoutText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: CORAL,
-  },
-
-  // Adicione estes estilos ao objeto styles
-  logoutButtonsContainer: {
-    flexDirection: 'column',
-    gap: 12,
-  },
-  deleteAccountCard: {
-    borderColor: '#FFE0E0',
+    width: ICON_SIZE,
   },
   deleteAccountText: {
+    fontSize: 16,
+    fontWeight: '600',
     color: '#FF3B30',
   },
 
@@ -746,8 +864,35 @@ const styles = StyleSheet.create({
     color: CORAL,
     marginBottom: 4,
   },
+  versionContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  buildTag: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  devTag: {
+    backgroundColor: '#FF6B6B', // Red for dev
+  },
+  previewTag: {
+    backgroundColor: '#4ECDC4', // Teal for preview
+  },
+  buildTagText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+  },
   footerVersion: {
     fontSize: 14,
+    color: TEXT_LIGHT,
+  },
+  footerBuildNumber: {
+    fontSize: 12,
     color: TEXT_LIGHT,
     marginBottom: 8,
   },

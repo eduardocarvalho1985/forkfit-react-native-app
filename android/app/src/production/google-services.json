@@ -1,38 +1,45 @@
-
 {
   "project_info": {
-    "project_number": "740196834740",
-    "project_id": "nutrisnapapp2025",
-    "storage_bucket": "nutrisnapapp2025.firebasestorage.app"
+    "project_number": "879388993252",
+    "project_id": "forkfit-prod",
+    "storage_bucket": "forkfit-prod.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:740196834740:android:d4e1f19767ca7d1306a6e1",
+        "mobilesdk_app_id": "1:879388993252:android:e986a145e1e32d887f2ef1",
         "android_client_info": {
           "package_name": "forkfit.app.forkfitprod"
         }
       },
       "oauth_client": [
         {
-          "client_id": "740196834740-29etdgq3tcedr9drn10iaf3qb98pkogd.apps.googleusercontent.com",
+          "client_id": "879388993252-84fpqcpllve9jrreb13a9gj7ao5vgvgr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "forkfit.app.forkfitprod",
+            "certificate_hash": "8fdaa7e8fff7e14521b6587e73b7d1e458c6878e"
+          }
+        },
+        {
+          "client_id": "879388993252-121oi05vdvslfqq5tqffrmrl998k60ip.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBzrryqKfpqxkf5fzpj_NbdWD5QfM7Kj7g"
+          "current_key": "AIzaSyDMmkKuIs8f-EnS77LNtQjBgeUNUBY--Tk"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "740196834740-29etdgq3tcedr9drn10iaf3qb98pkogd.apps.googleusercontent.com",
+              "client_id": "879388993252-121oi05vdvslfqq5tqffrmrl998k60ip.apps.googleusercontent.com",
               "client_type": 3
             },
             {
-              "client_id": "740196834740-vv70es2lcfgmdd3jn0inbosdgmvkkk2t.apps.googleusercontent.com",
+              "client_id": "879388993252-rfeh85p62e9hk06c15ff7t8fq03dgoo0.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
                 "bundle_id": "forkfit.app.forkfitprod"

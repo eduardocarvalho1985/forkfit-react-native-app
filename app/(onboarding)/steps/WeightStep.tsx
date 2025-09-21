@@ -18,7 +18,7 @@ interface WeightStepProps {
 
 export default function WeightStep({ onComplete }: WeightStepProps) {
   const { user, syncUser } = useAuth();
-  const { getStepData, updateStepData, getCurrentStepData, clearOnboardingData } = useOnboarding();
+  const { getStepData, updateStepData, getCurrentStepData, clearOnboardingData, calculatePlan } = useOnboarding();
   const [weightKg, setWeightKg] = useState(70); // Default to 70kg
   const [unit, setUnit] = useState<'kg' | 'lbs'>('kg');
   const [loading, setLoading] = useState(false);
@@ -77,6 +77,19 @@ export default function WeightStep({ onComplete }: WeightStepProps) {
       
       // Get all onboarding data from context
       const completeOnboardingData = getCurrentStepData();
+      
+      // *** FIX: Calculate and include the nutrition plan ***
+      const calculatedPlan = calculatePlan();
+      if (calculatedPlan) {
+        completeOnboardingData.calories = calculatedPlan.calories;
+        completeOnboardingData.protein = calculatedPlan.protein;
+        completeOnboardingData.carbs = calculatedPlan.carbs;
+        completeOnboardingData.fat = calculatedPlan.fat;
+        console.log('✅ Nutrition plan calculated and included:', calculatedPlan);
+      } else {
+        console.warn('⚠️ Could not calculate nutrition plan - missing required data');
+      }
+      
       console.log('Complete onboarding data to save:', completeOnboardingData);
 
       // Get authentication token

@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Switch, Alert, Linking } from 'react-native';
 import { useOnboarding } from '../OnboardingContext';
 import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   getNotificationPermissionStatus,
   requestNotificationPermissions,
-  updateNotificationPreferences
+  clearNotificationData
 } from '../../../services/notificationService';
 
 interface NotificationsStepProps {
@@ -46,8 +47,17 @@ export default function NotificationsStep({ onSetLoading }: NotificationsStepPro
         if (status.granted) {
           setNotificationsEnabled(true);
           setPermissionStatus('granted');
-          // Update preferences when notifications are enabled
-          await updateNotificationPreferences(true, true);
+          
+          // Clear any existing notifications to prevent immediate triggers
+          await clearNotificationData();
+          
+          // Store preference for later scheduling (after onboarding completion)
+          await AsyncStorage.setItem('forkfit_notification_preferences', JSON.stringify({
+            dailyReminders: true,
+            weeklyReports: true,
+            updatedAt: Date.now(),
+          }));
+          
           Alert.alert(
             'Notificações Ativadas!',
             'Agora você receberá lembretes e atualizações importantes.',
@@ -84,8 +94,16 @@ export default function NotificationsStep({ onSetLoading }: NotificationsStepPro
       }
     } else {
       setNotificationsEnabled(false);
-      // Update preferences when disabling
-      await updateNotificationPreferences(false, false);
+      // Clear notification data when disabling
+      await clearNotificationData();
+      
+      // Store preference when disabling
+      await AsyncStorage.setItem('forkfit_notification_preferences', JSON.stringify({
+        dailyReminders: false,
+        weeklyReports: false,
+        updatedAt: Date.now(),
+      }));
+      
       // Reset permission status to undetermined so user can request again
       setPermissionStatus('undetermined');
     }
@@ -139,10 +157,6 @@ export default function NotificationsStep({ onSetLoading }: NotificationsStepPro
             Você pode alterar essa configuração a qualquer momento nas configurações do app.
           </Text>
         </View>
-
-        <Text style={styles.disclaimer}>
-          * Suas informações serão excluídas após gerar o plano.
-        </Text>
       </View>
     </View>
   );
@@ -238,13 +252,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: typography.sm * 1.4,
     fontStyle: 'italic',
-  },
-  disclaimer: {
-    fontSize: typography.sm,
-    color: colors.textTertiary,
-    textAlign: 'center',
-    lineHeight: typography.sm * 1.4,
-    position: 'absolute',
-    bottom: spacing.xxl,
   },
 });

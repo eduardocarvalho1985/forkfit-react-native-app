@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Platform } 
 import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOnboarding } from '@/app/(onboarding)/OnboardingContext';
+import { useOnboardingStorage } from '@/hooks/useOnboardingStorage';
 import { api } from '@/services/api';
 import { colors, spacing, typography, borderRadius } from '@/theme';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -14,6 +15,7 @@ export default function Register() {
   const [loading, setLoading] = useState("");
   const { signUp, signInWithGoogle, signInWithApple } = useAuth();
   const { getCurrentStepData } = useOnboarding();
+  const { data: storageData, isLoading: storageLoading } = useOnboardingStorage();
   
   // Get onboarding data from navigation params
   const params = useLocalSearchParams();
@@ -101,11 +103,13 @@ export default function Register() {
     
     setLoading("email");
     try {
-      // Get all onboarding data
+      // Get all onboarding data - prioritize storage data over context data
       console.log('📊 Register: Getting onboarding data...');
-      const onboardingData = onboardingDataFromParams || getCurrentStepData();
+      const onboardingData = onboardingDataFromParams || storageData || getCurrentStepData();
       console.log('📦 Register: Onboarding data to save:', onboardingData);
       console.log('📊 Register: Onboarding data keys:', onboardingData ? Object.keys(onboardingData) : 'None');
+      console.log('📊 Register: Storage data:', storageData);
+      console.log('📊 Register: Context data:', getCurrentStepData());
       
       if (!onboardingData || Object.keys(onboardingData).length === 0) {
         console.log('❌ Register: No onboarding data found');
@@ -145,8 +149,8 @@ export default function Register() {
     try {
       setLoading("google");
       
-      // Get onboarding data for new users
-      const onboardingData = onboardingDataFromParams || getCurrentStepData();
+      // Get onboarding data for new users - prioritize storage data
+      const onboardingData = onboardingDataFromParams || storageData || getCurrentStepData();
       console.log('Register: Google sign in with onboarding data:', onboardingData);
       
       if (!onboardingData || Object.keys(onboardingData).length === 0) {
@@ -154,8 +158,8 @@ export default function Register() {
         return;
       }
       
-      // Start Google sign-in process
-      await signInWithGoogle();
+      // Start Google sign-in process with onboarding data
+      await signInWithGoogle(onboardingData);
       
       // Note: The AuthContext will handle the rest of the flow
       // We don't need to navigate here as the auth state change will handle it
@@ -172,8 +176,8 @@ export default function Register() {
     try {
       setLoading("apple");
       
-      // Get onboarding data for new users
-      const onboardingData = onboardingDataFromParams || getCurrentStepData();
+      // Get onboarding data for new users - prioritize storage data
+      const onboardingData = onboardingDataFromParams || storageData || getCurrentStepData();
       console.log('Register: Apple sign in with onboarding data:', onboardingData);
       
       if (!onboardingData || Object.keys(onboardingData).length === 0) {
@@ -181,8 +185,8 @@ export default function Register() {
         return;
       }
       
-      // Start Apple sign-in process
-      await signInWithApple();
+      // Start Apple sign-in process with onboarding data
+      await signInWithApple(onboardingData);
       
       // Note: The AuthContext will handle the rest of the flow
       // We don't need to navigate here as the auth state change will handle it

@@ -3,6 +3,7 @@ import { View, StyleSheet, TouchableOpacity, Text, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { OnboardingProvider, useOnboarding } from './OnboardingContext';
+import { useOnboardingStorage } from '@/hooks/useOnboardingStorage';
 import OnboardingProgress from '@/components/OnboardingProgress';
 import IntroCarouselStep from './steps/IntroCarouselStep';
 import GenderStep from './steps/GenderStep';
@@ -92,6 +93,7 @@ function OnboardingContent() {
   const insets = useSafeAreaInsets()
   const { user, syncUser } = useAuth();
   const { isStepValid, getCurrentStepData, clearOnboardingData } = useOnboarding();
+  const { data: storageData, isLoading: storageLoading } = useOnboardingStorage();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('introCarousel');
   const [loading, setLoading] = useState(false);
@@ -118,9 +120,11 @@ function OnboardingContent() {
   useEffect(() => {
     const validateOnboardingData = async () => {
       const currentData = getCurrentStepData();
-      // Check if this is old onboarding data (missing new fields)
-      if (currentData && !currentData.hasOwnProperty('emotionalGoal')) {
-        console.log('Detected old onboarding data, clearing and starting fresh');
+      // Check if this is old onboarding data (missing essential fields)
+      // Only clear if it's truly old data without basic required fields
+      if (currentData && Object.keys(currentData).length > 0 && 
+          (!currentData.goal || !currentData.gender || !currentData.age)) {
+        console.log('Detected old/incomplete onboarding data, clearing and starting fresh');
         await clearOnboardingData();
         setCurrentStep('introCarousel');
       }
@@ -128,6 +132,83 @@ function OnboardingContent() {
     
     validateOnboardingData();
   }, []);
+
+  // Check for existing onboarding data and resume if needed (only on initial load)
+  useEffect(() => {
+    // Wait for storage to finish loading before checking for resume
+    if (storageLoading) {
+      return;
+    }
+    
+    const checkForExistingOnboardingData = async () => {
+      console.log('🔍 Checking for existing onboarding data:', storageData);
+      
+      // If user is already onboarded, clear any residual onboarding data and don't resume
+      if (user?.onboardingCompleted) {
+        console.log('🧹 User already onboarded, clearing residual onboarding data');
+        console.log('🔍 User onboarding status:', user.onboardingCompleted);
+        console.log('🔍 User UID:', user.uid);
+        await clearOnboardingData();
+        return;
+      } else {
+        console.log('⚠️ User onboarding status check:');
+        console.log('  - User exists:', !!user);
+        console.log('  - User UID:', user?.uid);
+        console.log('  - Onboarding completed:', user?.onboardingCompleted);
+        console.log('  - Will proceed with onboarding resume logic...');
+      }
+      
+      // Check if we have substantial onboarding data (more than just basic fields)
+      const hasSubstantialData = storageData && (
+        storageData.gender && 
+        storageData.age && 
+        storageData.height && 
+        storageData.weight && 
+        storageData.goal
+      );
+      
+      if (hasSubstantialData) {
+        console.log('🔄 Resuming onboarding from existing data');
+        
+        // Determine the last completed step based on data
+        let resumeStep: OnboardingStep = 'introCarousel';
+        
+        if (storageData.notificationsEnabled !== undefined) {
+          // User reached notifications step, resume from paywall
+          resumeStep = 'paywall';
+        } else if (storageData.socialProofViewed) {
+          // User reached social proof, resume from notifications
+          resumeStep = 'notifications';
+        } else if (storageData.lossPlanInfo) {
+          // User reached loss plan info, resume from social proof
+          resumeStep = 'socialProof';
+        } else if (storageData.motivatingEvent) {
+          // User reached event choice, resume from loss plan info
+          resumeStep = 'lossPlanInfo';
+        } else if (storageData.motivation) {
+          // User reached motivation, resume from event choice
+          resumeStep = 'eventChoice';
+        } else if (storageData.pacing) {
+          // User reached pacing, resume from motivation
+          resumeStep = 'motivation';
+        } else if (storageData.targetWeight) {
+          // User reached target weight, resume from pacing
+          resumeStep = 'pacing';
+        } else if (storageData.goal) {
+          // User reached goal, resume from target weight
+          resumeStep = 'targetWeight';
+        }
+        
+        console.log(`📍 Resuming onboarding from step: ${resumeStep}`);
+        setCurrentStep(resumeStep);
+      } else {
+        console.log('🆕 Starting fresh onboarding');
+        setCurrentStep('introCarousel');
+      }
+    };
+    
+    checkForExistingOnboardingData();
+  }, [storageLoading, storageData]); // Run when storage loading completes
 
   const getCurrentStepIndex = () => {
     return STEP_ORDER.indexOf(currentStep) + 1;
@@ -278,10 +359,10 @@ function OnboardingContent() {
 
     if (currentStep === 'paywall') {
       return {
-        onPress: handleNext, // Use handleNext to complete onboarding
-        disabled: false, // Paywall step is always accessible
+        onPress: () => {}, // No action needed - PaywallStep handles its own button
+        disabled: true, // Hide the footer button for paywall
         loading: false,
-        buttonText: 'Completar Onboarding'
+        buttonText: ''
       };
     }
     return {
@@ -306,18 +387,20 @@ function OnboardingContent() {
         {renderCurrentStep()}
       </View>
 
-      {/* Fixed Footer - Only Continue Button */}
-      <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.footerPadding }]}>
-        <TouchableOpacity
-          style={[styles.continueButton, getStepProps().disabled && styles.continueButtonDisabled]}
-          onPress={getStepProps().onPress}
-          disabled={getStepProps().disabled}
-        >
-          <Text style={styles.continueButtonText}>
-            {getStepProps().loading ? 'Salvando...' : getStepProps().buttonText}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      {/* Fixed Footer - Only Continue Button (hidden for paywall) */}
+      {currentStep !== 'paywall' && (
+        <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.footerPadding }]}>
+          <TouchableOpacity
+            style={[styles.continueButton, getStepProps().disabled && styles.continueButtonDisabled]}
+            onPress={getStepProps().onPress}
+            disabled={getStepProps().disabled}
+          >
+            <Text style={styles.continueButtonText}>
+              {getStepProps().loading ? 'Salvando...' : getStepProps().buttonText}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }

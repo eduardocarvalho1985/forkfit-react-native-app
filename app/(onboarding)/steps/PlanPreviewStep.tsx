@@ -178,12 +178,6 @@ export default function PlanStep({ onSetLoading }: PlanStepProps) {
           </Text>
         </View>
 
-        {/* CTA Button */}
-        <View style={styles.ctaSection}>
-          <TouchableOpacity style={styles.ctaButton}>
-            <Text style={styles.ctaButtonText}>Começar meu plano</Text>
-          </TouchableOpacity>
-        </View>
       </View>
     </ScrollView>
   );
@@ -336,26 +330,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 16,
     marginBottom: spacing.xs,
-  },
-  ctaSection: {
-    marginTop: spacing.xl,
-    marginBottom: spacing.xl,
-    alignItems: 'center',
-  },
-  ctaButton: {
-    backgroundColor: colors.primary, // Use theme color instead of hardcoded
-    borderRadius: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-    minHeight: 48,
-    minWidth: 200, // Ensure button has good width
-    ...shadows.md,
-  },
-  ctaButtonText: {
-    color: colors.textInverse, // Use theme color instead of hardcoded
-    fontSize: typography.base,
-    fontWeight: typography.semibold,
   },
   caloriesSection: {
     alignItems: 'center',

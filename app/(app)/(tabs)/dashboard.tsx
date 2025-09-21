@@ -29,7 +29,6 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { api, FoodItem, FoodLog, SavedFood } from '../../../services/api';
 import { getAuth } from '@react-native-firebase/auth';
 import { formatNumber } from '../../../utils/formatters';
-import { V1APIDebugPanel } from '../../../components/V1APIDebugPanel';
 
 const MEAL_TYPES = [
   'Café da Manhã',
@@ -129,7 +128,6 @@ export default function DashboardScreen() {
   const [filteredFoods, setFilteredFoods] = useState<FoodItem[]>([]);
   const [foodEditInitialData, setFoodEditInitialData] = useState<any>(null);
   const [foodBottomloading, setFoodBottomLoading] = useState(false);
-  const [debugPanelVisible, setDebugPanelVisible] = useState(false);
 
   // Food database loading state
   const [loadingFoods, setLoadingFoods] = useState(false);
@@ -137,13 +135,19 @@ export default function DashboardScreen() {
   // User data from auth context
   const { user } = useAuth();
 
-  console.log('DashboardScreen: Component rendering, user:', !!user, 'user data:', user ? { uid: user.uid, calories: user.calories } : 'null');
+  console.log('DashboardScreen: Component rendering, user:', !!user, 'user data:', user ? { 
+    uid: user.uid, 
+    calories: user.calories, 
+    protein: user.protein, 
+    carbs: user.carbs, 
+    fat: user.fat 
+  } : 'null');
 
   // Add loading state for user data
   const isLoading = !user;
 
   // Format date for display
-  const formattedDate = format(currentDate, 'dd MMM');
+  const formattedDate = format(currentDate, 'dd MMM', { locale: ptBR });
   const isToday = format(currentDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
   const dateKey = format(currentDate, 'yyyy-MM-dd');
 
@@ -733,15 +737,8 @@ export default function DashboardScreen() {
             <View style={styles.headerContent}>
               <View style={styles.titleSection}>
                 <Text style={styles.appTitle}>ForkFit</Text>
-                <Icon name="restaurant" size={22} color="#fff" style={styles.titleIcon} />
               </View>
               <View style={styles.headerButtons}>
-                <TouchableOpacity 
-                  style={styles.debugButton} 
-                  onPress={() => setDebugPanelVisible(true)}
-                >
-                  <Icon name="bug-outline" size={20} color="#fff" />
-                </TouchableOpacity>
                 <TouchableOpacity style={styles.notificationButton}>
                   <Icon name="notifications-outline" size={26} color="#fff" />
                 </TouchableOpacity>
@@ -757,7 +754,7 @@ export default function DashboardScreen() {
               <Icon name="chevron-back" size={22} color="#FF725E" />
             </TouchableOpacity>
             <View style={styles.dateInfo}>
-              <Text style={styles.dayText}>{isToday ? 'Hoje' : format(currentDate, 'EEEE')}</Text>
+              <Text style={styles.dayText}>{isToday ? 'Hoje' : format(currentDate, 'EEEE', { locale: ptBR })}</Text>
               <Text style={styles.dateText}>{formattedDate}</Text>
             </View>
             <TouchableOpacity onPress={handleNextDay} style={[styles.dateButton, isToday && styles.disabledButton]} disabled={isToday}>
@@ -831,7 +828,7 @@ export default function DashboardScreen() {
 
           {/* Meals Section */}
           <View style={styles.mealsContainer}>
-            <Text style={styles.mealsTitle}>Refeições de {isToday ? 'Hoje' : format(currentDate, "dd 'de' MMMM")}</Text>
+            <Text style={styles.mealsTitle}>Refeições de {isToday ? 'Hoje' : format(currentDate, "dd 'de' MMMM", { locale: ptBR })}</Text>
             {MEAL_TYPES.map((mealType, idx) => (
               <React.Fragment key={mealType}>
                 <MealSection
@@ -976,15 +973,6 @@ export default function DashboardScreen() {
           selectedMealType={selectedMealType || 'Almoço'}
         />
 
-        {/* V1 API Debug Panel Modal */}
-        <Modal
-          isVisible={debugPanelVisible}
-          onBackdropPress={() => setDebugPanelVisible(false)}
-          onBackButtonPress={() => setDebugPanelVisible(false)}
-          style={styles.debugModal}
-        >
-          <V1APIDebugPanel onClose={() => setDebugPanelVisible(false)} />
-        </Modal>
       </View>
     </BottomSheetModalProvider>
   );
@@ -1018,25 +1006,13 @@ const styles = StyleSheet.create({
     marginRight: 8,
     letterSpacing: 0.5,
   },
-  titleIcon: {
-    marginLeft: 4,
-  },
   headerButtons: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  debugButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-  },
   notificationButton: {
     padding: 8,
-  },
-  debugModal: {
-    margin: 0,
-    justifyContent: 'flex-end',
   },
   content: {
     flex: 1,

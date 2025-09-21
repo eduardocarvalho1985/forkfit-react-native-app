@@ -72,10 +72,6 @@ export default function GoalStep({ onSetLoading }: GoalStepProps) {
             </TouchableOpacity>
           ))}
         </View>
-
-        <Text style={styles.disclaimer}>
-          * Suas informações serão excluídas após gerar o plano.
-        </Text>
       </View>
     </View>
   );
@@ -134,13 +130,5 @@ const styles = StyleSheet.create({
   },
   goalLabelSelected: {
     color: colors.textInverse,
-  },
-  disclaimer: {
-    fontSize: typography.sm,
-    color: colors.textTertiary,
-    textAlign: 'center',
-    lineHeight: typography.sm * 1.4,
-    position: 'absolute',
-    bottom: spacing.xxl,
   },
 }); 

@@ -10,19 +10,19 @@ interface MotivationStepProps {
 const MOTIVATION_OPTIONS = [
   {
     value: 'saude',
-    label: 'Saúde'
+    label: 'Melhorar minha Saúde.'
   },
   {
     value: 'energia',
-    label: 'Energia'
+    label: 'Ter mais Energia no dia a dia.'
   },
   {
     value: 'disciplina',
-    label: 'Disciplina'
+    label: 'Desenvolver mais Disciplina.'
   },
   {
     value: 'geral',
-    label: 'Geral'
+    label: 'Outro.'
   }
 ];
 
@@ -79,10 +79,6 @@ export default function MotivationStep({ onSetLoading }: MotivationStepProps) {
             </TouchableOpacity>
           ))}
         </View>
-
-        <Text style={styles.disclaimer}>
-          * Suas informações serão excluídas após gerar o plano.
-        </Text>
       </View>
     </View>
   );
@@ -142,12 +138,5 @@ const styles = StyleSheet.create({
   },
   motivationButtonTextSelected: {
     color: colors.textInverse,
-  },
-  disclaimer: {
-    fontSize: typography.sm,
-    color: colors.textTertiary,
-    textAlign: 'center',
-    lineHeight: typography.sm * 1.4,
-    marginTop: spacing.xl,
   },
 });

@@ -50,6 +50,56 @@ const validatePackageName = () => {
   return packageName;
 };
 
+// ✅ ADD: Dynamic API URL configuration function
+const getApiUrl = () => {
+  const profile = process.env.EAS_BUILD_PROFILE;
+  let apiUrl;
+  
+  if (profile === 'development') {
+    // Use dev API URL from EAS secret
+    apiUrl = process.env.API_URL_DEV || 'https://api.dev.forkfit.app/api';
+  } else if (profile === 'preview') {
+    // Preview uses dev environment for testing
+    apiUrl = process.env.API_URL_DEV || 'https://api.dev.forkfit.app/api';
+  } else {
+    // Production uses prod API URL from EAS secret
+    apiUrl = process.env.API_URL_PROD || 'https://api.forkfit.app/api';
+  }
+  
+  console.log(`🌐 API URL for ${profile || 'default'} profile: ${apiUrl}`);
+  return apiUrl;
+};
+
+// ✅ ADD: Dynamic Firebase configuration functions
+const getFirebaseConfig = () => {
+  const profile = process.env.EAS_BUILD_PROFILE;
+  let config;
+  
+  if (profile === 'development') {
+    config = {
+      ios: './firebase-ios-config/dev/GoogleService-Info.plist',
+      android: './android/app/src/development/google-services.json'
+    };
+  } else if (profile === 'preview') {
+    config = {
+      ios: './firebase-ios-config/preview/GoogleService-Info.plist',
+      android: './android/app/src/preview/google-services.json'
+    };
+  } else {
+    // Default to production
+    config = {
+      ios: './firebase-ios-config/prod/GoogleService-Info.plist',
+      android: './android/app/src/production/google-services.json'
+    };
+  }
+  
+  console.log(`🔥 Firebase config for ${profile || 'default'} profile:`);
+  console.log(`   iOS: ${config.ios}`);
+  console.log(`   Android: ${config.android}`);
+  
+  return config;
+};
+
 export default {
   expo: {
     name: process.env.APP_NAME || 'ForkFit',
@@ -67,9 +117,9 @@ export default {
     },
     ios: {
       supportsTablet: true,
-      googleServicesFile: './GoogleService-Info.plist',
+      googleServicesFile: getFirebaseConfig().ios,
       bundleIdentifier: validateBundleId(),  // ✅ Updated to use validation
-      buildNumber: '1',
+      // buildNumber: '1', // Remove this - will be managed remotely
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false
       },
@@ -79,9 +129,9 @@ export default {
       }
     },
     android: {
-      googleServicesFile: './google-services.json',
+      googleServicesFile: getFirebaseConfig().android,
       package: validatePackageName(),  // ✅ Updated to use validation
-      versionCode: 1,
+      // versionCode: 1, // Remove this - will be managed remotely
       adaptiveIcon: {
         foregroundImage: './assets/images/adaptive-icon.png',
         backgroundColor: '#ff725e'
@@ -144,7 +194,10 @@ export default {
       router: {},
       eas: {
         projectId: 'b02a1a41-6a08-4170-aaf0-e48a411490b9'
-      }
+      },
+      // ✅ ADD: Dynamic API URL and build profile for runtime access
+      API_URL: getApiUrl(),
+      BUILD_PROFILE: process.env.EAS_BUILD_PROFILE || 'unknown'
     },
     owner: 'forkfit-app'
   }

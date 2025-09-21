@@ -168,9 +168,6 @@ export default function VitalsStep({ onSetLoading }: VitalsStepProps) {
         {renderHeightSlider}
         {renderWeightSlider}
 
-        <Text style={styles.disclaimer}>
-          * Suas informações serão excluídas após gerar o plano.
-        </Text>
       </View>
     </View>
   );
@@ -252,12 +249,5 @@ const styles = StyleSheet.create({
   sliderWrapper: {
     width: '100%',
     alignItems: 'center',
-  },
-  disclaimer: {
-    fontSize: typography.sm,
-    color: colors.textTertiary,
-    textAlign: 'center',
-    lineHeight: typography.sm * 1.4,
-    marginTop: spacing.xl,
   },
 }); 

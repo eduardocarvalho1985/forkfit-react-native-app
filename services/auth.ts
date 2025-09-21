@@ -78,7 +78,6 @@ export const authService = {
 
       return userCredential;
     } catch (error: any) {
-      console.error("Error during Google Sign-In:", error);
       throw new Error(error.message || "Failed to sign in with Google");
     }
   },
@@ -94,7 +93,6 @@ export const authService = {
 
       return userCredential;
     } catch (error: any) {
-      console.error("Error during Apple Sign-In:", error);
       throw new Error(error.message || "Failed to sign in with Apple");
     }
   },

@@ -121,9 +121,6 @@ export default function TargetWeightStep({ onSetLoading }: TargetWeightStepProps
 
         {renderWeightSlider}
 
-        <Text style={styles.disclaimer}>
-          * Suas informações serão excluídas após gerar o plano.
-        </Text>
       </View>
     </View>
   );
@@ -190,13 +187,5 @@ const styles = StyleSheet.create({
   differenceValue: {
     color: colors.primary,
     fontWeight: typography.bold,
-  },
-  disclaimer: {
-    fontSize: typography.sm,
-    color: colors.textTertiary,
-    textAlign: 'center',
-    lineHeight: typography.sm * 1.4,
-    position: 'absolute',
-    bottom: spacing.xxl,
   },
 });
