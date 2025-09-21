@@ -324,22 +324,60 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
         
       } catch (profileError) {
-        console.log('📝 User profile not found, creating basic user object');
-        // Create basic user object for users without backend profile
-        const basicUser: AppUser = {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email || undefined,
-          displayName: firebaseUser.displayName,
-          photoURL: firebaseUser.photoURL,
-          name: firebaseUser.displayName || undefined,
-          onboardingCompleted: false,
-          calories: 2000,
-          protein: 150,
-          carbs: 250,
-          fat: 65,
-        };
-        console.log('👤 Using basic user data:', basicUser);
-        setUser(basicUser);
+        console.log('📝 User profile not found in backend, attempting to create user');
+        console.error('Profile fetch error:', profileError);
+        
+        try {
+          // Attempt to create the user in the backend
+          const syncData = {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email || '',
+            name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+            displayName: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+            photoURL: firebaseUser.photoURL
+          };
+          
+          console.log('🔄 Creating user in backend with data:', syncData);
+          const createdUser = await api.syncUser(syncData);
+          console.log('✅ User created in backend:', createdUser);
+          
+          // Fetch the complete profile after creation
+          const completeProfile = await api.getUserProfile(firebaseUser.uid, await firebaseUser.getIdToken());
+          console.log('✅ Complete profile fetched:', completeProfile);
+          
+          // Create combined user object
+          const combinedUser: AppUser = {
+            ...completeProfile,
+            uid: firebaseUser.uid,
+            email: firebaseUser.email || undefined,
+            displayName: firebaseUser.displayName,
+            photoURL: firebaseUser.photoURL,
+            activityLevel: completeProfile.activityLevel as 'sedentary' | 'light' | 'moderate' | 'very_active' | undefined,
+            goal: completeProfile.goal as 'lose_weight' | 'maintain' | 'gain_muscle' | undefined,
+          };
+          
+          console.log('🔗 Combined user after backend creation:', combinedUser);
+          setUser(combinedUser);
+          
+        } catch (creationError) {
+          console.error('💥 Failed to create user in backend:', creationError);
+          
+          // Final fallback: create basic user object
+          const basicUser: AppUser = {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email || undefined,
+            displayName: firebaseUser.displayName,
+            photoURL: firebaseUser.photoURL,
+            name: firebaseUser.displayName || undefined,
+            onboardingCompleted: false,
+            calories: 2000,
+            protein: 150,
+            carbs: 250,
+            fat: 65,
+          };
+          console.log('👤 Using fallback user data due to backend creation failure:', basicUser);
+          setUser(basicUser);
+        }
       }
       
     } catch (backendError) {
