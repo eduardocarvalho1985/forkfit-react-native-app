@@ -1,37 +1,51 @@
 const getBundleId = () => {
   // This function reads the build profile from eas.json and returns the correct bundle ID.
+  const profile = process.env.EAS_BUILD_PROFILE;
+  console.log(`🔍 getBundleId: EAS_BUILD_PROFILE = "${profile}"`);
 
   // For 'development' builds (e.g., for Expo Go or internal testing builds)
-  if (process.env.EAS_BUILD_PROFILE === 'development') {
+  if (profile === 'development') {
     return 'forkfit.app.forkfitdev';
   }
 
   // For 'preview' builds (e.g., for TestFlight)
-  if (process.env.EAS_BUILD_PROFILE === 'preview') {
+  if (profile === 'preview') {
     return 'forkfit.app.forkfitpreview';
   }
 
   // For 'production' builds (the final App Store version)
-  // This also acts as the default.
-  return 'forkfit.app.forkfitprod';
+  if (profile === 'production') {
+    return 'forkfit.app.forkfitprod';
+  }
+
+  // Default case - if no profile is set, assume development for local builds
+  console.log(`⚠️ No EAS_BUILD_PROFILE set, defaulting to development bundle ID`);
+  return 'forkfit.app.forkfitdev';
 };
 
 const getPackageName = () => {
   // This function reads the build profile from eas.json and returns the correct package name.
+  const profile = process.env.EAS_BUILD_PROFILE;
+  console.log(`🔍 getPackageName: EAS_BUILD_PROFILE = "${profile}"`);
 
   // For 'development' builds (internal testing)
-  if (process.env.EAS_BUILD_PROFILE === 'development') {
+  if (profile === 'development') {
     return 'forkfit.app.forkfitdev';
   }
 
   // For 'preview' builds (internal testing builds)
-  if (process.env.EAS_BUILD_PROFILE === 'preview') {
+  if (profile === 'preview') {
     return 'forkfit.app.forkfitpreview';
   }
 
   // For 'production' builds (Google Play Store version)
-  // This also acts as the default.
-  return 'forkfit.app.forkfitprod';
+  if (profile === 'production') {
+    return 'forkfit.app.forkfitprod';
+  }
+
+  // Default case - if no profile is set, assume development for local builds
+  console.log(`⚠️ No EAS_BUILD_PROFILE set, defaulting to development package name`);
+  return 'forkfit.app.forkfitdev';
 };
 
 // ✅ ADD: Validation function for iOS
@@ -61,13 +75,35 @@ const getApiUrl = () => {
   } else if (profile === 'preview') {
     // Preview uses dev environment for testing
     apiUrl = process.env.API_URL_DEV || 'https://api.dev.forkfit.app/api';
-  } else {
+  } else if (profile === 'production') {
     // Production uses prod API URL from EAS secret
     apiUrl = process.env.API_URL_PROD || 'https://api.forkfit.app/api';
+  } else {
+    // Default case - use dev API for local development
+    console.log(`⚠️ No EAS_BUILD_PROFILE set, defaulting to dev API URL`);
+    apiUrl = process.env.API_URL_DEV || 'https://api.dev.forkfit.app/api';
   }
   
   console.log(`🌐 API URL for ${profile || 'default'} profile: ${apiUrl}`);
   return apiUrl;
+};
+
+// ✅ ADD: RevenueCat API key configuration
+const getRevenueCatApiKey = () => {
+  const profile = process.env.EAS_BUILD_PROFILE;
+  const apiKey = process.env.REVENUECAT_IOS_API_KEY;
+  
+  if (!apiKey) {
+    console.log(`⚠️ RevenueCat API key missing - only available during EAS builds`);
+    console.log(`📝 To test RevenueCat: Use eas build --profile production --platform ios`);
+    console.log(`🏗️ RevenueCat will use ${profile === 'production' ? 'PRODUCTION' : 'SANDBOX'} mode based on app signing`);
+    return undefined;
+  }
+  
+  console.log(`💰 RevenueCat API key for ${profile || 'default'} profile: configured`);
+  console.log(`🏗️ RevenueCat will use ${profile === 'production' ? 'PRODUCTION' : 'SANDBOX'} mode based on app signing`);
+  
+  return apiKey;
 };
 
 // ✅ ADD: Dynamic Firebase configuration functions
@@ -197,7 +233,9 @@ export default {
       },
       // ✅ ADD: Dynamic API URL and build profile for runtime access
       API_URL: getApiUrl(),
-      BUILD_PROFILE: process.env.EAS_BUILD_PROFILE || 'unknown'
+      BUILD_PROFILE: process.env.EAS_BUILD_PROFILE || 'unknown',
+      // ✅ ADD: RevenueCat API key with environment management
+      revenueCatIosApiKey: getRevenueCatApiKey(),
     },
     owner: 'forkfit-app'
   }

@@ -69,6 +69,7 @@
     "react-native-modal": "^14.0.0-rc.1",
     "react-native-prompt-android": "^1.1.0",
     "react-native-purchases": "9.5.0",
+    "react-native-purchases-ui": "9.5.0",
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
