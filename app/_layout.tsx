@@ -70,6 +70,22 @@ function RootLayoutContent() {
           } catch (infoError) {
             console.log('ℹ️ Could not fetch customer info immediately after initialization:', infoError);
           }
+
+          // ✅ Get offerings immediately after initialization to verify products are available
+          try {
+            const offerings = await Purchases.getOfferings();
+            if (
+              offerings.current !== null &&
+              offerings.current.availablePackages.length !== 0
+            ) {
+              console.log("📢 offerings", JSON.stringify(offerings, null, 2));
+            } else {
+              console.log('⚠️ No current offerings or packages available');
+              console.log('📋 Available offerings:', Object.keys(offerings.all));
+            }
+          } catch (offeringsError) {
+            console.log('ℹ️ Could not fetch offerings immediately after initialization:', offeringsError);
+          }
         }
       } catch (error) {
         console.error('❌ RevenueCat initialization failed:', error);
