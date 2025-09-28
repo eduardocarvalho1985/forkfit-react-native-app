@@ -9,22 +9,16 @@ interface SocialProofStepProps {
 
 const TESTIMONIALS = [
   {
-    name: 'Maria S.',
-    result: 'Perdeu 15kg em 6 meses',
+    name: 'Déborah A.',
+    result: 'Perdeu 7kg em 3 meses',
     text: 'O ForkFit mudou minha vida! Agora me sinto mais confiante e saudável do que nunca.',
-    avatar: '👩‍🦰'
+    avatar: ''
   },
   {
-    name: 'João P.',
-    result: 'Ganhou 8kg de massa muscular',
+    name: 'Ricardo D. C.',
+    result: 'Ganhou 6kg de massa muscular em 4 meses',
     text: 'Sempre quis ser mais forte, e com o ForkFit consegui de forma sustentável e saudável.',
-    avatar: '👨‍🦱'
-  },
-  {
-    name: 'Ana L.',
-    result: 'Manteve o peso ideal',
-    text: 'O app me ajudou a entender melhor minha alimentação e manter um estilo de vida saudável.',
-    avatar: '👩‍🦳'
+    avatar: ''
   }
 ];
 
@@ -45,28 +39,10 @@ export default function SocialProofStep({ onSetLoading }: SocialProofStepProps) 
             Veja como outras pessoas transformaram suas vidas com o ForkFit
           </Text>
 
-          <View style={styles.statsContainer}>
-            <View style={styles.statCard}>
-              <Text style={styles.statNumber}>50,000+</Text>
-              <Text style={styles.statLabel}>Usuários Ativos</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statNumber}>95%</Text>
-              <Text style={styles.statLabel}>Taxa de Sucesso</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statNumber}>4.8★</Text>
-              <Text style={styles.statLabel}>Avaliação Média</Text>
-            </View>
-          </View>
-
           <View style={styles.testimonialsContainer}>
-            <Text style={styles.testimonialsTitle}>Depoimentos Reais</Text>
-            
             {TESTIMONIALS.map((testimonial, index) => (
               <View key={index} style={styles.testimonialCard}>
                 <View style={styles.testimonialHeader}>
-                  <Text style={styles.avatar}>{testimonial.avatar}</Text>
                   <View style={styles.testimonialInfo}>
                     <Text style={styles.testimonialName}>{testimonial.name}</Text>
                     <Text style={styles.testimonialResult}>{testimonial.result}</Text>
@@ -78,18 +54,13 @@ export default function SocialProofStep({ onSetLoading }: SocialProofStepProps) 
           </View>
 
           <View style={styles.motivationContainer}>
-            <Text style={styles.motivationTitle}>🎯 Você é o próximo!</Text>
+            <Text style={styles.motivationTitle}>Você é o próximo!</Text>
             <Text style={styles.motivationText}>
               Com dedicação e o suporte do ForkFit, você também pode alcançar seus objetivos de saúde e fitness.
             </Text>
           </View>
 
           {/* Navigation is handled by the parent component's footer */}
-          <View style={styles.infoContainer}>
-            <Text style={styles.infoText}>
-              Use o botão "Continuar" na parte inferior da tela para prosseguir
-            </Text>
-          </View>
         </View>
       </ScrollView>
     </View>
@@ -125,42 +96,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xxl,
     paddingHorizontal: spacing.md,
   },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 40,
-  },
-  statCard: {
-    backgroundColor: colors.backgroundTertiary,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    alignItems: 'center',
-    flex: 1,
-    marginHorizontal: spacing.xs,
-    ...shadows.sm,
-  },
-  statNumber: {
-    fontSize: typography.xl,
-    fontWeight: typography.bold,
-    color: colors.primary,
-    marginBottom: spacing.xs,
-  },
-  statLabel: {
-    fontSize: typography.sm,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
   testimonialsContainer: {
     width: '100%',
     marginBottom: 30,
-  },
-  testimonialsTitle: {
-    fontSize: typography.xl,
-    fontWeight: typography.bold,
-    color: colors.textPrimary,
-    textAlign: 'center',
-    marginBottom: spacing.lg,
   },
   testimonialCard: {
     backgroundColor: colors.backgroundTertiary,
@@ -173,10 +111,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
-  },
-  avatar: {
-    fontSize: 32,
-    marginRight: 12,
   },
   testimonialInfo: {
     flex: 1,
@@ -215,16 +149,6 @@ const styles = StyleSheet.create({
   motivationText: {
     fontSize: typography.sm,
     color: colors.background,
-    textAlign: 'center',
-    lineHeight: typography.sm * 1.4,
-  },
-  infoContainer: {
-    width: '100%',
-    alignItems: 'center',
-  },
-  infoText: {
-    color: colors.textSecondary,
-    fontSize: typography.sm,
     textAlign: 'center',
     lineHeight: typography.sm * 1.4,
   },
