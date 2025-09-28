@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking } from 'react-native';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { useOnboarding } from '../OnboardingContext';
 import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
@@ -153,17 +153,22 @@ export default function PlanStep({ onSetLoading }: PlanStepProps) {
           </View>
         </View>
 
-        {/* Divider Line */}
-        <View style={styles.divider} />
-
         {/* Info Links */}
         <View style={styles.infoSection}>
-          <Text style={styles.infoTitle}>Como calculamos</Text>
+          <Text style={styles.infoTitle}>Calculamos o seu plano baseado nas seguintes fontes, dentre outras referências revisadas por pares:</Text>
           <View style={styles.infoLinks}>
-            <Text style={styles.infoLinkText}>Taxa Metabólica Basal (BMR)</Text>
-            <Text style={styles.infoLinkText}>Gasto diário total (TDEE)</Text>
-            <Text style={styles.infoLinkText}>Déficit/Superávit calórico</Text>
-            <Text style={styles.infoLinkText}>Distribuição de macros</Text>
+            <TouchableOpacity onPress={() => Linking.openURL('https://pt.wikipedia.org/wiki/Metabolismo_basal')}>
+              <Text style={styles.infoLinkText}>• Taxa Metabólica Basal (BMR)</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => Linking.openURL('https://calculadoratdee.com/')}>
+              <Text style={styles.infoLinkText}>• Gasto diário total (TDEE)</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => Linking.openURL('https://www.webmd.com/diet/calorie-deficit/')}>
+              <Text style={styles.infoLinkText}>• Déficit/Superávit calórico</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => Linking.openURL('https://www.healthline.com/nutrition/best-macronutrient-ratio')}>
+              <Text style={styles.infoLinkText}>• Distribuição de macros</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -296,21 +301,14 @@ const styles = StyleSheet.create({
   infoLinks: {
     flexDirection: 'column',
     gap: spacing.sm,
+    marginTop: spacing.md,
   },
   infoLinkText: {
     fontSize: typography.sm,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    backgroundColor: colors.backgroundTertiary,
-    borderRadius: borderRadius.md,
-    ...shadows.sm,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginVertical: spacing.lg,
+    color: colors.primary,
+    textAlign: 'left',
+    paddingVertical: spacing.xs,
+    textDecorationLine: 'underline',
   },
   disclaimerSection: {
     marginTop: spacing.xl,

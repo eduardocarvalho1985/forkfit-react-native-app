@@ -8,10 +8,10 @@ interface PacingStepProps {
 }
 
 const PACING_OPTIONS = [
-  { value: 0.25, label: 'Muito Lento', description: '0.25 kg/semana', detail: 'Mudanças graduais e sustentáveis' },
-  { value: 0.5, label: 'Lento', description: '0.5 kg/semana', detail: 'Pace recomendado para a maioria' },
-  { value: 0.75, label: 'Moderado', description: '0.75 kg/semana', detail: 'Resultados visíveis mais rapidamente' },
-  { value: 1.0, label: 'Rápido', description: '1.0 kg/semana', detail: 'Máximo recomendado para segurança' }
+  { value: 0.25, label: 'Suave', description: '0.25 kg/semana', detail: 'Mudanças graduais e sustentáveis' },
+  { value: 0.5, label: 'Constante', description: '0.5 kg/semana', detail: 'Pace recomendado para a maioria' },
+  { value: 0.75, label: 'Acelerado', description: '0.75 kg/semana', detail: 'Resultados visíveis mais rapidamente' },
+  { value: 1.0, label: 'Intenso', description: '1.0 kg/semana', detail: 'Máximo recomendado para segurança' }
 ];
 
 export default function PacingStep({ onSetLoading }: PacingStepProps) {

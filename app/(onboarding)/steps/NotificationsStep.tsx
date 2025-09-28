@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Switch, Alert, Linking } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding } from '../OnboardingContext';
 import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -136,19 +137,19 @@ export default function NotificationsStep({ onSetLoading }: NotificationsStepPro
           <View style={styles.benefitsContainer}>
             <Text style={styles.benefitsTitle}>Benefícios das Notificações:</Text>
             <View style={styles.benefitItem}>
-              <Text style={styles.benefitEmoji}>⏰</Text>
+              <Ionicons name="time-outline" size={24} color={colors.primary} style={styles.benefitIcon} />
               <Text style={styles.benefitText}>Lembretes no momento certo</Text>
             </View>
             <View style={styles.benefitItem}>
-              <Text style={styles.benefitEmoji}>📱</Text>
+              <Ionicons name="phone-portrait-outline" size={24} color={colors.primary} style={styles.benefitIcon} />
               <Text style={styles.benefitText}>Acompanhamento consistente</Text>
             </View>
             <View style={styles.benefitItem}>
-              <Text style={styles.benefitEmoji}>🎯</Text>
+              <Ionicons name="flag-outline" size={24} color={colors.primary} style={styles.benefitIcon} />
               <Text style={styles.benefitText}>Foco nos seus objetivos</Text>
             </View>
             <View style={styles.benefitItem}>
-              <Text style={styles.benefitEmoji}>💪</Text>
+              <Ionicons name="fitness-outline" size={24} color={colors.primary} style={styles.benefitIcon} />
               <Text style={styles.benefitText}>Motivação contínua</Text>
             </View>
           </View>
@@ -236,13 +237,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.sm,
   },
-  benefitEmoji: {
-    fontSize: typography.lg,
-    marginRight: spacing.sm,
-    width: 24,
+  benefitIcon: {
+    marginRight: spacing.md,
+    width: 28,
   },
   benefitText: {
-    fontSize: typography.base,
+    fontSize: typography.lg,
     color: colors.textSecondary,
     flex: 1,
   },
