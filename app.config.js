@@ -192,6 +192,7 @@ export default {
       'expo-router',
       '@react-native-firebase/app',
       '@react-native-firebase/auth',
+      '@react-native-firebase/analytics',
       'expo-secure-store',
       // Apple authentication plugin removed to fix Android build issues
       // The library is still available for use in code, but not as a config plugin

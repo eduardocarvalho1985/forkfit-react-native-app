@@ -13,6 +13,7 @@ import { ProgressProvider } from '@/contexts/ProgressContext';
 import { SubscriptionProvider } from '@/contexts/SubscriptionContext';
 import { OnboardingProvider } from './(onboarding)/OnboardingContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { AnalyticsService } from '@/services/analytics';
 import * as Sentry from '@sentry/react-native';
 
 Sentry.init({
@@ -30,6 +31,9 @@ function RootLayoutContent() {
 
   // ✅ RevenueCat initialization following best practices
   useEffect(() => {
+    // Track app opened event
+    AnalyticsService.trackAppOpened();
+    
     const initializeRevenueCat = async () => {
       try {
         // Set log level first
