@@ -16,8 +16,7 @@ export default function VitalsStep({ onSetLoading }: VitalsStepProps) {
   const { getStepData, updateStepData } = useOnboarding();
   const [heightCm, setHeightCm] = useState(getStepData('height') || 170); // Default to 170cm
   const [weightKg, setWeightKg] = useState(getStepData('weight') || 60); // Default to 60kg
-  const [heightUnit, setHeightUnit] = useState<'cm' | 'ft/in'>('cm');
-  const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg');
+  const [unitSystem, setUnitSystem] = useState<'metric' | 'imperial'>('metric');
 
   // Load existing data when component mounts
   useEffect(() => {
@@ -27,13 +26,10 @@ export default function VitalsStep({ onSetLoading }: VitalsStepProps) {
     if (existingHeight) setHeightCm(existingHeight);
     if (existingWeight) setWeightKg(existingWeight);
     
-    // Load unit preferences if available
-    const unitPrefs = getStepData('prefs')?.units;
-    if (unitPrefs?.height) {
-      setHeightUnit(unitPrefs.height);
-    }
-    if (unitPrefs?.weight) {
-      setWeightUnit(unitPrefs.weight);
+    // Load unit system preference if available
+    const unitPrefs = getStepData('prefs')?.unitSystem;
+    if (unitPrefs) {
+      setUnitSystem(unitPrefs);
     }
   }, []); // Empty dependency array - only run once on mount
 
@@ -47,57 +43,40 @@ export default function VitalsStep({ onSetLoading }: VitalsStepProps) {
     }
   }, [heightCm, weightKg]); // Remove updateStepData from dependencies
 
-  const handleHeightUnitChange = useCallback((newUnit: string) => {
+  const handleUnitSystemChange = useCallback((selectedOption: string) => {
+    // Map the selected option to the unit system
+    const system = (selectedOption === 'cm' || selectedOption === 'kg') ? 'metric' : 'imperial';
     
-    // Prevent unnecessary state updates if clicking the same unit
-    if (newUnit === heightUnit) {
+    // Prevent unnecessary state updates if clicking the same system
+    if (system === unitSystem) {
       return;
     }
     
-    const unit = newUnit as 'cm' | 'ft/in';
-    setHeightUnit(unit);
+    setUnitSystem(system);
     
-    // Save unit preference
+    // Save unit system preference
     const currentPrefs = getStepData('prefs') || {};
     updateStepData('prefs', {
       ...currentPrefs,
-      units: { ...(currentPrefs.units || {}), height: unit }
+      unitSystem: system
     });
-  }, [heightUnit, getStepData]); // Remove updateStepData from dependencies
-
-  const handleWeightUnitChange = useCallback((newUnit: string) => {
-    
-    // Prevent unnecessary state updates if clicking the same unit
-    if (newUnit === weightUnit) {
-      return;
-    }
-    
-    const unit = newUnit as 'kg' | 'lbs';
-    setWeightUnit(unit);
-    
-    // Save unit preference
-    const currentPrefs = getStepData('prefs') || {};
-    updateStepData('prefs', {
-      ...currentPrefs,
-      units: { ...(currentPrefs.units || {}), weight: unit }
-    });
-  }, [weightUnit, getStepData]); // Remove updateStepData from dependencies
+  }, [unitSystem, getStepData, updateStepData]);
 
   const formatHeightLabel = useCallback((value: number) => {
-    if (heightUnit === 'cm') {
+    if (unitSystem === 'metric') {
       return `${value.toFixed(0)} cm`;
     } else {
       return cmToFeetIn(value);
     }
-  }, [heightUnit]);
+  }, [unitSystem]);
 
   const formatWeightLabel = useCallback((value: number) => {
-    if (weightUnit === 'kg') {
+    if (unitSystem === 'metric') {
       return `${value.toFixed(1)} kg`;
     } else {
       return `${kgToLbs(value)} lbs`;
     }
-  }, [weightUnit]);
+  }, [unitSystem]);
 
   const renderHeightSlider = useMemo(() => {
     return (
@@ -106,8 +85,8 @@ export default function VitalsStep({ onSetLoading }: VitalsStepProps) {
           <Text style={styles.sliderLabel}>Altura:</Text>
           <UnitToggle
             options={['cm', 'ft/in']}
-            value={heightUnit}
-            onChange={handleHeightUnitChange}
+            value={unitSystem === 'metric' ? 'cm' : 'ft/in'}
+            onChange={handleUnitSystemChange}
             label="Unidade"
           />
         </View>
@@ -122,11 +101,11 @@ export default function VitalsStep({ onSetLoading }: VitalsStepProps) {
           labelEvery={10}
           tickWidth={12}
           formatCenterLabel={formatHeightLabel}
-          unit={heightUnit === 'cm' ? 'cm' : ''}
+          unit={unitSystem === 'metric' ? 'cm' : ''}
         />
       </View>
     );
-  }, [heightCm, heightUnit, handleHeightUnitChange, formatHeightLabel]);
+  }, [heightCm, unitSystem, handleUnitSystemChange, formatHeightLabel]);
 
   const renderWeightSlider = useMemo(() => {
     return (
@@ -135,8 +114,8 @@ export default function VitalsStep({ onSetLoading }: VitalsStepProps) {
           <Text style={styles.sliderLabel}>Peso:</Text>
           <UnitToggle
             options={['kg', 'lbs']}
-            value={weightUnit}
-            onChange={handleWeightUnitChange}
+            value={unitSystem === 'metric' ? 'kg' : 'lbs'}
+            onChange={handleUnitSystemChange}
             label="Unidade"
           />
         </View>
@@ -151,11 +130,11 @@ export default function VitalsStep({ onSetLoading }: VitalsStepProps) {
           labelEvery={5}
           tickWidth={12}
           formatCenterLabel={formatWeightLabel}
-          unit={weightUnit === 'kg' ? 'kg' : ''}
+          unit={unitSystem === 'metric' ? 'kg' : ''}
         />
       </View>
     );
-  }, [weightKg, weightUnit, handleWeightUnitChange, formatWeightLabel]);
+  }, [weightKg, unitSystem, handleUnitSystemChange, formatWeightLabel]);
 
   return (
     <View style={styles.container}>
