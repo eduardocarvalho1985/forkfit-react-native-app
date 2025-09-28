@@ -150,13 +150,21 @@ function OnboardingContent() {
         console.log('🔍 User UID:', user.uid);
         await clearOnboardingData();
         return;
-      } else {
-        console.log('⚠️ User onboarding status check:');
-        console.log('  - User exists:', !!user);
-        console.log('  - User UID:', user?.uid);
-        console.log('  - Onboarding completed:', user?.onboardingCompleted);
-        console.log('  - Will proceed with onboarding resume logic...');
       }
+      
+      // If there's no user (logged out), always start fresh
+      if (!user) {
+        console.log('👤 No user found, clearing onboarding data and starting fresh');
+        await clearOnboardingData();
+        setCurrentStep('introCarousel');
+        return;
+      }
+      
+      console.log('⚠️ User onboarding status check:');
+      console.log('  - User exists:', !!user);
+      console.log('  - User UID:', user?.uid);
+      console.log('  - Onboarding completed:', user?.onboardingCompleted);
+      console.log('  - Will proceed with onboarding resume logic...');
       
       // Check if we have substantial onboarding data (more than just basic fields)
       const hasSubstantialData = storageData && (

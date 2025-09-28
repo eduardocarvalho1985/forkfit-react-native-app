@@ -570,11 +570,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(null);
       console.log('AuthContext: Local user state cleared');
       
-      // Clear any residual onboarding data to prevent resume issues
+      // Clear ALL onboarding-related data to prevent resume issues
       try {
         await AsyncStorage.removeItem('onboardingData');
         await AsyncStorage.removeItem('onboarding_data');
-        console.log('AuthContext: Residual onboarding data cleared on logout');
+        await AsyncStorage.removeItem('@onboarding_data'); // In case it's stored with @ prefix
+        await AsyncStorage.multiRemove([
+          'onboardingData',
+          'onboarding_data', 
+          '@onboarding_data',
+          'onboardingStep',
+          'currentOnboardingStep'
+        ]);
+        console.log('AuthContext: ALL onboarding data cleared on logout');
       } catch (cleanupError) {
         console.log('AuthContext: Error clearing onboarding data on logout (non-critical):', cleanupError);
       }
