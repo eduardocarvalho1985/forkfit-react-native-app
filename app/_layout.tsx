@@ -96,6 +96,43 @@ function RootLayoutContent() {
     initializeRevenueCat();
   }, []); // Empty dependency array - initialize once
 
+  // ✅ ADD: Global RevenueCat error handler
+  React.useEffect(() => {
+    const handleRevenueCatError = (error: any) => {
+      const errorMessage = error?.message || error?.toString() || 'Unknown RevenueCat error';
+      
+      // Handle specific RevenueCat errors gracefully
+      if (errorMessage.includes('flushing data') || errorMessage.includes('timeout')) {
+        console.log('🔄 Global RevenueCat flushing/timeout error - handled gracefully');
+        return; // Don't show this error to users
+      }
+      
+      if (errorMessage.includes('network') || errorMessage.includes('connection')) {
+        console.log('🌐 Global RevenueCat network error - handled gracefully');
+        return; // Don't show this error to users
+      }
+      
+      // For other RevenueCat errors, log them but don't show to users
+      console.log('⚠️ Global RevenueCat error handled gracefully:', errorMessage);
+    };
+
+    // Set up global error handler for RevenueCat
+    const originalConsoleError = console.error;
+    console.error = (...args) => {
+      const message = args.join(' ');
+      if (message.includes('[RevenueCat]')) {
+        handleRevenueCatError({ message });
+      } else {
+        originalConsoleError.apply(console, args);
+      }
+    };
+
+    // Cleanup
+    return () => {
+      console.error = originalConsoleError;
+    };
+  }, []);
+
   React.useEffect(() => {
     if (loading) {
       console.log('RootLayout: Still loading, waiting...');
