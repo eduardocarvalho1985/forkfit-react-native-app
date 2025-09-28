@@ -8,6 +8,7 @@ import * as Application from 'expo-application';
 import { PrivacyBottomSheet } from '../../../components/PrivacyBottomSheet';
 import { HelpBottomSheet } from '../../../components/HelpBottomSheet';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useSubscription } from '../../../contexts/SubscriptionContext';
 import { useRouter } from 'expo-router';
 import {
   getNotificationPermissionStatus,
@@ -62,6 +63,7 @@ export default function SettingsScreen() {
   const privacyBottomSheetRef = useRef<BottomSheetModal>(null);
   const helpBottomSheetRef = useRef<BottomSheetModal>(null);
   const { signOut } = useAuth();
+  const { isPremium, customerInfo, isLoading: subscriptionLoading } = useSubscription();
   const router = useRouter();
 
   // Version display logic
@@ -97,6 +99,70 @@ export default function SettingsScreen() {
   };
 
   const versionInfo = getVersionInfo();
+
+  // Get subscription plan details
+  const getSubscriptionPlanDetails = () => {
+    if (subscriptionLoading) {
+      return {
+        title: 'Carregando...',
+        badge: 'CARREGANDO',
+        description: 'Verificando status da assinatura...',
+        isPremium: false,
+        isLoading: true
+      };
+    }
+
+    if (!isPremium || !customerInfo) {
+      return {
+        title: 'Plano Gratuito',
+        badge: 'ATIVO',
+        description: 'Ainda não lançamos nosso plano premium. Continue usando gratuitamente e fique ligado para nosso lançamento oficial.',
+        isPremium: false,
+        isLoading: false
+      };
+    }
+
+    // Check for active subscriptions
+    const activeSubscriptions = customerInfo.activeSubscriptions;
+    const entitlements = customerInfo.entitlements.active;
+    
+    // Determine plan type based on active subscriptions
+    let planType = 'Premium';
+    let planPeriod = '';
+    
+    if (activeSubscriptions.includes('forkfit_yearly')) {
+      planType = 'ForkFit Premium';
+      planPeriod = 'Anual';
+    } else if (activeSubscriptions.includes('forkfit_monthly')) {
+      planType = 'ForkFit Premium';
+      planPeriod = 'Mensal';
+    }
+
+    // Get expiration date
+    const expirationDate = customerInfo.latestExpirationDate;
+    let expirationText = '';
+    
+    if (expirationDate) {
+      const date = new Date(expirationDate);
+      const formattedDate = date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+      expirationText = `Válido até: ${formattedDate}`;
+    }
+
+    return {
+      title: `${planType} ${planPeriod}`,
+      badge: 'ATIVO',
+      description: expirationText || 'Assinatura ativa',
+      isPremium: true,
+      isLoading: false,
+      expirationDate: expirationDate
+    };
+  };
+
+  const planDetails = getSubscriptionPlanDetails();
 
   // Check notification permission status and preferences on mount
   useEffect(() => {
@@ -450,14 +516,24 @@ export default function SettingsScreen() {
             <View style={styles.card}>
               <View style={styles.planContent}>
                 <View style={styles.planHeader}>
-                  <Text style={styles.planTitle}>Plano Gratuito</Text>
-                  <View style={styles.planBadge}>
-                    <Text style={styles.planBadgeText}>ATIVO</Text>
+                  <Text style={styles.planTitle}>{planDetails.title}</Text>
+                  <View style={[
+                    styles.planBadge,
+                    planDetails.isPremium ? styles.premiumBadge : styles.freeBadge
+                  ]}>
+                    <Text style={styles.planBadgeText}>{planDetails.badge}</Text>
                   </View>
                 </View>
                 <Text style={styles.planDescription}>
-                  Ainda não lançamos nosso plano premium. Continue usando gratuitamente e fique ligado para nosso lançamento oficial.
+                  {planDetails.description}
                 </Text>
+                {planDetails.isPremium && planDetails.expirationDate && (
+                  <View style={styles.planFooter}>
+                    <Text style={styles.planFooterText}>
+                      🔄 Renovação automática
+                    </Text>
+                  </View>
+                )}
               </View>
             </View>
           </View>
@@ -716,10 +792,15 @@ const styles = StyleSheet.create({
     color: TEXT_DARK,
   },
   planBadge: {
-    backgroundColor: CORAL,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
+  },
+  premiumBadge: {
+    backgroundColor: '#10B981', // Green for premium
+  },
+  freeBadge: {
+    backgroundColor: CORAL, // Coral for free
   },
   planBadgeText: {
     color: '#fff',
@@ -730,6 +811,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: TEXT_LIGHT,
     lineHeight: 20,
+  },
+  planFooter: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(31,41,55,0.08)',
+  },
+  planFooterText: {
+    fontSize: 12,
+    color: '#10B981',
+    fontWeight: '500',
   },
 
   // Setting Row Styles
