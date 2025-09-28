@@ -111,11 +111,23 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
 
   const refreshCustomerInfo = async (): Promise<void> => {
     try {
+      console.log('🔄 SubscriptionContext: Refreshing customer info...');
       const customerInfo = await revenueCatService.getCustomerInfo();
+      const hasActiveSubscription = revenueCatService.hasActiveSubscription(customerInfo);
+      
+      console.log('🔄 SubscriptionContext: Updated customer info:', {
+        activeSubscriptions: customerInfo.activeSubscriptions,
+        entitlementsActive: Object.keys(customerInfo.entitlements.active),
+        latestExpirationDate: customerInfo.latestExpirationDate,
+        hasActiveSubscription
+      });
+      
       setCustomerInfo(customerInfo);
-      setIsPremium(revenueCatService.hasActiveSubscription(customerInfo));
+      setIsPremium(hasActiveSubscription);
+      
+      console.log('✅ SubscriptionContext: Customer info refreshed successfully');
     } catch (error) {
-      console.error('Failed to refresh customer info:', error);
+      console.error('❌ SubscriptionContext: Failed to refresh customer info:', error);
       throw error;
     }
   };

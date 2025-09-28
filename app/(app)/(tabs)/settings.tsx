@@ -7,8 +7,9 @@ import { useFocusEffect } from '@react-navigation/native';
 import * as Application from 'expo-application';
 import { PrivacyBottomSheet } from '../../../components/PrivacyBottomSheet';
 import { HelpBottomSheet } from '../../../components/HelpBottomSheet';
+import { SubscriptionBottomSheet } from '../../../components/SubscriptionBottomSheet';
+import { LanguageBottomSheet } from '../../../components/LanguageBottomSheet';
 import { useAuth } from '../../../contexts/AuthContext';
-import { useSubscription } from '../../../contexts/SubscriptionContext';
 import { useRouter } from 'expo-router';
 import {
   getNotificationPermissionStatus,
@@ -62,8 +63,9 @@ export default function SettingsScreen() {
   const [permissionStatus, setPermissionStatus] = useState<'undetermined' | 'granted' | 'denied' | 'blocked'>('undetermined');
   const privacyBottomSheetRef = useRef<BottomSheetModal>(null);
   const helpBottomSheetRef = useRef<BottomSheetModal>(null);
+  const subscriptionBottomSheetRef = useRef<BottomSheetModal>(null);
+  const languageBottomSheetRef = useRef<BottomSheetModal>(null);
   const { signOut } = useAuth();
-  const { isPremium, customerInfo, isLoading: subscriptionLoading } = useSubscription();
   const router = useRouter();
 
   // Version display logic
@@ -100,69 +102,6 @@ export default function SettingsScreen() {
 
   const versionInfo = getVersionInfo();
 
-  // Get subscription plan details
-  const getSubscriptionPlanDetails = () => {
-    if (subscriptionLoading) {
-      return {
-        title: 'Carregando...',
-        badge: 'CARREGANDO',
-        description: 'Verificando status da assinatura...',
-        isPremium: false,
-        isLoading: true
-      };
-    }
-
-    if (!isPremium || !customerInfo) {
-      return {
-        title: 'Plano Gratuito',
-        badge: 'ATIVO',
-        description: 'Ainda não lançamos nosso plano premium. Continue usando gratuitamente e fique ligado para nosso lançamento oficial.',
-        isPremium: false,
-        isLoading: false
-      };
-    }
-
-    // Check for active subscriptions
-    const activeSubscriptions = customerInfo.activeSubscriptions;
-    const entitlements = customerInfo.entitlements.active;
-    
-    // Determine plan type based on active subscriptions
-    let planType = 'Premium';
-    let planPeriod = '';
-    
-    if (activeSubscriptions.includes('forkfit_yearly')) {
-      planType = 'ForkFit Premium';
-      planPeriod = 'Anual';
-    } else if (activeSubscriptions.includes('forkfit_monthly')) {
-      planType = 'ForkFit Premium';
-      planPeriod = 'Mensal';
-    }
-
-    // Get expiration date
-    const expirationDate = customerInfo.latestExpirationDate;
-    let expirationText = '';
-    
-    if (expirationDate) {
-      const date = new Date(expirationDate);
-      const formattedDate = date.toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-      expirationText = `Válido até: ${formattedDate}`;
-    }
-
-    return {
-      title: `${planType} ${planPeriod}`,
-      badge: 'ATIVO',
-      description: expirationText || 'Assinatura ativa',
-      isPremium: true,
-      isLoading: false,
-      expirationDate: expirationDate
-    };
-  };
-
-  const planDetails = getSubscriptionPlanDetails();
 
   // Check notification permission status and preferences on mount
   useEffect(() => {
@@ -510,33 +449,6 @@ export default function SettingsScreen() {
           {/* Main Title - Left aligned and lower */}
           <Text style={styles.mainTitle}>Ajustes</Text>
 
-          {/* Plan Section */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Plano Atual</Text>
-            <View style={styles.card}>
-              <View style={styles.planContent}>
-                <View style={styles.planHeader}>
-                  <Text style={styles.planTitle}>{planDetails.title}</Text>
-                  <View style={[
-                    styles.planBadge,
-                    planDetails.isPremium ? styles.premiumBadge : styles.freeBadge
-                  ]}>
-                    <Text style={styles.planBadgeText}>{planDetails.badge}</Text>
-                  </View>
-                </View>
-                <Text style={styles.planDescription}>
-                  {planDetails.description}
-                </Text>
-                {planDetails.isPremium && planDetails.expirationDate && (
-                  <View style={styles.planFooter}>
-                    <Text style={styles.planFooterText}>
-                      🔄 Renovação automática
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </View>
-          </View>
 
           {/* Notifications Section */}
           <View style={styles.section}>
@@ -638,7 +550,10 @@ export default function SettingsScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Geral</Text>
             <View style={styles.card}>
-              <TouchableOpacity style={styles.actionRow}>
+              <TouchableOpacity 
+                style={styles.actionRow}
+                onPress={() => languageBottomSheetRef.current?.present()}
+              >
                 <Icon name="globe-outline" style={styles.actionIcon} />
                 <View style={styles.actionText}>
                   <Text style={styles.actionLabel}>Idioma</Text>
@@ -647,7 +562,10 @@ export default function SettingsScreen() {
                 <Icon name="chevron-forward" size={16} color="rgba(31,41,55,0.35)" />
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.actionRow}>
+              <TouchableOpacity 
+                style={styles.actionRow}
+                onPress={() => subscriptionBottomSheetRef.current?.present()}
+              >
                 <Icon name="card-outline" style={styles.actionIcon} />
                 <View style={styles.actionText}>
                   <Text style={styles.actionLabel}>Gerenciar Assinatura</Text>
@@ -729,6 +647,8 @@ export default function SettingsScreen() {
       {/* Bottom Sheets */}
       <PrivacyBottomSheet ref={privacyBottomSheetRef} />
       <HelpBottomSheet ref={helpBottomSheetRef} />
+      <SubscriptionBottomSheet ref={subscriptionBottomSheetRef} />
+      <LanguageBottomSheet ref={languageBottomSheetRef} />
     </BottomSheetModalProvider>
   );
 }
@@ -776,53 +696,6 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
-  // Plan Section Styles
-  planContent: {
-    padding: 16,
-  },
-  planHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  planTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: TEXT_DARK,
-  },
-  planBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  premiumBadge: {
-    backgroundColor: '#10B981', // Green for premium
-  },
-  freeBadge: {
-    backgroundColor: CORAL, // Coral for free
-  },
-  planBadgeText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  planDescription: {
-    fontSize: 14,
-    color: TEXT_LIGHT,
-    lineHeight: 20,
-  },
-  planFooter: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(31,41,55,0.08)',
-  },
-  planFooterText: {
-    fontSize: 12,
-    color: '#10B981',
-    fontWeight: '500',
-  },
 
   // Setting Row Styles
   settingRow: {
