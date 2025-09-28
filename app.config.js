@@ -91,19 +91,26 @@ const getApiUrl = () => {
 // ✅ ADD: RevenueCat API key configuration
 const getRevenueCatApiKey = () => {
   const profile = process.env.EAS_BUILD_PROFILE;
-  const apiKey = process.env.REVENUECAT_IOS_API_KEY;
   
-  if (!apiKey) {
-    console.log(`⚠️ RevenueCat API key missing - only available during EAS builds`);
-    console.log(`📝 To test RevenueCat: Use eas build --profile production --platform ios`);
+  // For EAS builds, use environment variable
+  if (process.env.REVENUECAT_IOS_API_KEY) {
+    console.log(`💰 RevenueCat API key for ${profile || 'default'} profile: configured from EAS secret`);
     console.log(`🏗️ RevenueCat will use ${profile === 'production' ? 'PRODUCTION' : 'SANDBOX'} mode based on app signing`);
-    return undefined;
+    return process.env.REVENUECAT_IOS_API_KEY;
   }
   
-  console.log(`💰 RevenueCat API key for ${profile || 'default'} profile: configured`);
-  console.log(`🏗️ RevenueCat will use ${profile === 'production' ? 'PRODUCTION' : 'SANDBOX'} mode based on app signing`);
+  // For local development builds, use hardcoded development API key
+  if (profile === 'development' || !profile) {
+    console.log(`💰 RevenueCat API key for development: using hardcoded dev key`);
+    console.log(`🏗️ RevenueCat will use SANDBOX mode for development`);
+    return 'appl_LJonjokkwRzzWYOjFsByehjGJil';
+  }
   
-  return apiKey;
+  // For other profiles without EAS secret, return undefined
+  console.log(`⚠️ RevenueCat API key missing for ${profile} profile`);
+  console.log(`📝 To test RevenueCat: Use eas build --profile ${profile} --platform ios`);
+  console.log(`🏗️ RevenueCat will use ${profile === 'production' ? 'PRODUCTION' : 'SANDBOX'} mode based on app signing`);
+  return undefined;
 };
 
 // ✅ ADD: Dynamic Firebase configuration functions
