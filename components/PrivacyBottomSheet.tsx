@@ -1,5 +1,5 @@
 import React, { forwardRef, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { BottomSheetModal, BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import { FontAwesome6 } from '@expo/vector-icons';
 
@@ -21,6 +21,22 @@ export const PrivacyBottomSheet = forwardRef<BottomSheetModal, PrivacyBottomShee
         ref.current.dismiss();
       }
     }, [ref]);
+
+    const handleOpenPrivacyPolicy = useCallback(async () => {
+      try {
+        await Linking.openURL('https://forkfit.app/politica-de-privacidade');
+      } catch (error) {
+        console.error('Error opening privacy policy:', error);
+      }
+    }, []);
+
+    const handleOpenTermsOfUse = useCallback(async () => {
+      try {
+        await Linking.openURL('https://forkfit.app/termos-de-uso');
+      } catch (error) {
+        console.error('Error opening terms of use:', error);
+      }
+    }, []);
 
     return (
       <BottomSheetModal
@@ -53,6 +69,9 @@ export const PrivacyBottomSheet = forwardRef<BottomSheetModal, PrivacyBottomShee
             <Text style={styles.sectionContent}>
               Levamos sua privacidade a sério. Coletamos apenas o essencial para oferecer uma boa experiência no ForkFit — como nome, e-mail e suas escolhas alimentares. Tudo é armazenado com segurança e nunca será compartilhado sem seu consentimento.
             </Text>
+            <TouchableOpacity onPress={handleOpenPrivacyPolicy} style={styles.linkButton}>
+              <Text style={styles.linkText}>Saiba mais aqui</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Terms of Use Section */}
@@ -65,6 +84,9 @@ export const PrivacyBottomSheet = forwardRef<BottomSheetModal, PrivacyBottomShee
             <Text style={styles.sectionContent}>
               Ao usar o ForkFit, você concorda em registrar informações reais e usar o app apenas para fins pessoais. Não nos responsabilizamos por decisões médicas — sempre consulte um profissional de saúde.
             </Text>
+            <TouchableOpacity onPress={handleOpenTermsOfUse} style={styles.linkButton}>
+              <Text style={styles.linkText}>Saiba mais aqui</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Contact Section */}
@@ -166,6 +188,17 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: '#666',
     marginLeft: 36, // Align with content after emoji
+    marginBottom: 12,
+  },
+  linkButton: {
+    marginLeft: 36, // Align with content after emoji
+    marginTop: 4,
+  },
+  linkText: {
+    fontSize: 14,
+    color: CORAL,
+    fontWeight: '500',
+    textDecorationLine: 'underline',
   },
   contactSection: {
     backgroundColor: '#f8f9fa',
