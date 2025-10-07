@@ -1,0 +1,16 @@
+---
+alwaysApply: true
+
+This app is a mobile app.
+
+This code represents the react native / type script code that generates the native apps via Expo
+
+The backend / APIs and DB lives on another repo
+
+We have 3 different app builds available:
+Dev, Preview and Production for both iOS and Android platforms.
+
+Dev and Preview connect to Firebase Dev project and Dev Backend / DB
+Production connect to Firebase prod project and Prod backend / DB
+
+---
