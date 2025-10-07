@@ -1,0 +1,10 @@
+---
+alwaysApply: true
+
+The target audience for our app is the brazilian market.
+
+So, until we confirm we are supporting multi language, the app should always use brazilian portuguese in the interface.
+
+Documentation, commenting, naming and agent conversation and reporting should continue to be in english.
+
+---
