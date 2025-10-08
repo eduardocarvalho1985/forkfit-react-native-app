@@ -12,6 +12,7 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ProgressProvider } from '@/contexts/ProgressContext';
 import { SubscriptionProvider } from '@/contexts/SubscriptionContext';
 import { OnboardingProvider } from './(onboarding)/OnboardingContext';
+import { PostHogProvider } from 'posthog-react-native';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import * as Sentry from '@sentry/react-native';
 
@@ -170,20 +171,6 @@ function RootLayoutContent() {
     }
   }, [user, loading, segments]);
 
-  // Remove the aggressive setTimeout redirect that was causing issues
-  // React.useEffect(() => {
-  //   if (!loading && !user) {
-  //     console.log('RootLayout: User not authenticated, ensuring redirect to onboarding');
-  //     // Force redirect to onboarding if not already there
-  //     setTimeout(() => {
-  //       if (!segments || segments[0] !== '(onboarding)') {
-  //         console.log('RootLayout: Forcing redirect to onboarding');
-  //         router.replace('/(onboarding)');
-  //       }
-  //     }, 100);
-  //   }
-  // }, [loading, user, segments]);
-
   // Handle user sign out - redirect to onboarding
   React.useEffect(() => {
     if (!loading && !user && segments[0] === '(app)') {
@@ -247,19 +234,28 @@ export default Sentry.wrap(function RootLayout() {
 
   return (
     <ErrorBoundary>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <BottomSheetModalProvider>
-          <AuthProvider>
-            <SubscriptionProvider>
-              <ProgressProvider>
-                <OnboardingProvider>
-                  <RootLayoutContent />
-                </OnboardingProvider>
-              </ProgressProvider>
-            </SubscriptionProvider>
-          </AuthProvider>
-        </BottomSheetModalProvider>
-      </GestureHandlerRootView>
+      <PostHogProvider
+        apiKey="phc_5VbjDClsDzHHEsEVuWENmvP6T9oUfh1giAy2pm48mbq"
+        options={{
+          host: 'https://us.i.posthog.com', 
+          enableSessionReplay: true,
+        }}
+        autocapture
+      >
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <BottomSheetModalProvider>
+            <AuthProvider>
+              <SubscriptionProvider>
+                <ProgressProvider>
+                  <OnboardingProvider>
+                    <RootLayoutContent />
+                  </OnboardingProvider>
+                </ProgressProvider>
+              </SubscriptionProvider>
+            </AuthProvider>
+          </BottomSheetModalProvider>
+        </GestureHandlerRootView>
+      </PostHogProvider>
     </ErrorBoundary>
   );
 });

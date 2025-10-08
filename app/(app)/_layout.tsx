@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { updateNotificationPreferences } from '../../services/notificationService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PostHogProvider } from 'posthog-react-native';
 
 export default function AppLayout() {
   useEffect(() => {
@@ -34,18 +35,27 @@ export default function AppLayout() {
   }, []);
 
   return (
-    <Stack>
-      <Stack.Screen 
-        name="(tabs)" 
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen 
-        name="index" 
-        options={{ 
-          headerShown: false,
-          href: null // Disable this route to prevent conflicts
-        }}
-      />
-    </Stack>
+    <PostHogProvider
+      apiKey="phc_5VbjDClsDzHHEsEVuWENmvP6T9oUfh1giAy2pm48mbq"
+      options={{
+        host: 'https://us.i.posthog.com', 
+        enableSessionReplay: true,
+      }}
+      autocapture
+    >
+      <Stack>
+        <Stack.Screen 
+          name="(tabs)" 
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="index" 
+          options={{ 
+            headerShown: false,
+            href: null // Disable this route to prevent conflicts
+          }}
+        />
+      </Stack>
+    </PostHogProvider>
   );
 }
